@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign up — HoosOut</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="index.html">
+      <span class="logo-mark" aria-hidden="true">
+        <img src="images/logo-mark.svg" width="38" height="38" alt="" />
+      </span>
+      <span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span>
+    </a>
+    <nav class="nav-links">
+      <a href="events-uva.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">UVA &amp; Cville</a>
+      <a href="login.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Log in</a>
+    </nav>
+  </header>
+
+  <main class="auth-main">
+    <div class="auth-card">
+      <h1>Join the UVA network</h1>
+      <p class="auth-lead">We use official email domain verification or UVA SSO — not “upload your ID” as the only proof. That keeps spam out and meetups accountable.</p>
+
+      <div class="trust-row">
+        <span class="trust-pill">Closed network</span>
+        <span class="trust-pill">Trust &gt; anonymity</span>
+      </div>
+
+      <button type="button" class="btn btn-primary btn-full" id="btn-sso">
+        Sign up with UVA SSO
+      </button>
+
+      <div class="divider">or verify with email</div>
+
+      <form action="verify.html" method="get">
+        <input type="hidden" name="flow" value="signup" />
+        <label for="email">School email</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          autocomplete="email"
+          placeholder="you@virginia.edu"
+          required
+          pattern=".+@virginia\.edu$"
+          title="Must be @virginia.edu"
+        />
+        <label for="name">Preferred name</label>
+        <input id="name" name="name" type="text" autocomplete="given-name" placeholder="Alex" required />
+        <button type="submit" class="btn btn-ghost btn-full">Send verification code</button>
+      </form>
+
+      <p class="auth-footer">
+        Already verified? <a href="login.html">Log in</a>
+      </p>
+    </div>
+  </main>
+
+  <script>
+    document.getElementById("btn-sso").addEventListener("click", function () {
+      window.location.href = "verify.html?flow=signup&method=sso";
+    });
+  </script>
+</body>
+</html>

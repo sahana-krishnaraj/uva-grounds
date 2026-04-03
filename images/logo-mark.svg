@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none" role="img" aria-label="HoosOut">
+  <defs>
+    <linearGradient id="hoosoutGrad" x1="4" y1="2" x2="36" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#232d4b"/>
+      <stop offset="0.55" stop-color="#2d3d5c"/>
+      <stop offset="1" stop-color="#e57200"/>
+    </linearGradient>
+  </defs>
+  <rect width="40" height="40" rx="11" fill="url(#hoosoutGrad)"/>
+  <path fill="#fff" fill-opacity="0.98" fill-rule="evenodd" d="M20 8.25c-4.28 0-7.75 3.35-7.75 7.48 0 4.57 6.23 11.12 7.15 12.08a.9.9 0 001.2 0c.92-.96 7.15-7.51 7.15-12.08 0-4.13-3.47-7.48-7.75-7.48zm0 3.55a3.55 3.55 0 100 7.1 3.55 3.55 0 000-7.1z"/>
+  <circle cx="29" cy="10" r="2" fill="#e57200" fill-opacity="0.95"/>
+</svg>

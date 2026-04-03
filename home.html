@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home — HoosOut</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="home.html">
+      <span class="logo-mark" aria-hidden="true">
+        <img src="images/logo-mark.svg" width="38" height="38" alt="" />
+      </span>
+      <span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span>
+    </a>
+    <nav class="nav-links">
+      <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
+      <a href="events-uva.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">UVA &amp; Cville</a>
+      <a href="post.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem">Create</a>
+      <a href="index.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Log out</a>
+    </nav>
+  </header>
+
+  <main class="container container--feed">
+    <div class="feed-header" style="margin-bottom: 0.5rem">
+      <div>
+        <h1 style="font-size: 1.5rem">Home</h1>
+        <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem">See posts, events, and feedback from people you know</p>
+      </div>
+    </div>
+
+    <div class="chips" role="toolbar" aria-label="Filter feed" style="margin-bottom: 1rem">
+      <button type="button" class="chip active">Following</button>
+      <button type="button" class="chip">Friends’ events</button>
+      <button type="button" class="chip">Sports</button>
+      <button type="button" class="chip">Study</button>
+      <button type="button" class="chip">Around CVille</button>
+    </div>
+
+    <section class="feed-map-section" aria-labelledby="map-heading">
+      <h2 id="map-heading" class="feed-map-heading">Events map</h2>
+      <p class="feed-map-lead">
+        Every event you post shows up here as an orange pin. Pan and zoom to see where things are happening around Grounds and Charlottesville.
+      </p>
+      <p id="feed-map-empty" class="feed-map-empty">
+        No events in this browser yet.
+        <a href="post.html">Create an event</a>
+        — pick date &amp; time on the calendar and drop a pin on the map.
+      </p>
+      <div id="feed-map" class="feed-map-canvas" role="application" aria-label="Map of posted events"></div>
+    </section>
+
+    <div class="stories-strip" aria-label="Friends and stories">
+      <a class="story-ring" href="post.html">
+        <div class="story-avatar">
+          <span class="story-avatar-inner" style="font-size: 1.1rem">+</span>
+        </div>
+        <span>Your story</span>
+      </a>
+      <a class="story-ring" href="#">
+        <div class="story-avatar"><span class="story-avatar-inner avatar--color-1">JR</span></div>
+        <span>Jordan</span>
+      </a>
+      <a class="story-ring" href="#">
+        <div class="story-avatar"><span class="story-avatar-inner avatar--color-2">SK</span></div>
+        <span>Sam</span>
+      </a>
+      <a class="story-ring" href="#">
+        <div class="story-avatar"><span class="story-avatar-inner avatar--color-3">AL</span></div>
+        <span>Aisha</span>
+      </a>
+      <a class="story-ring" href="#">
+        <div class="story-avatar"><span class="story-avatar-inner avatar--color-4">TC</span></div>
+        <span>Ty</span>
+      </a>
+    </div>
+
+    <div class="composer-card">
+      <div class="composer-avatar" aria-hidden="true">You</div>
+      <div class="composer-input-wrap">
+        <a class="composer-fake-input" href="post.html">Start an event, or share what you’re doing…</a>
+      </div>
+      <div class="composer-shortcuts">
+        <a href="post.html">Event</a>
+      </div>
+    </div>
+
+    <p id="user-events-empty" class="feed-empty-user-events" style="display: none">
+      You haven’t posted an event in <strong>this browser</strong> yet. Open
+      <a href="post.html">Create</a>, choose date &amp; time with the calendar, set the location on the map, then publish — it will appear above the sample posts.
+    </p>
+    <div id="user-events-mount"></div>
+
+    <!-- Post: status update -->
+    <article class="feed-post">
+      <header class="post-header">
+        <div class="avatar avatar--md avatar--color-2" aria-hidden="true">SK</div>
+        <div class="post-header-main">
+          <div class="post-names">
+            <strong>Sam K.</strong>
+            <span class="post-visibility-pill pill-friends" title="Visible to friends">👥 Friends</span>
+          </div>
+          <div class="post-meta-line">About an hour ago · Newcomb</div>
+        </div>
+        <div class="post-follow-wrap">
+          <button
+            type="button"
+            class="js-follow-btn btn-follow-pill"
+            data-person-id="person-sam"
+            data-person-name="Sam K."
+            data-person-initials="SK"
+          >
+            Follow
+          </button>
+          <button type="button" class="post-menu" aria-label="Post options">⋯</button>
+        </div>
+      </header>
+      <div class="post-body">
+        <p>Anyone down to review prob sets before the quiz? I’m grabbing a table on 4th floor Clem.</p>
+      </div>
+      <div class="post-stats">8 classmates and 3 friends interacted</div>
+      <div class="post-actions-row">
+        <button type="button" class="post-action-btn" aria-label="Like">👍 Like</button>
+        <button type="button" class="post-action-btn" aria-label="Comment">💬 Comment</button>
+        <button type="button" class="post-action-btn" aria-label="Share">↗ Share</button>
+      </div>
+    </article>
+
+    <!-- Post: friends-only event + feedback -->
+    <article class="feed-post" data-event-id="demo-jordan-gym">
+      <header class="post-header">
+        <div class="avatar avatar--md avatar--color-1" aria-hidden="true">JR</div>
+        <div class="post-header-main">
+          <div class="post-names">
+            <strong>Jordan R.</strong>
+            created an event
+            <span class="post-visibility-pill pill-friends">👥 Friends only</span>
+          </div>
+          <div class="post-meta-line">3h · Visible to Jordan’s friends</div>
+        </div>
+        <div class="post-follow-wrap">
+          <button
+            type="button"
+            class="js-follow-btn btn-follow-pill"
+            data-person-id="person-jordan"
+            data-person-name="Jordan R."
+            data-person-initials="JR"
+          >
+            Follow
+          </button>
+          <button type="button" class="post-menu" aria-label="Post options">⋯</button>
+        </div>
+      </header>
+      <div class="post-body">
+        <p>Low-key AFC lift — beginners welcome. Then Bros if people want food.</p>
+      </div>
+      <div class="post-event-box">
+        <span class="badge badge-friends">Friends only</span>
+        <h3>Gym session → late dinner</h3>
+        <p class="event-line">Today · 5:30pm · ~2 hrs · AFC + Corner</p>
+        <p class="event-line">4 / 6 spots · Chill · wellness</p>
+        <div class="event-actions" style="margin-top: 0.5rem">
+          <button type="button" class="btn btn-primary btn-sm js-rsvp-btn" data-event-id="demo-jordan-gym" data-rsvp-label="RSVP">RSVP</button>
+          <button type="button" class="btn btn-ghost btn-sm js-save-btn" data-event-id="demo-jordan-gym">Save</button>
+        </div>
+      </div>
+      <div
+        class="post-stats js-event-status"
+        data-event-id="demo-jordan-gym"
+        data-status-base="12 friends saw this · 4 going"
+      >
+        12 friends saw this · 4 going
+      </div>
+      <div class="post-actions-row">
+        <button type="button" class="post-action-btn">👍 Like</button>
+        <button type="button" class="post-action-btn">💬 Comment</button>
+        <button type="button" class="post-action-btn">↗ Share</button>
+      </div>
+      <section class="event-feedback" aria-labelledby="feedback-title-1">
+        <h2 class="event-feedback-title" id="feedback-title-1">
+          Event feedback
+          <span class="feedback-summary-score" title="Average from past similar events">★ 4.7 past lifts</span>
+        </h2>
+        <p style="margin: 0 0 0.5rem; font-size: 0.82rem; color: var(--text-muted)">Only people who attended (or hosts) can leave ratings. Helps friends trust “vibe matches.”</p>
+        <div class="feedback-item">
+          <div class="feedback-item-header">
+            <span class="avatar avatar--md avatar--color-3" style="width: 28px; height: 28px; font-size: 0.65rem">AL</span>
+            <strong>Aisha L.</strong>
+            <span class="feedback-stars-inline">★★★★★</span>
+          </div>
+          <span>“Super welcoming — actually waited for me at benches.”</span>
+        </div>
+        <div class="feedback-item">
+          <div class="feedback-item-header">
+            <span class="avatar avatar--md avatar--color-4" style="width: 28px; height: 28px; font-size: 0.65rem">TC</span>
+            <strong>Ty C.</strong>
+            <span class="feedback-stars-inline">★★★★☆</span>
+          </div>
+          <span>“Crowded but fun. Would do again next week.”</span>
+        </div>
+        <form class="feedback-form js-feedback-form" data-demo="true">
+          <label for="fb-note-1">Your feedback (after you go)</label>
+          <div class="star-picker js-star-picker" role="group" aria-label="Star rating">
+            <button type="button" data-value="1" aria-label="1 star">★</button>
+            <button type="button" data-value="2" aria-label="2 stars">★</button>
+            <button type="button" data-value="3" aria-label="3 stars">★</button>
+            <button type="button" data-value="4" aria-label="4 stars">★</button>
+            <button type="button" data-value="5" aria-label="5 stars">★</button>
+          </div>
+          <textarea id="fb-note-1" placeholder="How was the vibe, timing, and group?"></textarea>
+          <button type="submit" class="btn btn-primary btn-sm">Submit feedback</button>
+        </form>
+      </section>
+    </article>
+
+    <!-- Post: public campus event + feedback -->
+    <article class="feed-post" data-event-id="demo-ty-soccer">
+      <header class="post-header">
+        <div class="avatar avatar--md avatar--color-4" aria-hidden="true">TC</div>
+        <div class="post-header-main">
+          <div class="post-names">
+            <strong>Ty C.</strong>
+            <span class="post-visibility-pill pill-public">🌐 Anyone at UVA</span>
+          </div>
+          <div class="post-meta-line">5h · Open invite</div>
+        </div>
+        <div class="post-follow-wrap">
+          <button
+            type="button"
+            class="js-follow-btn btn-follow-pill"
+            data-person-id="person-ty"
+            data-person-name="Ty C."
+            data-person-initials="TC"
+          >
+            Follow
+          </button>
+          <button type="button" class="post-menu" aria-label="Post options">⋯</button>
+        </div>
+      </header>
+      <div class="post-body">
+        <p>Pickup run at Carr’s Hill field if it’s dry. Cleats optional.</p>
+      </div>
+      <div class="post-media" aria-hidden="true">Photo / map preview</div>
+      <div class="post-event-box">
+        <span class="badge badge-student">Student event</span>
+        <h3>Sunset kickaround</h3>
+        <p class="event-line">Today · 6:15pm · 90 min · Carr’s Hill</p>
+        <div class="event-actions" style="margin-top: 0.5rem">
+          <button type="button" class="btn btn-primary btn-sm js-rsvp-btn" data-event-id="demo-ty-soccer" data-rsvp-label="Join">Join</button>
+          <button type="button" class="btn btn-ghost btn-sm js-save-btn" data-event-id="demo-ty-soccer">Save</button>
+        </div>
+      </div>
+      <div
+        class="post-stats js-event-status"
+        data-event-id="demo-ty-soccer"
+        data-status-base="Alex and 24 others are interested"
+      >
+        Alex and 24 others are interested
+      </div>
+      <div class="post-actions-row">
+        <button type="button" class="post-action-btn">👍 Like</button>
+        <button type="button" class="post-action-btn">💬 Comment</button>
+        <button type="button" class="post-action-btn">↗ Share</button>
+      </div>
+      <section class="event-feedback" aria-labelledby="feedback-title-2">
+        <h2 class="event-feedback-title" id="feedback-title-2">
+          Event feedback
+          <span class="feedback-summary-score">★ 4.2 · 18 reviews</span>
+        </h2>
+        <div class="feedback-item">
+          <div class="feedback-item-header">
+            <span class="avatar avatar--md avatar--color-1" style="width: 28px; height: 28px; font-size: 0.65rem">JR</span>
+            <strong>Jordan R.</strong>
+            <span class="feedback-stars-inline">★★★★★</span>
+          </div>
+          <span>“Good pace — split into chill vs competitive sides.”</span>
+        </div>
+        <form class="feedback-form js-feedback-form">
+          <label for="fb-note-2">Rate this event after you play</label>
+          <div class="star-picker js-star-picker" role="group" aria-label="Star rating">
+            <button type="button" data-value="1" aria-label="1 star">★</button>
+            <button type="button" data-value="2" aria-label="2 stars">★</button>
+            <button type="button" data-value="3" aria-label="3 stars">★</button>
+            <button type="button" data-value="4" aria-label="4 stars">★</button>
+            <button type="button" data-value="5" aria-label="5 stars">★</button>
+          </div>
+          <textarea id="fb-note-2" placeholder="Quick note for next time…"></textarea>
+          <button type="submit" class="btn btn-primary btn-sm">Submit feedback</button>
+        </form>
+      </section>
+    </article>
+
+    <!-- Official + short feedback prompt -->
+    <article class="feed-post" data-event-id="demo-uva-orgfair">
+      <header class="post-header">
+        <div class="avatar avatar--md" style="background: linear-gradient(135deg, #232d4b, #e57200); font-size: 0.65rem">UVA</div>
+        <div class="post-header-main">
+          <div class="post-names">
+            <strong>UVA Calendar</strong>
+            <span class="post-visibility-pill pill-public">🌐 Official</span>
+          </div>
+          <div class="post-meta-line">Synced · South Lawn</div>
+        </div>
+        <div class="post-follow-wrap">
+          <button
+            type="button"
+            class="js-follow-btn btn-follow-pill"
+            data-person-id="person-uva-calendar"
+            data-person-name="UVA Calendar"
+            data-person-initials="UV"
+          >
+            Follow
+          </button>
+          <button type="button" class="post-menu" aria-label="Post options">⋯</button>
+        </div>
+      </header>
+      <div class="post-body">
+        <p>Student org fair — walk through with friends and find your crew.</p>
+      </div>
+      <div class="post-event-box">
+        <span class="badge badge-uva">Official</span>
+        <h3>Org fair</h3>
+        <p class="event-line">Thu · 11am–2pm</p>
+        <div class="event-actions" style="margin-top: 0.5rem">
+          <button type="button" class="btn btn-primary btn-sm js-rsvp-btn" data-event-id="demo-uva-orgfair" data-rsvp-label="Add to plan">Add to plan</button>
+          <button type="button" class="btn btn-ghost btn-sm js-save-btn" data-event-id="demo-uva-orgfair">Save</button>
+        </div>
+      </div>
+      <div
+        class="post-stats js-event-status"
+        data-event-id="demo-uva-orgfair"
+        data-status-base="Hosted by UVA — public to all students"
+      >
+        Hosted by UVA — public to all students
+      </div>
+      <div class="post-actions-row">
+        <button type="button" class="post-action-btn">👍 Interested</button>
+        <button type="button" class="post-action-btn">💬 Comment</button>
+        <button type="button" class="post-action-btn">↗ Share</button>
+      </div>
+      <section class="event-feedback" aria-labelledby="feedback-title-3">
+        <h2 class="event-feedback-title" id="feedback-title-3">
+          Event feedback
+          <span class="feedback-summary-score">Tell us how it went</span>
+        </h2>
+        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted)">After you attend, a quick star + note helps friends decide next year.</p>
+        <form class="feedback-form js-feedback-form" style="border-top: none; padding-top: 0.5rem; margin-top: 0.5rem">
+          <div class="star-picker js-star-picker">
+            <button type="button" data-value="1">★</button>
+            <button type="button" data-value="2">★</button>
+            <button type="button" data-value="3">★</button>
+            <button type="button" data-value="4">★</button>
+            <button type="button" data-value="5">★</button>
+          </div>
+          <textarea placeholder="Worth the line? Favorite table?" style="margin-bottom: 0.5rem"></textarea>
+          <button type="submit" class="btn btn-ghost btn-sm">Submit anonymous tip to feed (demo)</button>
+        </form>
+      </section>
+    </article>
+  </main>
+
+  <footer class="footer-site">
+    Events save in your browser (localStorage) for this demo. Add a backend to sync across devices. Maps use OpenStreetMap tiles.
+  </footer>
+
+  <script src="js/events-store.js"></script>
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="js/home-feed.js"></script>
+</body>
+</html>

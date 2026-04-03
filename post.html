@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Post an event — HoosOut</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="home.html">
+      <span class="logo-mark" aria-hidden="true">
+        <img src="images/logo-mark.svg" width="38" height="38" alt="" />
+      </span>
+      <span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span>
+    </a>
+    <nav class="nav-links">
+      <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
+      <a href="events-uva.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">UVA &amp; Cville</a>
+      <a href="home.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Cancel</a>
+    </nav>
+  </header>
+
+  <main class="container" style="max-width: 680px">
+    <h1 class="section-title" style="text-align: left; margin-bottom: 0.5rem">Create an event</h1>
+    <p class="section-sub" style="text-align: left; margin-bottom: 1.5rem">
+      Pick the <strong>date</strong> and <strong>time</strong> with the calendar controls, and drop a <strong>pin on the map</strong> so everyone knows where to meet. Your event is saved to this browser and appears on Home.
+    </p>
+
+    <div class="auth-card" style="box-shadow: none; width: 100%">
+      <form id="event-form" class="form-grid" novalidate>
+        <div>
+          <label for="title">Title</label>
+          <input id="title" name="title" type="text" required placeholder="Pickup basketball at AFC" />
+        </div>
+
+        <div class="two-col">
+          <div>
+            <label for="type">Activity type</label>
+            <select id="type" name="type" required>
+              <option value="">Select</option>
+              <option value="Sports">Sports</option>
+              <option value="Study">Study</option>
+              <option value="Food run">Food run</option>
+              <option value="Gaming">Gaming</option>
+              <option value="Movie night">Movie night</option>
+              <option value="Wellness / gym">Wellness / gym</option>
+              <option value="Social">Social</option>
+            </select>
+          </div>
+          <div>
+            <label for="duration">Duration</label>
+            <select id="duration" name="duration">
+              <option value="1 hour">1 hour</option>
+              <option value="2 hours" selected>2 hours</option>
+              <option value="3+ hours">3+ hours</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div>
+            <label for="event-date">Date</label>
+            <input id="event-date" name="event-date" type="date" required />
+          </div>
+          <div>
+            <label for="event-time">Time</label>
+            <input id="event-time" name="event-time" type="time" required />
+          </div>
+        </div>
+
+        <div>
+          <label for="cap">Max people (optional)</label>
+          <input id="cap" name="cap" type="number" min="1" max="500" placeholder="8" />
+        </div>
+
+        <div class="event-map-wrap">
+          <label for="event-map">Location on map</label>
+          <p class="map-hint" id="map-hint">Search for a building, or tap / drag the pin. Centered on Grounds.</p>
+          <div class="map-search-row">
+            <input
+              id="map-search"
+              type="search"
+              placeholder="e.g. AFC UVA, Newcomb Hall, Downtown Mall…"
+              autocomplete="off"
+            />
+            <button type="button" class="btn btn-ghost btn-sm" id="map-search-btn" style="flex-shrink: 0">
+              Search
+            </button>
+          </div>
+          <div id="event-map" role="application" aria-label="Map to choose event location"></div>
+          <input type="hidden" id="lat" name="lat" value="" />
+          <input type="hidden" id="lng" name="lng" value="" />
+        </div>
+
+        <div>
+          <label for="loc">Place label</label>
+          <input
+            id="loc"
+            name="loc"
+            type="text"
+            required
+            placeholder="Shown on the feed — e.g. AFC courts, north entrance"
+          />
+        </div>
+
+        <div>
+          <label for="vis">Who can see this?</label>
+          <select id="vis" name="vis">
+            <option value="public">Anyone at UVA (public)</option>
+            <option value="friends">Friends only</option>
+            <option value="invite">Invite-only</option>
+          </select>
+          <p style="margin: -0.5rem 0 0; font-size: 0.82rem; color: var(--text-muted)">
+            Friends-only posts are labeled in the feed; full privacy needs a real friends list on the server.
+          </p>
+        </div>
+
+        <div>
+          <label for="tags">Tags</label>
+          <input id="tags" name="tags" type="text" placeholder="sports, basketball, AFC, chill" />
+        </div>
+
+        <div>
+          <label for="vibe">Vibe</label>
+          <input id="vibe" name="vibe" type="text" placeholder="chill, social, competitive…" />
+        </div>
+
+        <div>
+          <label for="notes">Notes for attendees (optional)</label>
+          <textarea id="notes" name="notes" placeholder="Bring indoor shoes · we’ll grab Bros after"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">Publish to feed &amp; map</button>
+      </form>
+    </div>
+  </main>
+
+  <script src="js/events-store.js"></script>
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="js/post-page.js"></script>
+  <script>
+    (function () {
+      var d = document.getElementById("event-date");
+      var t = document.getElementById("event-time");
+      if (d && !d.value) {
+        var now = new Date();
+        d.value = now.toISOString().slice(0, 10);
+      }
+      if (t && !t.value) {
+        t.value = "18:00";
+      }
+    })();
+  </script>
+</body>
+</html>

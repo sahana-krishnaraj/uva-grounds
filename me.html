@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your profile — HoosOut</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="home.html">
+      <span class="logo-mark" aria-hidden="true">
+        <img src="images/logo-mark.svg" width="38" height="38" alt="" />
+      </span>
+      <span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span>
+    </a>
+    <nav class="nav-links">
+      <a href="events-uva.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">UVA &amp; Cville</a>
+      <a href="home.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Home</a>
+      <a href="post.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem">Create</a>
+    </nav>
+  </header>
+
+  <main class="container me-page">
+    <section class="me-hero">
+      <div class="me-hero-avatar" aria-hidden="true">You</div>
+      <div class="me-hero-text">
+        <h1 class="me-hero-name">Your HoosOut</h1>
+        <p class="me-hero-handle">@you · demo profile · stored on this device only</p>
+        <div class="me-stats">
+          <div class="me-stat">
+            <span class="me-stat-num" id="me-stat-following">0</span>
+            <span class="me-stat-label">following</span>
+          </div>
+          <div class="me-stat">
+            <span class="me-stat-num" id="me-stat-going">0</span>
+            <span class="me-stat-label">going</span>
+          </div>
+          <div class="me-stat">
+            <span class="me-stat-num" id="me-stat-saved">0</span>
+            <span class="me-stat-label">saved</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <p class="me-intro">
+      Like Instagram’s profile tabs: see who you follow, which events you RSVP’d to, and what you saved — all in one place.
+    </p>
+
+    <div class="me-tabs" role="tablist" aria-label="Profile sections">
+      <button type="button" class="me-tab me-tab--active" data-panel="following" role="tab" aria-selected="true">Following</button>
+      <button type="button" class="me-tab" data-panel="going" role="tab" aria-selected="false">Going</button>
+      <button type="button" class="me-tab" data-panel="saved" role="tab" aria-selected="false">Saved</button>
+    </div>
+
+    <div id="me-panel-following" class="me-panel me-panel--active" role="tabpanel">
+      <h2 class="me-panel-title">People you follow</h2>
+      <div id="me-following-list" class="me-list"></div>
+    </div>
+    <div id="me-panel-going" class="me-panel" role="tabpanel" hidden>
+      <h2 class="me-panel-title">Events you’re going to</h2>
+      <div id="me-going-list" class="me-list"></div>
+    </div>
+    <div id="me-panel-saved" class="me-panel" role="tabpanel" hidden>
+      <h2 class="me-panel-title">Saved events</h2>
+      <div id="me-saved-list" class="me-list"></div>
+    </div>
+  </main>
+
+  <footer class="footer-site">
+    Profile data lives in your browser (localStorage). Sign in + API later for a real Instagram-style account.
+  </footer>
+
+  <script src="js/events-store.js"></script>
+  <script src="js/me-page.js"></script>
+</body>
+</html>

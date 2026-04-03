@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Set up profile — HoosOut</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="index.html">
+      <span class="logo-mark" aria-hidden="true">
+        <img src="images/logo-mark.svg" width="38" height="38" alt="" />
+      </span>
+      <span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span>
+    </a>
+    <nav class="nav-links">
+      <a href="events-uva.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">UVA &amp; Cville</a>
+    </nav>
+  </header>
+
+  <main class="container" style="max-width: 560px">
+    <h1 class="section-title" style="text-align: left; margin-bottom: 0.5rem">Build your profile</h1>
+    <p class="section-sub" style="text-align: left; margin-bottom: 1.5rem">
+      Better matching starts here. Optional fields can be skipped and finished later.
+    </p>
+
+    <div class="auth-card" style="box-shadow: none; width: 100%">
+      <form action="home.html" method="get" class="form-grid">
+        <div>
+          <label for="year">Year</label>
+          <select id="year" name="year" required>
+            <option value="">Select</option>
+            <option>First year</option>
+            <option>Second year</option>
+            <option>Third year</option>
+            <option>Fourth year</option>
+            <option>Grad</option>
+          </select>
+        </div>
+        <div>
+          <label for="interests">Top interests (comma-separated)</label>
+          <input id="interests" name="interests" type="text" placeholder="hoops, econ, lifting, Bodo's" />
+        </div>
+        <div>
+          <label for="vibe">Vibe tags</label>
+          <input id="vibe" name="vibe" type="text" placeholder="chill, social, academic" />
+        </div>
+        <div>
+          <label for="schedule">Typical free blocks (optional)</label>
+          <input id="schedule" name="schedule" type="text" placeholder="Thu afternoons, weekend mornings" />
+        </div>
+        <div>
+          <label for="bio">Bio (optional)</label>
+          <textarea id="bio" name="bio" placeholder="Transfer from NOVA · IM soccer"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Save &amp; go to feed</button>
+      </form>
+    </div>
+  </main>
+</body>
+</html>
