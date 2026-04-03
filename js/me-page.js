@@ -14,17 +14,21 @@
     if (!H) return;
 
     var followingEl = document.getElementById("me-following-list");
+    var postedEl = document.getElementById("me-posted-list");
     var goingEl = document.getElementById("me-going-list");
     var savedEl = document.getElementById("me-saved-list");
     var statFollow = document.getElementById("me-stat-following");
+    var statPosted = document.getElementById("me-stat-posted");
     var statGoing = document.getElementById("me-stat-going");
     var statSaved = document.getElementById("me-stat-saved");
 
     var following = H.getFollowing();
+    var myEvents = H.getAll();
     var rsvpIds = H.getRsvpIds();
     var savedIds = H.getSavedIds();
 
     if (statFollow) statFollow.textContent = String(following.length);
+    if (statPosted) statPosted.textContent = String(myEvents.length);
     if (statGoing) statGoing.textContent = String(rsvpIds.length);
     if (statSaved) statSaved.textContent = String(savedIds.length);
 
@@ -48,6 +52,34 @@
               '<button type="button" class="btn btn-ghost btn-sm js-me-unfollow" data-person-id="' +
               escapeHtml(p.id) +
               '">Unfollow</button>' +
+              "</div>"
+            );
+          })
+          .join("");
+      }
+    }
+
+    if (postedEl) {
+      if (!myEvents.length) {
+        postedEl.innerHTML =
+          '<p class="me-empty">You haven’t published an event yet. <a href="post.html">Create one</a> — it will show on Home and here.</p>';
+      } else {
+        postedEl.innerHTML = myEvents
+          .map(function (ev) {
+            var meta = H.getEventMeta(ev.id);
+            var line = meta && meta.line ? meta.line : (ev.placeLabel || "");
+            return (
+              '<div class="me-row" data-event-id="' +
+              escapeHtml(ev.id) +
+              '">' +
+              "<div><strong>" +
+              escapeHtml(ev.title) +
+              "</strong><br><span class=\"me-row-sub\">" +
+              escapeHtml(line) +
+              "</span></div>" +
+              '<a class="btn btn-ghost btn-sm" href="home.html#' +
+              encodeURIComponent(ev.id) +
+              '">View on feed</a>' +
               "</div>"
             );
           })

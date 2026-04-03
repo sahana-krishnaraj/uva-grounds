@@ -26,7 +26,7 @@
   <main class="auth-main">
     <div class="auth-card">
       <h1>Welcome back, Hoos</h1>
-      <p class="auth-lead">Log in with your UVA email or school SSO. Only verified students get past this screen.</p>
+      <p class="auth-lead">Demo: log in with UVA SSO or your @virginia.edu email.</p>
 
       <div class="trust-row">
         <span class="trust-pill">@virginia.edu</span>
@@ -38,12 +38,12 @@
         Continue with UVA SSO
       </button>
       <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.5rem 0 0; text-align: center">
-        Demo: connects to verification preview
+        Demo: optional confirmation screen before profile
       </p>
 
       <div class="divider">or school email</div>
 
-      <form action="verify.html" method="get">
+      <form id="login-email-form" novalidate>
         <label for="email">UVA email</label>
         <input
           id="email"
@@ -55,8 +55,9 @@
           pattern=".+@virginia\.edu$"
           title="Use your @virginia.edu address"
         />
-        <button type="submit" class="btn btn-ghost btn-full">Email me a login code</button>
+        <button type="submit" class="btn btn-ghost btn-full" id="login-email-submit">Continue</button>
       </form>
+      <p id="login-email-msg" class="auth-form-msg" style="display: none; margin-top: 0.75rem; font-size: 0.88rem"></p>
 
       <p class="auth-footer">
         First time here? <a href="signup.html">Create an account</a>
@@ -64,10 +65,27 @@
     </div>
   </main>
 
+  <script src="js/session.js"></script>
   <script>
     document.getElementById("btn-sso").addEventListener("click", function () {
       window.location.href = "verify.html?method=sso";
     });
+
+    (function () {
+      var form = document.getElementById("login-email-form");
+      var msg = document.getElementById("login-email-msg");
+      var btn = document.getElementById("login-email-submit");
+      if (!form || !window.HoosOutSession) return;
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (!form.reportValidity()) return;
+        msg.style.display = "none";
+        btn.disabled = true;
+        window.HoosOutSession.signIn();
+        window.location.href = "profile.html";
+      });
+    })();
   </script>
 </body>
 </html>

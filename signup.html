@@ -26,7 +26,7 @@
   <main class="auth-main">
     <div class="auth-card">
       <h1>Join the UVA network</h1>
-      <p class="auth-lead">We use official email domain verification or UVA SSO — not “upload your ID” as the only proof. That keeps spam out and meetups accountable.</p>
+      <p class="auth-lead">Demo: sign up with UVA SSO or your @virginia.edu email — no separate email code step.</p>
 
       <div class="trust-row">
         <span class="trust-pill">Closed network</span>
@@ -37,10 +37,9 @@
         Sign up with UVA SSO
       </button>
 
-      <div class="divider">or verify with email</div>
+      <div class="divider">or with school email</div>
 
-      <form action="verify.html" method="get">
-        <input type="hidden" name="flow" value="signup" />
+      <form id="signup-form" novalidate>
         <label for="email">School email</label>
         <input
           id="email"
@@ -54,19 +53,37 @@
         />
         <label for="name">Preferred name</label>
         <input id="name" name="name" type="text" autocomplete="given-name" placeholder="Alex" required />
-        <button type="submit" class="btn btn-ghost btn-full">Send verification code</button>
+        <button type="submit" class="btn btn-ghost btn-full" id="signup-submit">Continue</button>
       </form>
+      <p id="signup-msg" class="auth-form-msg" style="display: none; margin-top: 0.75rem; font-size: 0.88rem"></p>
 
       <p class="auth-footer">
-        Already verified? <a href="login.html">Log in</a>
+        Already have an account? <a href="login.html">Log in</a>
       </p>
     </div>
   </main>
 
+  <script src="js/session.js"></script>
   <script>
     document.getElementById("btn-sso").addEventListener("click", function () {
       window.location.href = "verify.html?flow=signup&method=sso";
     });
+
+    (function () {
+      var form = document.getElementById("signup-form");
+      var msg = document.getElementById("signup-msg");
+      var btn = document.getElementById("signup-submit");
+      if (!form || !window.HoosOutSession) return;
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (!form.reportValidity()) return;
+        msg.style.display = "none";
+        btn.disabled = true;
+        window.HoosOutSession.signIn();
+        window.location.href = "profile.html";
+      });
+    })();
   </script>
 </body>
 </html>

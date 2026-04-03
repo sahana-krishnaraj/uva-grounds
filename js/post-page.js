@@ -137,6 +137,7 @@
     }
 
     window.HoosOutEvents.add(event);
-    window.location.href = "home.html?posted=1";
+    window.location.href =
+      "home.html?posted=1#" + encodeURIComponent(event.id);
   });
 })();

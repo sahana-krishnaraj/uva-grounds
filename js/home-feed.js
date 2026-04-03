@@ -60,7 +60,9 @@
         .join(" ");
 
     return (
-      '<article class="feed-post hoosout-user-event" data-event-id="' +
+      '<article class="feed-post hoosout-user-event" id="' +
+      escapeHtml(ev.id) +
+      '" data-event-id="' +
       escapeHtml(ev.id) +
       '">' +
       '<header class="post-header">' +
@@ -127,11 +129,15 @@
 
   var mount = document.getElementById("user-events-mount");
   var events = window.HoosOutEvents ? window.HoosOutEvents.getAll() : [];
+  var mapEvents =
+    window.HoosOutEvents && typeof window.HoosOutEvents.getHomeMapEvents === "function"
+      ? window.HoosOutEvents.getHomeMapEvents(events)
+      : events;
   var emptyFeed = document.getElementById("user-events-empty");
   var emptyMapMsg = document.getElementById("feed-map-empty");
 
   if (emptyMapMsg) {
-    emptyMapMsg.style.display = events.length ? "none" : "block";
+    emptyMapMsg.style.display = mapEvents.length ? "none" : "block";
   }
   if (emptyFeed) {
     emptyFeed.style.display = events.length ? "none" : "block";
@@ -150,7 +156,30 @@
     if (def === "Join") return "You're in ✓";
     if (def === "Add to plan") return "On your plan ✓";
     if (def === "Interested") return "Interested ✓";
+    if (def === "Request spot") return "Requested ✓";
     return "Going ✓";
+  }
+
+  /** Bump demo “N going” / “N others are interested” when the user RSVPs (base text stays in data-status-base). */
+  function applyRsvpCountToStatusText(base, isRsvpd) {
+    if (!base) return base;
+    var s = base;
+    s = s.replace(/(\d+)\s+going\b/g, function (_, n) {
+      return String(Number(n) + (isRsvpd ? 1 : 0)) + " going";
+    });
+    s = s.replace(/(\d+)\s+others are interested/g, function (_, n) {
+      return String(Number(n) + (isRsvpd ? 1 : 0)) + " others are interested";
+    });
+    return s;
+  }
+
+  /** e.g. "4 / 6 spots" → "5 / 6 spots" when the user RSVPs */
+  function applyRsvpSpotsLine(base, isRsvpd) {
+    if (!base) return base;
+    return base.replace(/(\d+)\s*\/\s*(\d+)\s+spots/i, function (_, a, cap) {
+      var n = Number(a) + (isRsvpd ? 1 : 0);
+      return n + " / " + cap + " spots";
+    });
   }
 
   function refreshActionButtons(root) {
@@ -176,15 +205,27 @@
     scope.querySelectorAll(".js-event-status").forEach(function (el) {
       var id = el.getAttribute("data-event-id");
       if (!id || !window.HoosOutEvents) return;
-      var base = el.getAttribute("data-status-base");
-      if (!base) {
-        base = el.textContent.replace(/\s*·\s*You're registered.*$/i, "").replace(/\s*·\s*saved.*$/i, "");
-        el.setAttribute("data-status-base", base);
+      var baseRaw = el.getAttribute("data-status-base");
+      if (!baseRaw) {
+        baseRaw = el.textContent.replace(/\s*·\s*You're registered.*$/i, "").replace(/\s*·\s*saved.*$/i, "");
+        el.setAttribute("data-status-base", baseRaw);
       }
+      var rsvpOn = window.HoosOutEvents.isRsvpd(id);
+      var base = applyRsvpCountToStatusText(baseRaw, rsvpOn);
       var parts = [];
-      if (window.HoosOutEvents.isRsvpd(id)) parts.push("You're registered");
+      if (rsvpOn) parts.push("You're registered");
       if (window.HoosOutEvents.isSaved(id)) parts.push("saved");
       el.textContent = base + (parts.length ? " · " + parts.join(" · ") : "");
+    });
+    scope.querySelectorAll(".js-rsvp-spots").forEach(function (el) {
+      var id = el.getAttribute("data-event-id");
+      if (!id || !window.HoosOutEvents) return;
+      var baseLine = el.getAttribute("data-event-line-base");
+      if (!baseLine) {
+        baseLine = el.textContent;
+        el.setAttribute("data-event-line-base", baseLine);
+      }
+      el.textContent = applyRsvpSpotsLine(baseLine, window.HoosOutEvents.isRsvpd(id));
     });
   }
 
@@ -252,6 +293,20 @@
   refreshActionButtons(document);
   refreshFollowButtons(document);
 
+  function scrollFeedPostIntoView(eventId) {
+    if (!eventId) return;
+    var esc = String(eventId).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    var post = document.querySelector('.feed-post[data-event-id="' + esc + '"]');
+    if (!post) return;
+    post.scrollIntoView({ behavior: "smooth", block: "center" });
+    post.classList.remove("feed-post--map-focus");
+    void post.offsetWidth;
+    post.classList.add("feed-post--map-focus");
+    window.setTimeout(function () {
+      post.classList.remove("feed-post--map-focus");
+    }, 2400);
+  }
+
   var mainMapEl = document.getElementById("feed-map");
   if (typeof L !== "undefined" && mainMapEl) {
     var map = L.map(mainMapEl, { scrollWheelZoom: true }).setView(UVA, 14);
@@ -260,8 +315,20 @@
       maxZoom: 19,
     }).addTo(map);
 
+    if (!mainMapEl.getAttribute("data-feed-jump-wired")) {
+      mainMapEl.setAttribute("data-feed-jump-wired", "1");
+      mainMapEl.addEventListener("click", function (e) {
+        var a = e.target.closest && e.target.closest("a.map-popup-to-feed");
+        if (!a || !mainMapEl.contains(a)) return;
+        e.preventDefault();
+        var id = a.getAttribute("data-event-id");
+        scrollFeedPostIntoView(id);
+        map.closePopup();
+      });
+    }
+
     var bounds = [];
-    events.forEach(function (ev) {
+    mapEvents.forEach(function (ev) {
       if (ev.lat == null || ev.lng == null) return;
       var lat = Number(ev.lat);
       var lng = Number(ev.lng);
@@ -275,18 +342,21 @@
         opacity: 1,
         fillOpacity: 0.9,
       }).addTo(map);
-      m.bindPopup(
-        "<strong>" +
-          escapeHtml(ev.title) +
-          "</strong><br>" +
-          escapeHtml(formatWhen(ev.startISO)) +
-          "<br>" +
-          escapeHtml(ev.placeLabel || "")
-      );
+      var whenLine = ev.startISO ? escapeHtml(formatWhen(ev.startISO)) + "<br>" : "";
+      var place = escapeHtml(ev.placeLabel || ev.line || "");
+      var feedLink =
+        '<p class="map-popup-feed" style="margin:0.45rem 0 0;font-size:0.86rem">' +
+        '<a href="#" class="map-popup-to-feed" data-event-id="' +
+        escapeHtml(ev.id) +
+        '">View in feed →</a></p>';
+      m.bindPopup("<strong>" + escapeHtml(ev.title) + "</strong><br>" + whenLine + place + feedLink);
+      m.on("click", function () {
+        scrollFeedPostIntoView(ev.id);
+      });
     });
 
     if (bounds.length === 1) {
-      map.setView(bounds[0], 15);
+      map.setView(bounds[0], 16);
     } else if (bounds.length > 1) {
       map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
     }
@@ -296,14 +366,16 @@
     }, 300);
   }
 
-  /* Small inline maps per user event card */
+  /* Inline maps: any .mini-map-wrap with data-lat / data-lng (user cards + demo feed) */
   function initMiniMaps() {
-    events.forEach(function (ev, idx) {
-      if (ev.lat == null || ev.lng == null) return;
-      var el = document.getElementById("mini-map-" + ev.id);
-      if (!el) return;
-      var lat = Number(ev.lat);
-      var lng = Number(ev.lng);
+    if (typeof L === "undefined") return;
+    var wraps = document.querySelectorAll(".mini-map-wrap");
+    wraps.forEach(function (el, idx) {
+      var latStr = el.getAttribute("data-lat");
+      var lngStr = el.getAttribute("data-lng");
+      if (latStr == null || lngStr == null || latStr === "" || lngStr === "") return;
+      var lat = Number(latStr);
+      var lng = Number(lngStr);
       if (!isFinite(lat) || !isFinite(lng)) return;
       setTimeout(function () {
         var mini = L.map(el, {
@@ -324,15 +396,34 @@
       }, 80 + idx * 120);
     });
   }
-  if (typeof L !== "undefined" && events.length) {
+  if (typeof L !== "undefined") {
     initMiniMaps();
+  }
+
+  function scrollToPublishedEvent() {
+    var h = window.location.hash;
+    if (!h || h.length < 2) return;
+    var id = decodeURIComponent(h.slice(1));
+    if (!id) return;
+    var el = document.getElementById(id);
+    if (el && el.classList && el.classList.contains("hoosout-user-event")) {
+      setTimeout(function () {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.remove("feed-post--map-focus");
+        void el.offsetWidth;
+        el.classList.add("feed-post--map-focus");
+        setTimeout(function () {
+          el.classList.remove("feed-post--map-focus");
+        }, 2400);
+      }, 350);
+    }
   }
 
   var params = new URLSearchParams(window.location.search);
   if (params.get("posted") === "1") {
     var toast = document.createElement("div");
     toast.className = "hoosout-toast";
-    toast.textContent = "Event published — it’s on your feed and the map.";
+    toast.textContent = "Published — on your feed, map, and Profile → My events.";
     document.body.appendChild(toast);
     setTimeout(function () {
       toast.classList.add("hoosout-toast--out");
@@ -340,8 +431,9 @@
         toast.remove();
       }, 400);
     }, 3200);
-    history.replaceState({}, "", "home.html");
+    history.replaceState({}, "", "home.html" + window.location.hash);
   }
+  scrollToPublishedEvent();
 
   document.querySelectorAll(".chip").forEach(function (c) {
     c.addEventListener("click", function () {

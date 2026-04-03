@@ -89,18 +89,102 @@
       title: "Gym session → late dinner",
       line: "Today · 5:30pm · AFC + Corner · wellness",
       host: "Jordan R.",
+      placeLabel: "Aquatic & Fitness Center (AFC), 450 Whitehead Rd",
+      lat: 38.04912,
+      lng: -78.51142,
+      startISO: "2026-04-03T17:30:00",
     },
     "demo-ty-soccer": {
       title: "Sunset kickaround",
       line: "Today · 6:15pm · Carr’s Hill",
       host: "Ty C.",
+      placeLabel: "Carr’s Hill field (intramural turf)",
+      lat: 38.03192,
+      lng: -78.51388,
+      startISO: "2026-04-03T18:15:00",
     },
     "demo-uva-orgfair": {
       title: "Org fair",
       line: "Thu · 11am–2pm · South Lawn",
       host: "UVA Calendar",
+      placeLabel: "South Lawn, Central Grounds",
+      lat: 38.03526,
+      lng: -78.50374,
+      startISO: "2026-04-09T11:00:00",
+    },
+    "demo-clemons-econ": {
+      title: "Econ 2010 problem-set sprint",
+      line: "Sat · 2pm · Clemons 4th floor",
+      host: "Sam K.",
+      placeLabel: "Clemons Library, 4th floor",
+      lat: 38.03622,
+      lng: -78.50488,
+      startISO: "2026-04-04T14:00:00",
+    },
+    "demo-lawn-volleyball": {
+      title: "Grass volleyball — all levels",
+      line: "Sat · 4pm · South Lawn",
+      host: "Morgan P.",
+      placeLabel: "South Lawn (grass, north side)",
+      lat: 38.03508,
+      lng: -78.50325,
+      startISO: "2026-04-04T16:00:00",
+    },
+    "demo-memgym-hoops": {
+      title: "Pickup runs @ Mem Gym",
+      line: "Sun · 7pm · full court if we get 10",
+      host: "Chris N.",
+      placeLabel: "Memorial Gymnasium, Carr’s Hill",
+      lat: 38.03435,
+      lng: -78.50815,
+      startISO: "2026-04-05T19:00:00",
+    },
+    "demo-mall-coffee": {
+      title: "Sunday coffee + read on the Mall",
+      line: "Sun · 10:30am · Downtown Mall",
+      host: "Riley D.",
+      placeLabel: "Grit Coffee, Downtown Mall",
+      lat: 38.03052,
+      lng: -78.47942,
+      startISO: "2026-04-05T10:30:00",
+    },
+    "demo-alderman-thesis": {
+      title: "Thesis writing blocks (quiet)",
+      line: "Mon · 9am–12pm · Alderman stacks",
+      host: "Nora V.",
+      placeLabel: "Alderman Library, quiet floors",
+      lat: 38.03465,
+      lng: -78.50545,
+      startISO: "2026-04-06T09:00:00",
     },
   };
+
+  /** User-posted events plus demo feed pins (real lat/lng) for the Home map */
+  function getHomeMapEvents(userEvents) {
+    userEvents = userEvents || [];
+    var seen = {};
+    var out = [];
+    var i;
+    for (i = 0; i < userEvents.length; i++) {
+      var u = userEvents[i];
+      seen[u.id] = true;
+      out.push(u);
+    }
+    Object.keys(DEMO_EVENTS).forEach(function (id) {
+      if (seen[id]) return;
+      var d = DEMO_EVENTS[id];
+      if (d.lat == null || d.lng == null) return;
+      out.push({
+        id: id,
+        title: d.title,
+        startISO: d.startISO || null,
+        placeLabel: d.placeLabel || "",
+        lat: d.lat,
+        lng: d.lng,
+      });
+    });
+    return out;
+  }
 
   function formatUserEventLine(ev) {
     try {
@@ -144,8 +228,8 @@
         line: demo.line,
         host: demo.host,
         isYours: false,
-        lat: null,
-        lng: null,
+        lat: demo.lat != null ? demo.lat : null,
+        lng: demo.lng != null ? demo.lng : null,
       };
     }
     return {
@@ -209,6 +293,7 @@
   window.HoosOutEvents = {
     STORAGE_KEY: STORAGE_KEY,
     getAll: getAll,
+    getHomeMapEvents: getHomeMapEvents,
     add: add,
     generateId: generateId,
     toggleRsvp: toggleRsvp,

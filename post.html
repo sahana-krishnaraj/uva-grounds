@@ -25,7 +25,14 @@
     </a>
     <nav class="nav-links">
       <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
-      <a href="events-uva.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">UVA &amp; Cville</a>
+      <a
+        href="events-uva.html"
+        class="btn btn-ghost btn-sm"
+        style="padding: 0.5rem 1rem"
+        id="nav-uva-cville"
+        hidden
+        >UVA &amp; Cville</a
+      >
       <a href="home.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Cancel</a>
     </nav>
   </header>
@@ -145,7 +152,16 @@
     </div>
   </main>
 
+  <script src="js/session.js"></script>
   <script src="js/events-store.js"></script>
+  <script>
+    (function () {
+      var uva = document.getElementById("nav-uva-cville");
+      if (!uva || !window.HoosOutSession) return;
+      if (window.HoosOutSession.isSignedIn()) uva.removeAttribute("hidden");
+      else uva.setAttribute("hidden", "");
+    })();
+  </script>
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="

@@ -18,7 +18,14 @@
       <span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span>
     </a>
     <nav class="nav-links">
-      <a href="events-uva.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">UVA &amp; Cville</a>
+      <a
+        href="events-uva.html"
+        class="btn btn-ghost btn-sm"
+        style="padding: 0.5rem 1rem"
+        id="nav-uva-cville"
+        hidden
+        >UVA &amp; Cville</a
+      >
       <a href="home.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Home</a>
       <a href="post.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem">Create</a>
     </nav>
@@ -36,6 +43,10 @@
             <span class="me-stat-label">following</span>
           </div>
           <div class="me-stat">
+            <span class="me-stat-num" id="me-stat-posted">0</span>
+            <span class="me-stat-label">my events</span>
+          </div>
+          <div class="me-stat">
             <span class="me-stat-num" id="me-stat-going">0</span>
             <span class="me-stat-label">going</span>
           </div>
@@ -48,11 +59,12 @@
     </section>
 
     <p class="me-intro">
-      Like Instagram’s profile tabs: see who you follow, which events you RSVP’d to, and what you saved — all in one place.
+      See who you follow, events you posted, RSVPs, and saved listings — all stored on this device for the demo.
     </p>
 
     <div class="me-tabs" role="tablist" aria-label="Profile sections">
       <button type="button" class="me-tab me-tab--active" data-panel="following" role="tab" aria-selected="true">Following</button>
+      <button type="button" class="me-tab" data-panel="posted" role="tab" aria-selected="false">My events</button>
       <button type="button" class="me-tab" data-panel="going" role="tab" aria-selected="false">Going</button>
       <button type="button" class="me-tab" data-panel="saved" role="tab" aria-selected="false">Saved</button>
     </div>
@@ -60,6 +72,10 @@
     <div id="me-panel-following" class="me-panel me-panel--active" role="tabpanel">
       <h2 class="me-panel-title">People you follow</h2>
       <div id="me-following-list" class="me-list"></div>
+    </div>
+    <div id="me-panel-posted" class="me-panel" role="tabpanel" hidden>
+      <h2 class="me-panel-title">Events you published</h2>
+      <div id="me-posted-list" class="me-list"></div>
     </div>
     <div id="me-panel-going" class="me-panel" role="tabpanel" hidden>
       <h2 class="me-panel-title">Events you’re going to</h2>
@@ -75,7 +91,16 @@
     Profile data lives in your browser (localStorage). Sign in + API later for a real Instagram-style account.
   </footer>
 
+  <script src="js/session.js"></script>
   <script src="js/events-store.js"></script>
+  <script>
+    (function () {
+      var uva = document.getElementById("nav-uva-cville");
+      if (!uva || !window.HoosOutSession) return;
+      if (window.HoosOutSession.isSignedIn()) uva.removeAttribute("hidden");
+      else uva.setAttribute("hidden", "");
+    })();
+  </script>
   <script src="js/me-page.js"></script>
 </body>
 </html>

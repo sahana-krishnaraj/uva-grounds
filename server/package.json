@@ -1,0 +1,13 @@
+{
+  "name": "hoosout-server",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Serves the HoosOut static site",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  }
+}

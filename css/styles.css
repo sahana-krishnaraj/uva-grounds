@@ -135,6 +135,11 @@ img {
   padding-block: 2.5rem 4rem;
 }
 
+/* Ensure [hidden] works on controls that set their own display (e.g. .btn) */
+[hidden] {
+  display: none !important;
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;
@@ -707,6 +712,13 @@ input:focus {
   overflow: hidden;
 }
 
+.feed-post--map-focus {
+  outline: 3px solid var(--uva-orange);
+  outline-offset: 2px;
+  transition: outline-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--shadow-soft), 0 0 0 4px rgba(229, 114, 0, 0.25);
+}
+
 .post-header {
   display: flex;
   align-items: flex-start;
@@ -1145,7 +1157,8 @@ select {
   color: var(--uva-navy);
 }
 
-.hub-card h3 {
+.hub-card h3,
+.hub-card h4 {
   margin: 0;
   font-size: 1.05rem;
   color: var(--uva-navy);
@@ -1260,6 +1273,11 @@ select {
   border: 1px dashed var(--border);
   font-size: 0.95rem;
   color: var(--text-muted);
+}
+
+/* Your published events: first on Home feed (under chips) */
+.user-events-feed {
+  margin-bottom: 1.25rem;
 }
 
 .hoosout-toast {
@@ -1387,7 +1405,8 @@ select {
 
 .me-stats {
   display: flex;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
 }
 
 .me-stat {

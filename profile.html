@@ -29,7 +29,7 @@
     </p>
 
     <div class="auth-card" style="box-shadow: none; width: 100%">
-      <form action="home.html" method="get" class="form-grid">
+      <form action="home.html" method="get" class="form-grid" id="profile-form">
         <div>
           <label for="year">Year</label>
           <select id="year" name="year" required>
@@ -61,5 +61,17 @@
       </form>
     </div>
   </main>
+
+  <script src="js/session.js"></script>
+  <script>
+    (function () {
+      var form = document.getElementById("profile-form");
+      if (form && window.HoosOutSession) {
+        form.addEventListener("submit", function () {
+          window.HoosOutSession.signIn();
+        });
+      }
+    })();
+  </script>
 </body>
 </html>

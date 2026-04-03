@@ -19,8 +19,16 @@
     </a>
     <nav class="nav-links">
       <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
+      <a
+        href="events-uva.html"
+        class="btn btn-ghost btn-sm"
+        style="padding: 0.5rem 1rem"
+        aria-current="page"
+        >UVA &amp; Cville</a
+      >
       <a href="home.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Home</a>
       <a href="post.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem">Create</a>
+      <a href="index.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem" id="nav-logout-hub">Log out</a>
     </nav>
   </header>
 
@@ -83,6 +91,35 @@
             <button type="button" class="btn-outline-navy">Share with hall group</button>
           </div>
         </article>
+        <article class="hub-card">
+          <span class="hub-card-source is-navy">Music</span>
+          <h3>Wind ensemble — family-friendly concert</h3>
+          <p class="hub-card-meta">Old Cabell Hall · Sun 3:00pm · Free with student ID</p>
+          <p class="hub-card-meta">Bring friends · ~1 hr program</p>
+          <div class="hub-card-actions">
+            <button type="button" class="btn btn-primary btn-sm">Add reminder</button>
+            <button type="button" class="btn-outline-navy">Venue map</button>
+          </div>
+        </article>
+        <article class="hub-card">
+          <span class="hub-card-source is-navy">Health &amp; wellness</span>
+          <h3>Mindfulness walk — O-Hill trails</h3>
+          <p class="hub-card-meta">Sat 9:00am · 45 min · Meet at Observatory Hill dining</p>
+          <p class="hub-card-meta">CAPS co-sponsor · Open to all students</p>
+          <div class="hub-card-actions">
+            <button type="button" class="btn btn-primary btn-sm">RSVP (demo)</button>
+          </div>
+        </article>
+        <article class="hub-card">
+          <span class="hub-card-source is-navy">Career</span>
+          <h3>Employer info session — Big Four consulting</h3>
+          <p class="hub-card-meta">Rouss &amp; Robertson Halls · Wed 5:30pm</p>
+          <p class="hub-card-meta">Business formal optional · Resume drop</p>
+          <div class="hub-card-actions">
+            <button type="button" class="btn btn-primary btn-sm">Handshake (demo)</button>
+            <button type="button" class="btn-outline-navy">Dress code FAQ</button>
+          </div>
+        </article>
       </div>
     </section>
 
@@ -130,6 +167,35 @@
             <button type="button" class="btn btn-primary btn-sm">Open student post</button>
           </div>
         </article>
+        <article class="hub-card">
+          <span class="hub-card-source">Vinegar Hill Theater</span>
+          <h3>Indie film + director Q&amp;A</h3>
+          <p class="hub-card-meta">Thu 7:30pm · Student discount · ~2 hrs</p>
+          <p class="hub-card-meta">Walkable from Downtown Mall</p>
+          <div class="hub-card-actions">
+            <button type="button" class="btn btn-primary btn-sm">Tickets</button>
+            <button type="button" class="btn-outline-navy">Trailer</button>
+          </div>
+        </article>
+        <article class="hub-card">
+          <span class="hub-card-source">Farmers’ market</span>
+          <h3>IX Park winter market</h3>
+          <p class="hub-card-meta">Sun 9:00am–1:00pm · Local farms + hot drinks</p>
+          <p class="hub-card-meta">Good stop before library blocks</p>
+          <div class="hub-card-actions">
+            <button type="button" class="btn btn-primary btn-sm">Vendor list</button>
+          </div>
+        </article>
+        <article class="hub-card">
+          <span class="hub-card-source">Seminole trail</span>
+          <h3>Group ride — gravel-friendly pace</h3>
+          <p class="hub-card-meta">Sun 8:00am · Helmets required · Regroup at Barracks</p>
+          <p class="hub-card-meta">Student cycling club (demo listing)</p>
+          <div class="hub-card-actions">
+            <button type="button" class="btn btn-primary btn-sm">Route GPX</button>
+            <button type="button" class="btn-outline-navy">Waivers</button>
+          </div>
+        </article>
       </div>
     </section>
   </main>
@@ -137,5 +203,21 @@
   <footer class="footer-site">
     Replace demo rows with live UVA calendar + Eventbrite (or Visit Charlottesville) APIs. Colors inspired by navy &amp; orange — not an official UVA product.
   </footer>
+
+  <script src="js/session.js"></script>
+  <script>
+    (function () {
+      if (!window.HoosOutSession || !window.HoosOutSession.isSignedIn()) {
+        window.location.replace("login.html");
+        return;
+      }
+      var out = document.getElementById("nav-logout-hub");
+      if (out && window.HoosOutSession) {
+        out.addEventListener("click", function () {
+          window.HoosOutSession.signOut();
+        });
+      }
+    })();
+  </script>
 </body>
 </html>

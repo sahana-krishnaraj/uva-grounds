@@ -25,9 +25,16 @@
     </a>
     <nav class="nav-links">
       <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
-      <a href="events-uva.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">UVA &amp; Cville</a>
+      <a
+        href="events-uva.html"
+        class="btn btn-ghost btn-sm"
+        style="padding: 0.5rem 1rem"
+        id="nav-uva-cville"
+        hidden
+        >UVA &amp; Cville</a
+      >
       <a href="post.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem">Create</a>
-      <a href="index.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Log out</a>
+      <a href="index.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem" id="nav-logout">Log out</a>
     </nav>
   </header>
 
@@ -44,13 +51,19 @@
       <button type="button" class="chip">Friends’ events</button>
       <button type="button" class="chip">Sports</button>
       <button type="button" class="chip">Study</button>
-      <button type="button" class="chip">Around CVille</button>
+      <button type="button" class="chip" id="chip-around-cville" hidden>Around CVille</button>
     </div>
+
+    <p id="user-events-empty" class="feed-empty-user-events" style="display: none">
+      You haven’t posted an event in <strong>this browser</strong> yet. Open
+      <a href="post.html">Create</a>, choose date &amp; time, set the map pin, then publish — it will show here and under Profile → My events.
+    </p>
+    <div id="user-events-mount" class="user-events-feed"></div>
 
     <section class="feed-map-section" aria-labelledby="map-heading">
       <h2 id="map-heading" class="feed-map-heading">Events map</h2>
       <p class="feed-map-lead">
-        Every event you post shows up here as an orange pin. Pan and zoom to see where things are happening around Grounds and Charlottesville.
+        Sample feed events and every event you post show up here as orange pins at their map location. Pan and zoom around Grounds and Charlottesville.
       </p>
       <p id="feed-map-empty" class="feed-map-empty">
         No events in this browser yet.
@@ -94,12 +107,6 @@
         <a href="post.html">Event</a>
       </div>
     </div>
-
-    <p id="user-events-empty" class="feed-empty-user-events" style="display: none">
-      You haven’t posted an event in <strong>this browser</strong> yet. Open
-      <a href="post.html">Create</a>, choose date &amp; time with the calendar, set the location on the map, then publish — it will appear above the sample posts.
-    </p>
-    <div id="user-events-mount"></div>
 
     <!-- Post: status update -->
     <article class="feed-post">
@@ -168,7 +175,14 @@
         <span class="badge badge-friends">Friends only</span>
         <h3>Gym session → late dinner</h3>
         <p class="event-line">Today · 5:30pm · ~2 hrs · AFC + Corner</p>
-        <p class="event-line">4 / 6 spots · Chill · wellness</p>
+        <p class="event-line js-rsvp-spots" data-event-id="demo-jordan-gym">4 / 6 spots · Chill · wellness</p>
+        <div
+          class="mini-map-wrap"
+          id="mini-map-demo-jordan-gym"
+          data-lat="38.04912"
+          data-lng="-78.51142"
+          aria-label="Event location map"
+        ></div>
         <div class="event-actions" style="margin-top: 0.5rem">
           <button type="button" class="btn btn-primary btn-sm js-rsvp-btn" data-event-id="demo-jordan-gym" data-rsvp-label="RSVP">RSVP</button>
           <button type="button" class="btn btn-ghost btn-sm js-save-btn" data-event-id="demo-jordan-gym">Save</button>
@@ -250,11 +264,17 @@
       <div class="post-body">
         <p>Pickup run at Carr’s Hill field if it’s dry. Cleats optional.</p>
       </div>
-      <div class="post-media" aria-hidden="true">Photo / map preview</div>
       <div class="post-event-box">
         <span class="badge badge-student">Student event</span>
         <h3>Sunset kickaround</h3>
         <p class="event-line">Today · 6:15pm · 90 min · Carr’s Hill</p>
+        <div
+          class="mini-map-wrap"
+          id="mini-map-demo-ty-soccer"
+          data-lat="38.03192"
+          data-lng="-78.51388"
+          aria-label="Event location map"
+        ></div>
         <div class="event-actions" style="margin-top: 0.5rem">
           <button type="button" class="btn btn-primary btn-sm js-rsvp-btn" data-event-id="demo-ty-soccer" data-rsvp-label="Join">Join</button>
           <button type="button" class="btn btn-ghost btn-sm js-save-btn" data-event-id="demo-ty-soccer">Save</button>
@@ -300,6 +320,294 @@
       </section>
     </article>
 
+    <!-- Clemons study event -->
+    <article class="feed-post" data-event-id="demo-clemons-econ">
+      <header class="post-header">
+        <div class="avatar avatar--md avatar--color-2" aria-hidden="true">SK</div>
+        <div class="post-header-main">
+          <div class="post-names">
+            <strong>Sam K.</strong>
+            created an event
+            <span class="post-visibility-pill pill-friends">👥 Friends only</span>
+          </div>
+          <div class="post-meta-line">45m · Clemons</div>
+        </div>
+        <div class="post-follow-wrap">
+          <button
+            type="button"
+            class="js-follow-btn btn-follow-pill"
+            data-person-id="person-sam"
+            data-person-name="Sam K."
+            data-person-initials="SK"
+          >
+            Follow
+          </button>
+          <button type="button" class="post-menu" aria-label="Post options">⋯</button>
+        </div>
+      </header>
+      <div class="post-body">
+        <p>Working through the practice midterm. Bring scratch paper — we’ll trade hints, not answers.</p>
+      </div>
+      <div class="post-event-box">
+        <span class="badge badge-friends">Friends only</span>
+        <h3>Econ 2010 problem-set sprint</h3>
+        <p class="event-line">Sat · 2pm · ~2 hrs · Clemons 4th floor</p>
+        <div
+          class="mini-map-wrap"
+          id="mini-map-demo-clemons-econ"
+          data-lat="38.03622"
+          data-lng="-78.50488"
+          aria-label="Event location map"
+        ></div>
+        <div class="event-actions" style="margin-top: 0.5rem">
+          <button type="button" class="btn btn-primary btn-sm js-rsvp-btn" data-event-id="demo-clemons-econ" data-rsvp-label="RSVP">RSVP</button>
+          <button type="button" class="btn btn-ghost btn-sm js-save-btn" data-event-id="demo-clemons-econ">Save</button>
+        </div>
+      </div>
+      <div
+        class="post-stats js-event-status"
+        data-event-id="demo-clemons-econ"
+        data-status-base="6 friends saw this · 3 going"
+      >
+        6 friends saw this · 3 going
+      </div>
+      <div class="post-actions-row">
+        <button type="button" class="post-action-btn">👍 Like</button>
+        <button type="button" class="post-action-btn">💬 Comment</button>
+        <button type="button" class="post-action-btn">↗ Share</button>
+      </div>
+    </article>
+
+    <!-- Lawn volleyball -->
+    <article class="feed-post" data-event-id="demo-lawn-volleyball">
+      <header class="post-header">
+        <div class="avatar avatar--md avatar--color-3" aria-hidden="true">MP</div>
+        <div class="post-header-main">
+          <div class="post-names">
+            <strong>Morgan P.</strong>
+            <span class="post-visibility-pill pill-public">🌐 Anyone at UVA</span>
+          </div>
+          <div class="post-meta-line">1d · Open invite</div>
+        </div>
+        <div class="post-follow-wrap">
+          <button
+            type="button"
+            class="js-follow-btn btn-follow-pill"
+            data-person-id="person-morgan"
+            data-person-name="Morgan P."
+            data-person-initials="MP"
+          >
+            Follow
+          </button>
+          <button type="button" class="post-menu" aria-label="Post options">⋯</button>
+        </div>
+      </header>
+      <div class="post-body">
+        <p>Bringing a net and ball. Weather backup: cancel if pouring — I’ll post by 2pm.</p>
+      </div>
+      <div class="post-event-box">
+        <span class="badge badge-student">Student event</span>
+        <h3>Grass volleyball — all levels</h3>
+        <p class="event-line">Sat · 4pm · ~2 hrs · South Lawn</p>
+        <div
+          class="mini-map-wrap"
+          id="mini-map-demo-lawn-volleyball"
+          data-lat="38.03508"
+          data-lng="-78.50325"
+          aria-label="Event location map"
+        ></div>
+        <div class="event-actions" style="margin-top: 0.5rem">
+          <button type="button" class="btn btn-primary btn-sm js-rsvp-btn" data-event-id="demo-lawn-volleyball" data-rsvp-label="Join">Join</button>
+          <button type="button" class="btn btn-ghost btn-sm js-save-btn" data-event-id="demo-lawn-volleyball">Save</button>
+        </div>
+      </div>
+      <div
+        class="post-stats js-event-status"
+        data-event-id="demo-lawn-volleyball"
+        data-status-base="Skylar and 31 others are interested"
+      >
+        Skylar and 31 others are interested
+      </div>
+      <div class="post-actions-row">
+        <button type="button" class="post-action-btn">👍 Like</button>
+        <button type="button" class="post-action-btn">💬 Comment</button>
+        <button type="button" class="post-action-btn">↗ Share</button>
+      </div>
+    </article>
+
+    <!-- Mem Gym hoops -->
+    <article class="feed-post" data-event-id="demo-memgym-hoops">
+      <header class="post-header">
+        <div class="avatar avatar--md avatar--color-1" aria-hidden="true">CN</div>
+        <div class="post-header-main">
+          <div class="post-names">
+            <strong>Chris N.</strong>
+            <span class="post-visibility-pill pill-public">🌐 Anyone at UVA</span>
+          </div>
+          <div class="post-meta-line">2d · Carr’s Hill</div>
+        </div>
+        <div class="post-follow-wrap">
+          <button
+            type="button"
+            class="js-follow-btn btn-follow-pill"
+            data-person-id="person-chris"
+            data-person-name="Chris N."
+            data-person-initials="CN"
+          >
+            Follow
+          </button>
+          <button type="button" class="post-menu" aria-label="Post options">⋯</button>
+        </div>
+      </header>
+      <div class="post-body">
+        <p>5v5 or 4v4 depending on numbers. Chill comp — no refs, call your own fouls.</p>
+      </div>
+      <div class="post-event-box">
+        <span class="badge badge-student">Student event</span>
+        <h3>Pickup runs @ Mem Gym</h3>
+        <p class="event-line">Sun · 7pm · 90 min · Memorial Gym</p>
+        <p class="event-line js-rsvp-spots" data-event-id="demo-memgym-hoops">6 / 12 spots · competitive-friendly</p>
+        <div
+          class="mini-map-wrap"
+          id="mini-map-demo-memgym-hoops"
+          data-lat="38.03435"
+          data-lng="-78.50815"
+          aria-label="Event location map"
+        ></div>
+        <div class="event-actions" style="margin-top: 0.5rem">
+          <button type="button" class="btn btn-primary btn-sm js-rsvp-btn" data-event-id="demo-memgym-hoops" data-rsvp-label="Join">Join</button>
+          <button type="button" class="btn btn-ghost btn-sm js-save-btn" data-event-id="demo-memgym-hoops">Save</button>
+        </div>
+      </div>
+      <div
+        class="post-stats js-event-status"
+        data-event-id="demo-memgym-hoops"
+        data-status-base="Posted in IM GroupMe · 14 going"
+      >
+        Posted in IM GroupMe · 14 going
+      </div>
+      <div class="post-actions-row">
+        <button type="button" class="post-action-btn">👍 Like</button>
+        <button type="button" class="post-action-btn">💬 Comment</button>
+        <button type="button" class="post-action-btn">↗ Share</button>
+      </div>
+    </article>
+
+    <!-- Downtown Mall coffee -->
+    <article class="feed-post" data-event-id="demo-mall-coffee">
+      <header class="post-header">
+        <div class="avatar avatar--md avatar--color-4" aria-hidden="true">RD</div>
+        <div class="post-header-main">
+          <div class="post-names">
+            <strong>Riley D.</strong>
+            <span class="post-visibility-pill pill-public">🌐 Anyone at UVA</span>
+          </div>
+          <div class="post-meta-line">3d · Off Grounds</div>
+        </div>
+        <div class="post-follow-wrap">
+          <button
+            type="button"
+            class="js-follow-btn btn-follow-pill"
+            data-person-id="person-riley"
+            data-person-name="Riley D."
+            data-person-initials="RD"
+          >
+            Follow
+          </button>
+          <button type="button" class="post-menu" aria-label="Post options">⋯</button>
+        </div>
+      </header>
+      <div class="post-body">
+        <p>Low-commitment Sunday — bring a book or a problem set. First round’s on me if we hit 6 people.</p>
+      </div>
+      <div class="post-event-box">
+        <span class="badge badge-student">Student event</span>
+        <h3>Sunday coffee + read on the Mall</h3>
+        <p class="event-line">Sun · 10:30am · ~2 hrs · Grit Coffee</p>
+        <div
+          class="mini-map-wrap"
+          id="mini-map-demo-mall-coffee"
+          data-lat="38.03052"
+          data-lng="-78.47942"
+          aria-label="Event location map"
+        ></div>
+        <div class="event-actions" style="margin-top: 0.5rem">
+          <button type="button" class="btn btn-primary btn-sm js-rsvp-btn" data-event-id="demo-mall-coffee" data-rsvp-label="RSVP">RSVP</button>
+          <button type="button" class="btn btn-ghost btn-sm js-save-btn" data-event-id="demo-mall-coffee">Save</button>
+        </div>
+      </div>
+      <div
+        class="post-stats js-event-status"
+        data-event-id="demo-mall-coffee"
+        data-status-base="9 mutuals and 12 others are interested"
+      >
+        9 mutuals and 12 others are interested
+      </div>
+      <div class="post-actions-row">
+        <button type="button" class="post-action-btn">👍 Like</button>
+        <button type="button" class="post-action-btn">💬 Comment</button>
+        <button type="button" class="post-action-btn">↗ Share</button>
+      </div>
+    </article>
+
+    <!-- Alderman thesis sprint -->
+    <article class="feed-post" data-event-id="demo-alderman-thesis">
+      <header class="post-header">
+        <div class="avatar avatar--md avatar--color-2" aria-hidden="true">NV</div>
+        <div class="post-header-main">
+          <div class="post-names">
+            <strong>Nora V.</strong>
+            created an event
+            <span class="post-visibility-pill pill-invite">✉️ Invite-only</span>
+          </div>
+          <div class="post-meta-line">4d · Alderman</div>
+        </div>
+        <div class="post-follow-wrap">
+          <button
+            type="button"
+            class="js-follow-btn btn-follow-pill"
+            data-person-id="person-nora"
+            data-person-name="Nora V."
+            data-person-initials="NV"
+          >
+            Follow
+          </button>
+          <button type="button" class="post-menu" aria-label="Post options">⋯</button>
+        </div>
+      </header>
+      <div class="post-body">
+        <p>Tiny cohort (max 6). Pomodoro 25/5, phones in bags. Thesis / diss writers only — DM for the table code.</p>
+      </div>
+      <div class="post-event-box">
+        <span class="badge badge-local">Invite-only</span>
+        <h3>Thesis writing blocks (quiet)</h3>
+        <p class="event-line">Mon · 9am–12pm · Alderman stacks</p>
+        <div
+          class="mini-map-wrap"
+          id="mini-map-demo-alderman-thesis"
+          data-lat="38.03465"
+          data-lng="-78.50545"
+          aria-label="Event location map"
+        ></div>
+        <div class="event-actions" style="margin-top: 0.5rem">
+          <button type="button" class="btn btn-primary btn-sm js-rsvp-btn" data-event-id="demo-alderman-thesis" data-rsvp-label="Request spot">Request spot</button>
+          <button type="button" class="btn btn-ghost btn-sm js-save-btn" data-event-id="demo-alderman-thesis">Save</button>
+        </div>
+      </div>
+      <div
+        class="post-stats js-event-status"
+        data-event-id="demo-alderman-thesis"
+        data-status-base="Invite circle · 5 going"
+      >
+        Invite circle · 5 going
+      </div>
+      <div class="post-actions-row">
+        <button type="button" class="post-action-btn">👍 Like</button>
+        <button type="button" class="post-action-btn">💬 Comment</button>
+        <button type="button" class="post-action-btn">↗ Share</button>
+      </div>
+    </article>
+
     <!-- Official + short feedback prompt -->
     <article class="feed-post" data-event-id="demo-uva-orgfair">
       <header class="post-header">
@@ -331,6 +639,13 @@
         <span class="badge badge-uva">Official</span>
         <h3>Org fair</h3>
         <p class="event-line">Thu · 11am–2pm</p>
+        <div
+          class="mini-map-wrap"
+          id="mini-map-demo-uva-orgfair"
+          data-lat="38.03526"
+          data-lng="-78.50374"
+          aria-label="Event location map"
+        ></div>
         <div class="event-actions" style="margin-top: 0.5rem">
           <button type="button" class="btn btn-primary btn-sm js-rsvp-btn" data-event-id="demo-uva-orgfair" data-rsvp-label="Add to plan">Add to plan</button>
           <button type="button" class="btn btn-ghost btn-sm js-save-btn" data-event-id="demo-uva-orgfair">Save</button>
@@ -373,7 +688,29 @@
     Events save in your browser (localStorage) for this demo. Add a backend to sync across devices. Maps use OpenStreetMap tiles.
   </footer>
 
+  <script src="js/session.js"></script>
   <script src="js/events-store.js"></script>
+  <script>
+    (function () {
+      var signedIn = window.HoosOutSession && window.HoosOutSession.isSignedIn();
+      var uva = document.getElementById("nav-uva-cville");
+      if (uva && window.HoosOutSession) {
+        if (signedIn) uva.removeAttribute("hidden");
+        else uva.setAttribute("hidden", "");
+      }
+      var cvilleChip = document.getElementById("chip-around-cville");
+      if (cvilleChip && window.HoosOutSession) {
+        if (signedIn) cvilleChip.removeAttribute("hidden");
+        else cvilleChip.setAttribute("hidden", "");
+      }
+      var out = document.getElementById("nav-logout");
+      if (out && window.HoosOutSession) {
+        out.addEventListener("click", function () {
+          window.HoosOutSession.signOut();
+        });
+      }
+    })();
+  </script>
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
