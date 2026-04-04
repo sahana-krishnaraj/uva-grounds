@@ -71,10 +71,31 @@
       <button type="button" class="btn btn-ghost btn-sm js-profile-photo-remove">Remove photo</button>
     </div>
 
-    <p class="me-intro">
-      See who you follow, events you posted, RSVPs, and saved listings — all stored on this device for the demo.
-    </p>
-
+<section class="me-bio-section">
+  <div class="me-bio-grid">
+    <div class="me-bio-item js-bio-bio" hidden>
+      <span class="me-bio-label">About:</span>
+      <span class="me-bio-value"></span>
+    </div>
+    <div class="me-bio-item js-bio-interests" hidden>
+      <span class="me-bio-label">Interests:</span>
+      <span class="me-bio-value"></span>
+    </div>
+    <!-- <div class="me-bio-item js-bio-vibe" hidden>
+      <span class="me-bio-label">Vibe: </span>
+      <span class="me-bio-value"></span>
+    </div> -->
+    <div class="me-bio-item js-bio-location" hidden>
+      <span class="me-bio-label">Location: </span>
+      <span class="me-bio-value"></span>
+    </div>
+    <div class="me-bio-item js-bio-schedule" hidden>
+      <span class="me-bio-label">Availability:</span>
+      <span class="me-bio-value"></span>
+    </div>
+  </div>
+</section>
+<!-- Tabs -->
     <div class="me-tabs" role="tablist" aria-label="Profile sections">
       <button type="button" class="me-tab me-tab--active" data-panel="following" role="tab" aria-selected="true">Following</button>
       <button type="button" class="me-tab" data-panel="posted" role="tab" aria-selected="false">My events</button>
@@ -100,6 +121,7 @@
     </div>
   </main>
 
+<!-- Profile Info Pull -->
 
 <script src="js/session.js"></script>
 <script src="js/events-store.js"></script>
@@ -128,9 +150,10 @@
     catch (err) { console.warn("HoosOut: could not parse profile", err); return; }
 
     // 4. Full name + handle
+    
     var fullName    = [p.firstName, p.lastName].filter(Boolean).join(" ");
-    var displayName = p.preferredName || p.firstName || "you";
-    var handle      = "@" + displayName.toLowerCase().replace(/\s+/g, "");
+    //var displayName = p.preferredName || p.firstName || "you";
+    var handle      = "@" + p.preferredName.toLowerCase().replace(/\s+/g, "");
 
     var nameEl   = document.querySelector(".me-hero-name");
     var handleEl = document.querySelector(".me-hero-handle");
@@ -151,16 +174,21 @@
     }
 
     // 6. Bio / intro strip
-    var introEl = document.querySelector(".me-intro");
-    if (introEl) {
-      var lines = [];
-      if (p.bio)       lines.push(p.bio);
-      if (p.interests) lines.push("✦ " + p.interests);
-      if (p.vibe)      lines.push("Vibe: " + p.vibe);
-      if (p.location)  lines.push("📍 " + p.location);
-      if (p.schedule)  lines.push("🕐 Free: " + p.schedule);
-      introEl.textContent = lines.length ? lines.join("  ·  ") : "";
-    }
+// 6. Bio section
+var fields = [
+  { key: "bio",       selector: ".js-bio-bio" },
+  { key: "interests", selector: ".js-bio-interests" },
+  { key: "vibe",      selector: ".js-bio-vibe" },
+  { key: "location",  selector: ".js-bio-location" },
+  { key: "schedule",  selector: ".js-bio-schedule" },
+];
+fields.forEach(function(f) {
+  if (!p[f.key]) return;
+  var item = document.querySelector(f.selector);
+  if (!item) return;
+  item.querySelector(".me-bio-value").textContent = p[f.key];
+  item.removeAttribute("hidden");
+});
   })();
 </script>
 </body>
