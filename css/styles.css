@@ -384,8 +384,20 @@ label {
   margin-bottom: 0.35rem;
 }
 
+label .req-mark {
+  color: var(--uva-orange);
+  font-weight: 700;
+}
+
+label .optional-mark {
+  font-weight: 500;
+  color: var(--text-muted);
+  opacity: 0.9;
+}
+
 input[type="email"],
-input[type="text"] {
+input[type="text"],
+input[type="password"] {
   width: 100%;
   padding: 0.85rem 1rem;
   border-radius: var(--radius-sm);

@@ -26,21 +26,15 @@
   <main class="auth-main">
     <div class="auth-card">
       <h1>Join the UVA network</h1>
-      <p class="auth-lead">Demo: sign up with UVA SSO or your @virginia.edu email — no separate email code step.</p>
+      <p class="auth-lead">Create an account with your @virginia.edu email and password — next step is profile setup.</p>
 
       <div class="trust-row">
         <span class="trust-pill">Closed network</span>
         <span class="trust-pill">Trust &gt; anonymity</span>
       </div>
 
-      <button type="button" class="btn btn-primary btn-full" id="btn-sso">
-        Sign up with UVA SSO
-      </button>
-
-      <div class="divider">or with school email</div>
-
       <form id="signup-form" novalidate>
-        <label for="email">School email</label>
+        <label for="email">UVA email</label>
         <input
           id="email"
           name="email"
@@ -49,12 +43,36 @@
           placeholder="you@virginia.edu"
           required
           pattern=".+@virginia\.edu$"
-          title="Must be @virginia.edu"
+          title="Must be a @virginia.edu address"
         />
-        <label for="name">Preferred name</label>
-        <input id="name" name="name" type="text" autocomplete="given-name" placeholder="Alex" required />
-        <button type="submit" class="btn btn-ghost btn-full" id="signup-submit">Continue</button>
+
+        <label for="password">Password</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          autocomplete="new-password"
+          placeholder="At least 6 characters"
+          required
+          minlength="6"
+        />
+
+        <label for="password-confirm">Confirm password</label>
+        <input
+          id="password-confirm"
+          name="password-confirm"
+          type="password"
+          autocomplete="new-password"
+          placeholder="Re-enter password"
+          required
+          minlength="6"
+        />
+
+        <button type="submit" class="btn btn-primary btn-full" id="signup-submit">
+          Create account
+        </button>
       </form>
+
       <p id="signup-msg" class="auth-form-msg" style="display: none; margin-top: 0.75rem; font-size: 0.88rem"></p>
 
       <p class="auth-footer">
@@ -64,26 +82,56 @@
   </main>
 
   <script src="js/session.js"></script>
-  <script>
-    document.getElementById("btn-sso").addEventListener("click", function () {
-      window.location.href = "verify.html?flow=signup&method=sso";
-    });
+  <script type="module">
+    import { supabase } from "./js/supabase.js";
 
-    (function () {
-      var form = document.getElementById("signup-form");
-      var msg = document.getElementById("signup-msg");
-      var btn = document.getElementById("signup-submit");
-      if (!form || !window.HoosOutSession) return;
+    var form = document.getElementById("signup-form");
+    var msg = document.getElementById("signup-msg");
+    var btn = document.getElementById("signup-submit");
 
-      form.addEventListener("submit", function (e) {
-        e.preventDefault();
-        if (!form.reportValidity()) return;
-        msg.style.display = "none";
-        btn.disabled = true;
-        window.HoosOutSession.signIn();
-        window.location.href = "profile.html";
+    function showError(text) {
+      msg.style.display = "";
+      msg.style.color = "red";
+      msg.textContent = text;
+    }
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      msg.style.display = "none";
+
+      var pw = document.getElementById("password").value;
+      var pw2 = document.getElementById("password-confirm").value;
+      if (pw !== pw2) {
+        showError("Passwords do not match.");
+        return;
+      }
+
+      if (!form.reportValidity()) return;
+
+      var email = document.getElementById("email").value.trim();
+
+      btn.disabled = true;
+      btn.textContent = "Creating account…";
+
+      const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: pw,
       });
-    })();
+
+      if (error) {
+        showError(error.message || "Could not sign up. Try again.");
+        btn.disabled = false;
+        btn.textContent = "Create account";
+        return;
+      }
+
+      if (!data.session) {
+        await supabase.auth.signInWithPassword({ email: email, password: pw });
+      }
+
+      if (window.HoosOutSession) window.HoosOutSession.signIn();
+      window.location.href = "profile.html";
+    });
   </script>
 </body>
 </html>

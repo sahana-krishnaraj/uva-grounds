@@ -25,7 +25,7 @@
   <main class="container" style="max-width: 560px">
     <h1 class="section-title" style="text-align: left; margin-bottom: 0.5rem">Build your profile</h1>
     <p class="section-sub" style="text-align: left; margin-bottom: 1.5rem">
-      Better matching starts here. Optional fields can be skipped and finished later.
+      First name, last name, and year are required. Everything else is optional.
     </p>
 
     <div class="auth-card" style="box-shadow: none; width: 100%">
@@ -49,8 +49,62 @@
         <p style="margin: 0.5rem 0 0; font-size: 0.82rem; color: var(--text-muted)">Saved on this device only (demo).</p>
       </div>
       <form action="home.html" method="get" class="form-grid" id="profile-form">
+        <div class="two-col">
+          <div>
+            <label for="first-name">First name <span class="req-mark" aria-hidden="true">*</span></label>
+            <input
+              id="first-name"
+              name="first_name"
+              type="text"
+              autocomplete="given-name"
+              placeholder="Jordan"
+              required
+            />
+          </div>
+          <div>
+            <label for="last-name">Last name <span class="req-mark" aria-hidden="true">*</span></label>
+            <input
+              id="last-name"
+              name="last_name"
+              type="text"
+              autocomplete="family-name"
+              placeholder="Smith"
+              required
+            />
+          </div>
+        </div>
         <div>
-          <label for="year">Year</label>
+          <label for="preferred-name">Preferred name</label>
+          <input
+            id="preferred-name"
+            name="preferred_name"
+            type="text"
+            autocomplete="nickname"
+            placeholder="What you go by (optional)"
+          />
+        </div>
+        <div>
+          <label for="pronouns">Pronouns</label>
+          <input
+            id="pronouns"
+            name="pronouns"
+            type="text"
+            list="pronouns-suggestions"
+            placeholder="e.g. she/her, they/them"
+          />
+          <datalist id="pronouns-suggestions">
+            <option value="she/her"></option>
+            <option value="he/him"></option>
+            <option value="they/them"></option>
+            <option value="she/they"></option>
+            <option value="he/they"></option>
+            <option value="any pronouns"></option>
+            <option value="use my name"></option>
+            <option value="ask me"></option>
+          </datalist>
+        </div>
+        <div>
+          <label for="year">Year <span class="req-mark" aria-hidden="true">*</span></label>
           <select id="year" name="year" required>
             <option value="">Select</option>
             <option>First year</option>
@@ -59,6 +113,16 @@
             <option>Fourth year</option>
             <option>Grad</option>
           </select>
+        </div>
+        <div>
+          <label for="location-dorm">Location / dorm <span class="optional-mark">(optional)</span></label>
+          <input
+            id="location-dorm"
+            name="location_dorm"
+            type="text"
+            autocomplete="address-line2"
+            placeholder="e.g. Gibbons, off-Grounds on Elliewood"
+          />
         </div>
         <div>
           <label for="interests">Top interests (comma-separated)</label>

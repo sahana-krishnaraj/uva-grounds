@@ -64,6 +64,7 @@
     </div>
   </main>
 
+  <script src="js/session.js"></script>
   <script type="module">
     import { supabase } from "./js/supabase.js";
 
@@ -99,7 +100,7 @@
         return;
       }
 
-      // Success — go straight to profile
+      if (window.HoosOutSession) window.HoosOutSession.signIn();
       window.location.href = "profile.html";
     });
   </script>
