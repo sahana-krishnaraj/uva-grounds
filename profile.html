@@ -46,7 +46,6 @@
             <button type="button" class="btn btn-ghost btn-sm js-profile-photo-remove">Remove</button>
           </div>
         </div>
-        <p style="margin: 0.5rem 0 0; font-size: 0.82rem; color: var(--text-muted)">Saved on this device only (demo).</p>
       </div>
       <form action="home.html" method="get" class="form-grid" id="profile-form">
         <div class="two-col">
@@ -57,7 +56,6 @@
               name="first_name"
               type="text"
               autocomplete="given-name"
-              placeholder="Jordan"
               required
             />
           </div>
@@ -68,7 +66,6 @@
               name="last_name"
               type="text"
               autocomplete="family-name"
-              placeholder="Smith"
               required
             />
           </div>
@@ -80,7 +77,6 @@
             name="preferred_name"
             type="text"
             autocomplete="nickname"
-            placeholder="What you go by (optional)"
           />
         </div>
         <div>
@@ -145,20 +141,40 @@
     </div>
   </main>
 
-  <script src="js/session.js"></script>
-  <script src="js/profile-photo.js"></script>
-  <script>
-    (function () {
-      var form = document.getElementById("profile-form");
-      if (form && window.HoosOutSession) {
-        form.addEventListener("submit", function () {
-          window.HoosOutSession.signIn();
-        });
-      }
-      if (window.HoosOutProfilePhoto) {
-        window.HoosOutProfilePhoto.initMeEditor(document.body);
-      }
-    })();
-  </script>
+ <script src="js/session.js"></script>
+<script src="js/profile-photo.js"></script>
+<script>
+  (function () {
+    if (window.HoosOutProfilePhoto) {
+      window.HoosOutProfilePhoto.initMeEditor(document.body);
+    }
+
+    var form = document.getElementById("profile-form");
+    if (!form) return;
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!form.reportValidity()) return;
+
+      var profile = {
+        firstName:     document.getElementById("first-name").value.trim(),
+        lastName:      document.getElementById("last-name").value.trim(),
+        preferredName: document.getElementById("preferred-name").value.trim(),
+        pronouns:      document.getElementById("pronouns").value.trim(),
+        year:          document.getElementById("year").value,
+        location:      document.getElementById("location-dorm").value.trim(),
+        interests:     document.getElementById("interests").value.trim(),
+        vibe:          document.getElementById("vibe").value.trim(),
+        schedule:      document.getElementById("schedule").value.trim(),
+        bio:           document.getElementById("bio").value.trim(),
+      };
+
+      localStorage.setItem("hoosout_profile", JSON.stringify(profile));
+
+      if (window.HoosOutSession) window.HoosOutSession.signIn();
+      window.location.href = "home.html";
+    });
+  })();
+</script>
 </body>
 </html>
