@@ -26,22 +26,13 @@
   <main class="auth-main">
     <div class="auth-card">
       <h1>Welcome back, Hoos</h1>
-      <p class="auth-lead">Demo: log in with UVA SSO or your @virginia.edu email.</p>
+      <p class="auth-lead">Sign in with your UVA email and password.</p>
 
       <div class="trust-row">
         <span class="trust-pill">@virginia.edu</span>
         <span class="trust-pill">Exclusive network</span>
         <span class="trust-pill">Report &amp; block</span>
       </div>
-
-      <button type="button" class="btn btn-primary btn-full" id="btn-sso">
-        Continue with UVA SSO
-      </button>
-      <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.5rem 0 0; text-align: center">
-        Demo: optional confirmation screen before profile
-      </p>
-
-      <div class="divider">or school email</div>
 
       <form id="login-email-form" novalidate>
         <label for="email">UVA email</label>
@@ -50,13 +41,26 @@
           name="email"
           type="email"
           autocomplete="email"
-          placeholder="you@virginia.edu"
+          placeholder="you@virginia.edu or you@alumni.virginia.edu"
           required
-          pattern=".+@virginia\.edu$"
-          title="Use your @virginia.edu address"
+          pattern=".+@(virginia\.edu|alumni\.virginia\.edu)$"
+          title="Must end with @virginia.edu or @alumni.virginia.edu"
         />
-        <button type="submit" class="btn btn-ghost btn-full" id="login-email-submit">Continue</button>
+
+        <label for="password">Password</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          required
+        />
+
+        <button type="submit" class="btn btn-primary btn-full" id="login-email-submit">
+          Log in
+        </button>
       </form>
+
       <p id="login-email-msg" class="auth-form-msg" style="display: none; margin-top: 0.75rem; font-size: 0.88rem"></p>
 
       <p class="auth-footer">
@@ -66,26 +70,87 @@
   </main>
 
   <script src="js/session.js"></script>
-  <script>
-    document.getElementById("btn-sso").addEventListener("click", function () {
-      window.location.href = "verify.html?method=sso";
-    });
+  <script type="module">
+    import { supabase } from "./js/supabase.js";
 
-    (function () {
-      var form = document.getElementById("login-email-form");
-      var msg = document.getElementById("login-email-msg");
-      var btn = document.getElementById("login-email-submit");
-      if (!form || !window.HoosOutSession) return;
+    var form = document.getElementById("login-email-form");
+    var btn = document.getElementById("login-email-submit");
+    var msg = document.getElementById("login-email-msg");
 
-      form.addEventListener("submit", function (e) {
-        e.preventDefault();
-        if (!form.reportValidity()) return;
-        msg.style.display = "none";
-        btn.disabled = true;
-        window.HoosOutSession.signIn();
-        window.location.href = "profile.html";
+    function showError(text) {
+      msg.style.display = "";
+      msg.style.color = "red";
+      msg.textContent = text;
+    }
+
+    function hideMsg() {
+      msg.style.display = "none";
+      msg.textContent = "";
+    }
+
+    async function postJson(url, body) {
+      var r = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
-    })();
+      var data = {};
+      try {
+        data = await r.json();
+      } catch (_) {}
+      return { ok: r.ok, data: data };
+    }
+
+    if (form) {
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        hideMsg();
+        if (!form.reportValidity()) return;
+
+        var email = document.getElementById("email").value.trim();
+        var password = document.getElementById("password").value;
+
+        btn.disabled = true;
+        btn.textContent = "Signing in…";
+
+        var res;
+        try {
+          res = await postJson("/api/auth/login", { email: email, password: password });
+        } catch (err) {
+          showError(
+            "Could not reach the server. Use the app from the local server (run npm start in the server folder)."
+          );
+          btn.disabled = false;
+          btn.textContent = "Log in";
+          return;
+        }
+
+        if (!res.ok) {
+          showError(
+            res.data.error || "Incorrect email or password."
+          );
+          btn.disabled = false;
+          btn.textContent = "Log in";
+          return;
+        }
+
+        if (res.data.access_token && res.data.refresh_token) {
+          var sr = await supabase.auth.setSession({
+            access_token: res.data.access_token,
+            refresh_token: res.data.refresh_token,
+          });
+          if (sr.error) {
+            showError(sr.error.message || "Could not start session. Try again.");
+            btn.disabled = false;
+            btn.textContent = "Log in";
+            return;
+          }
+        }
+
+        if (window.HoosOutSession) window.HoosOutSession.signIn();
+        window.location.href = "home.html";
+      });
+    }
   </script>
 </body>
 </html>
