@@ -3,14 +3,147 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Redirecting… — HoosOut</title>
-  <script>
-    window.location.replace("signup.html");
-  </script>
+  <title>Verify your email — HoosOut</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <p style="font-family: system-ui, sans-serif; padding: 2rem">
-    Email verification is part of <a href="signup.html">sign up</a>. Redirecting…
-  </p>
+  <header class="site-header">
+    <a class="logo" href="index.html">
+      <span class="logo-mark" aria-hidden="true">
+        <img src="images/logo-mark.svg" width="38" height="38" alt="" />
+      </span>
+      <span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span>
+    </a>
+    <nav class="nav-links">
+      <a href="events-uva.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">UVA &amp; Cville</a>
+    </nav>
+  </header>
+
+  <main class="auth-main">
+    <div class="auth-card">
+      <h1>Check your inbox</h1>
+      <p class="auth-lead">
+        We sent a 8-digit code to <strong id="verify-email"></strong>. Enter it below to confirm your account.
+      </p>
+
+      <form id="verify-form" novalidate>
+        <label for="code">Verification code</label>
+        <input
+          id="code"
+          name="code"
+          type="text"
+          inputmode="numeric"
+          maxlength="8"
+          placeholder="12345678"
+          autocomplete="one-time-code"
+          required
+        />
+
+        <button type="submit" class="btn btn-primary btn-full" id="verify-submit">
+          Verify &amp; continue
+        </button>
+      </form>
+
+      <p id="verify-msg" class="auth-form-msg" style="display: none; margin-top: 0.75rem; font-size: 0.88rem"></p>
+
+      <p class="auth-footer">
+        Wrong email? <a href="signup.html">Go back</a>
+        &nbsp;·&nbsp;
+        <a href="#" id="resend-link">Resend code</a>
+      </p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { supabase } from "./js/supabase.js";
+
+    var params = new URLSearchParams(window.location.search);
+    var email = params.get("email") || sessionStorage.getItem("signup_email") || "";
+    var password = sessionStorage.getItem("signup_password") || "";
+    var name = sessionStorage.getItem("signup_name") || "";
+    var uvaId = sessionStorage.getItem("signup_uva_id") || "";
+
+    var emailEl = document.getElementById("verify-email");
+    var form = document.getElementById("verify-form");
+    var msg = document.getElementById("verify-msg");
+    var btn = document.getElementById("verify-submit");
+    var resend = document.getElementById("resend-link");
+
+    if (emailEl) emailEl.textContent = email;
+    if (!email) window.location.href = "signup.html";
+
+    function showError(text) {
+      msg.style.display = "";
+      msg.style.color = "red";
+      msg.textContent = text;
+    }
+
+    function showSuccess(text) {
+      msg.style.display = "";
+      msg.style.color = "green";
+      msg.textContent = text;
+    }
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      if (!form.reportValidity()) return;
+
+      var code = document.getElementById("code").value.trim();
+
+      if (!/^\d{8}$/.test(code)) {
+        showError("Please enter the 8-digit code from your email.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Verifying…";
+
+      // Verify the OTP code
+      const { error: otpError } = await supabase.auth.verifyOtp({
+        email: email,
+        token: code,
+        type: "email"
+      });
+
+      if (otpError) {
+        showError("Invalid or expired code. Try again.");
+        btn.disabled = false;
+        btn.textContent = "Verify & continue";
+        return;
+      }
+
+      // OTP passed — now create the account with email + password
+      const { error: signUpError } = await supabase.auth.updateUser({
+        password: password,
+        data: { name: name, uva_id: uvaId }
+      });
+
+      if (signUpError) {
+        showError("Account setup failed. Please try again.");
+        btn.disabled = false;
+        btn.textContent = "Verify & continue";
+        return;
+      }
+
+      // Clean up sessionStorage
+      sessionStorage.removeItem("signup_password");
+      sessionStorage.removeItem("signup_email");
+      sessionStorage.removeItem("signup_name");
+      sessionStorage.removeItem("signup_uva_id");
+
+      // Success — go to profile
+      window.location.href = "profile.html";
+    });
+
+    resend.addEventListener("click", async function (e) {
+      e.preventDefault();
+      const { error } = await supabase.auth.signInWithOtp({ email: email });
+      if (error) { showError("Couldn't resend. Try again."); return; }
+      showSuccess("Code resent! Check your inbox.");
+    });
+  </script>
 </body>
 </html>
