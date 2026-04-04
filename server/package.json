@@ -1,6 +1,3 @@
-"scripts": {
-  "start": "node server.js"
-}
 {
   "name": "hoosout-server",
   "private": true,
