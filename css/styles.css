@@ -232,22 +232,22 @@ img {
 
 .hero-visual {
   position: relative;
-  margin-top: 1rem;
-  border-radius: 24px;
+  width: 100%;
+  min-height: 100vh;
+  margin-top: 0;
+  border-radius: 0;
   overflow: hidden;
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   background: linear-gradient(165deg, #ffffff 0%, #f0f4fa 42%, #fff5eb 100%);
-  aspect-ratio: 16/9;
-  max-height: 420px;
+  background-attachment: fixed; /* gradient moves slower than scroll */
 }
-
 .hero-visual-inner {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
-  padding: 2rem;
+  padding: 1rem;
 }
 
 .feed-mock {
@@ -899,6 +899,27 @@ input:focus {
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }
+.me-bio-section {
+  margin: 1rem 0 1.5rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface-2, #f5f5f7);
+  border-radius: 12px;
+}
+.me-bio-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.me-bio-item {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+.me-bio-label {
+  font-weight: 600;
+  min-width: 80px;
+  color: var(--text-muted, #888);
+}
 
 .post-event-box {
   margin: 0 1rem 0.75rem;
@@ -1490,13 +1511,13 @@ select {
 .me-photo-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.8rem;
   margin: 0 0 1rem;
 }
 
 .me-hero-name {
   margin: 0 0 0.25rem;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   color: var(--uva-navy);
 }
 
