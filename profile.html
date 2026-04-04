@@ -29,6 +29,25 @@
     </p>
 
     <div class="auth-card" style="box-shadow: none; width: 100%">
+      <div class="profile-photo-setup" style="margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border)">
+        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600">Profile photo</label>
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap">
+          <div
+            class="me-hero-avatar profile-setup-avatar"
+            data-hoosout-profile-avatar
+            style="width: 72px; height: 72px; font-size: 0.85rem"
+          >
+            <img class="js-hoosout-avatar-img me-hero-avatar-img" alt="" hidden />
+            <span class="js-hoosout-avatar-fallback">You</span>
+          </div>
+          <div class="me-photo-toolbar" style="margin: 0">
+            <input type="file" class="js-profile-photo-file" accept="image/*" hidden />
+            <button type="button" class="btn btn-ghost btn-sm js-profile-photo-change">Upload photo</button>
+            <button type="button" class="btn btn-ghost btn-sm js-profile-photo-remove">Remove</button>
+          </div>
+        </div>
+        <p style="margin: 0.5rem 0 0; font-size: 0.82rem; color: var(--text-muted)">Saved on this device only (demo).</p>
+      </div>
       <form action="home.html" method="get" class="form-grid" id="profile-form">
         <div>
           <label for="year">Year</label>
@@ -63,6 +82,7 @@
   </main>
 
   <script src="js/session.js"></script>
+  <script src="js/profile-photo.js"></script>
   <script>
     (function () {
       var form = document.getElementById("profile-form");
@@ -70,6 +90,9 @@
         form.addEventListener("submit", function () {
           window.HoosOutSession.signIn();
         });
+      }
+      if (window.HoosOutProfilePhoto) {
+        window.HoosOutProfilePhoto.initMeEditor(document.body);
       }
     })();
   </script>

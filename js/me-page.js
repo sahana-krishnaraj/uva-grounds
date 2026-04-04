@@ -69,7 +69,7 @@
             var meta = H.getEventMeta(ev.id);
             var line = meta && meta.line ? meta.line : (ev.placeLabel || "");
             return (
-              '<div class="me-row" data-event-id="' +
+              '<div class="me-row me-row--actions" data-event-id="' +
               escapeHtml(ev.id) +
               '">' +
               "<div><strong>" +
@@ -77,9 +77,17 @@
               "</strong><br><span class=\"me-row-sub\">" +
               escapeHtml(line) +
               "</span></div>" +
+              '<div class="me-row-action-btns">' +
               '<a class="btn btn-ghost btn-sm" href="home.html#' +
               encodeURIComponent(ev.id) +
-              '">View on feed</a>' +
+              '">View</a>' +
+              '<a class="btn btn-ghost btn-sm" href="post.html?edit=' +
+              encodeURIComponent(ev.id) +
+              '">Edit</a>' +
+              '<button type="button" class="btn btn-ghost btn-sm js-me-delete-event" data-event-id="' +
+              escapeHtml(ev.id) +
+              '">Remove</button>' +
+              "</div>" +
               "</div>"
             );
           })
@@ -151,9 +159,20 @@
       var u = t.closest(".js-me-unfollow");
       var l = t.closest(".js-me-leave");
       var s = t.closest(".js-me-unsave");
+      var del = t.closest(".js-me-delete-event");
       var H = window.HoosOutEvents;
       if (!H) return;
-      if (u) {
+      if (del) {
+        e.preventDefault();
+        var eid = del.getAttribute("data-event-id");
+        if (
+          eid &&
+          window.confirm("Remove this event from your profile and the feed? This cannot be undone (demo storage).")
+        ) {
+          H.removeEvent(eid);
+          renderLists();
+        }
+      } else if (u) {
         e.preventDefault();
         H.unfollowPerson(u.getAttribute("data-person-id"));
         renderLists();

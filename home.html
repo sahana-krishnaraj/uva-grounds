@@ -47,12 +47,15 @@
     </div>
 
     <div class="chips" role="toolbar" aria-label="Filter feed" style="margin-bottom: 1rem">
-      <button type="button" class="chip active">Following</button>
-      <button type="button" class="chip">Friends’ events</button>
-      <button type="button" class="chip">Sports</button>
-      <button type="button" class="chip">Study</button>
-      <button type="button" class="chip" id="chip-around-cville" hidden>Around CVille</button>
+      <button type="button" class="chip active" data-filter="following">Following</button>
+      <button type="button" class="chip" data-filter="friends">Friends’ events</button>
+      <button type="button" class="chip" data-filter="sports">Sports</button>
+      <button type="button" class="chip" data-filter="study">Study</button>
+      <button type="button" class="chip" id="chip-around-cville" hidden data-filter="cville">Around CVille</button>
     </div>
+    <p id="feed-filter-empty" class="feed-filter-empty" hidden style="margin: -0.5rem 0 1rem; font-size: 0.88rem; color: var(--text-muted)">
+      No posts match this filter. Try another tab above.
+    </p>
 
     <p id="user-events-empty" class="feed-empty-user-events" style="display: none">
       You haven’t posted an event in <strong>this browser</strong> yet. Open
@@ -76,7 +79,10 @@
     <div class="stories-strip" aria-label="Friends and stories">
       <a class="story-ring" href="post.html">
         <div class="story-avatar">
-          <span class="story-avatar-inner" style="font-size: 1.1rem">+</span>
+          <span class="story-avatar-inner story-avatar-inner--self" data-hoosout-profile-avatar>
+            <img class="js-hoosout-avatar-img" alt="" hidden />
+            <span class="js-hoosout-avatar-fallback" style="font-size: 1.1rem">+</span>
+          </span>
         </div>
         <span>Your story</span>
       </a>
@@ -99,7 +105,10 @@
     </div>
 
     <div class="composer-card">
-      <div class="composer-avatar" aria-hidden="true">You</div>
+      <div class="composer-avatar" data-hoosout-profile-avatar aria-hidden="true">
+        <img class="js-hoosout-avatar-img composer-avatar-img" alt="" hidden />
+        <span class="js-hoosout-avatar-fallback">You</span>
+      </div>
       <div class="composer-input-wrap">
         <a class="composer-fake-input" href="post.html">Start an event, or share what you’re doing…</a>
       </div>
@@ -109,7 +118,15 @@
     </div>
 
     <!-- Post: status update -->
-    <article class="feed-post">
+    <article
+      class="feed-post"
+      data-author-id="person-sam"
+      data-post-kind="status"
+      data-friends-only="true"
+      data-feed-tags="study social"
+      data-region="grounds"
+      data-like-base="9"
+    >
       <header class="post-header">
         <div class="avatar avatar--md avatar--color-2" aria-hidden="true">SK</div>
         <div class="post-header-main">
@@ -137,14 +154,23 @@
       </div>
       <div class="post-stats">8 classmates and 3 friends interacted</div>
       <div class="post-actions-row">
-        <button type="button" class="post-action-btn" aria-label="Like">👍 Like</button>
-        <button type="button" class="post-action-btn" aria-label="Comment">💬 Comment</button>
-        <button type="button" class="post-action-btn" aria-label="Share">↗ Share</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="like" data-like-label="Like" aria-label="Like">👍 <span class="js-like-text">Like</span><span class="js-like-count"></span></button>
+        <button type="button" class="post-action-btn js-post-action" data-action="comment" aria-label="Comment">💬 Comment</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="share" aria-label="Share">↗ Share</button>
       </div>
     </article>
 
     <!-- Post: friends-only event + feedback -->
-    <article class="feed-post" data-event-id="demo-jordan-gym">
+    <article
+      class="feed-post"
+      data-event-id="demo-jordan-gym"
+      data-author-id="person-jordan"
+      data-post-kind="event"
+      data-friends-only="true"
+      data-feed-tags="sports wellness gym lifting chill"
+      data-region="grounds"
+      data-like-base="16"
+    >
       <header class="post-header">
         <div class="avatar avatar--md avatar--color-1" aria-hidden="true">JR</div>
         <div class="post-header-main">
@@ -196,9 +222,9 @@
         12 friends saw this · 4 going
       </div>
       <div class="post-actions-row">
-        <button type="button" class="post-action-btn">👍 Like</button>
-        <button type="button" class="post-action-btn">💬 Comment</button>
-        <button type="button" class="post-action-btn">↗ Share</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="like" data-like-label="Like">👍 <span class="js-like-text">Like</span><span class="js-like-count"></span></button>
+        <button type="button" class="post-action-btn js-post-action" data-action="comment">💬 Comment</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="share">↗ Share</button>
       </div>
       <section class="event-feedback" aria-labelledby="feedback-title-1">
         <h2 class="event-feedback-title" id="feedback-title-1">
@@ -238,7 +264,16 @@
     </article>
 
     <!-- Post: public campus event + feedback -->
-    <article class="feed-post" data-event-id="demo-ty-soccer">
+    <article
+      class="feed-post"
+      data-event-id="demo-ty-soccer"
+      data-author-id="person-ty"
+      data-post-kind="event"
+      data-friends-only="false"
+      data-feed-tags="sports soccer pickup turf sunset"
+      data-region="grounds"
+      data-like-base="27"
+    >
       <header class="post-header">
         <div class="avatar avatar--md avatar--color-4" aria-hidden="true">TC</div>
         <div class="post-header-main">
@@ -288,9 +323,9 @@
         Alex and 24 others are interested
       </div>
       <div class="post-actions-row">
-        <button type="button" class="post-action-btn">👍 Like</button>
-        <button type="button" class="post-action-btn">💬 Comment</button>
-        <button type="button" class="post-action-btn">↗ Share</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="like" data-like-label="Like">👍 <span class="js-like-text">Like</span><span class="js-like-count"></span></button>
+        <button type="button" class="post-action-btn js-post-action" data-action="comment">💬 Comment</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="share">↗ Share</button>
       </div>
       <section class="event-feedback" aria-labelledby="feedback-title-2">
         <h2 class="event-feedback-title" id="feedback-title-2">
@@ -321,7 +356,16 @@
     </article>
 
     <!-- Clemons study event -->
-    <article class="feed-post" data-event-id="demo-clemons-econ">
+    <article
+      class="feed-post"
+      data-event-id="demo-clemons-econ"
+      data-author-id="person-sam"
+      data-post-kind="event"
+      data-friends-only="true"
+      data-feed-tags="study econ midterm clemons library"
+      data-region="grounds"
+      data-like-base="7"
+    >
       <header class="post-header">
         <div class="avatar avatar--md avatar--color-2" aria-hidden="true">SK</div>
         <div class="post-header-main">
@@ -372,14 +416,23 @@
         6 friends saw this · 3 going
       </div>
       <div class="post-actions-row">
-        <button type="button" class="post-action-btn">👍 Like</button>
-        <button type="button" class="post-action-btn">💬 Comment</button>
-        <button type="button" class="post-action-btn">↗ Share</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="like" data-like-label="Like">👍 <span class="js-like-text">Like</span><span class="js-like-count"></span></button>
+        <button type="button" class="post-action-btn js-post-action" data-action="comment">💬 Comment</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="share">↗ Share</button>
       </div>
     </article>
 
     <!-- Lawn volleyball -->
-    <article class="feed-post" data-event-id="demo-lawn-volleyball">
+    <article
+      class="feed-post"
+      data-event-id="demo-lawn-volleyball"
+      data-author-id="person-morgan"
+      data-post-kind="event"
+      data-friends-only="false"
+      data-feed-tags="sports volleyball grass lawn south"
+      data-region="grounds"
+      data-like-base="30"
+    >
       <header class="post-header">
         <div class="avatar avatar--md avatar--color-3" aria-hidden="true">MP</div>
         <div class="post-header-main">
@@ -429,14 +482,22 @@
         Skylar and 31 others are interested
       </div>
       <div class="post-actions-row">
-        <button type="button" class="post-action-btn">👍 Like</button>
-        <button type="button" class="post-action-btn">💬 Comment</button>
-        <button type="button" class="post-action-btn">↗ Share</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="like" data-like-label="Like">👍 <span class="js-like-text">Like</span><span class="js-like-count"></span></button>
+        <button type="button" class="post-action-btn js-post-action" data-action="comment">💬 Comment</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="share">↗ Share</button>
       </div>
     </article>
 
     <!-- Mem Gym hoops -->
-    <article class="feed-post" data-event-id="demo-memgym-hoops">
+    <article
+      class="feed-post"
+      data-event-id="demo-memgym-hoops"
+      data-author-id="person-chris"
+      data-post-kind="event"
+      data-friends-only="false"
+      data-feed-tags="sports basketball hoops pickup gym memorial"
+      data-region="grounds"
+    >
       <header class="post-header">
         <div class="avatar avatar--md avatar--color-1" aria-hidden="true">CN</div>
         <div class="post-header-main">
@@ -487,14 +548,23 @@
         Posted in IM GroupMe · 14 going
       </div>
       <div class="post-actions-row">
-        <button type="button" class="post-action-btn">👍 Like</button>
-        <button type="button" class="post-action-btn">💬 Comment</button>
-        <button type="button" class="post-action-btn">↗ Share</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="like" data-like-label="Like">👍 <span class="js-like-text">Like</span><span class="js-like-count"></span></button>
+        <button type="button" class="post-action-btn js-post-action" data-action="comment">💬 Comment</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="share">↗ Share</button>
       </div>
     </article>
 
     <!-- Downtown Mall coffee -->
-    <article class="feed-post" data-event-id="demo-mall-coffee">
+    <article
+      class="feed-post"
+      data-event-id="demo-mall-coffee"
+      data-author-id="person-riley"
+      data-post-kind="event"
+      data-friends-only="false"
+      data-feed-tags="social coffee downtown mall grit cville charlottesville"
+      data-region="cville"
+      data-like-base="14"
+    >
       <header class="post-header">
         <div class="avatar avatar--md avatar--color-4" aria-hidden="true">RD</div>
         <div class="post-header-main">
@@ -544,14 +614,23 @@
         9 mutuals and 12 others are interested
       </div>
       <div class="post-actions-row">
-        <button type="button" class="post-action-btn">👍 Like</button>
-        <button type="button" class="post-action-btn">💬 Comment</button>
-        <button type="button" class="post-action-btn">↗ Share</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="like" data-like-label="Like">👍 <span class="js-like-text">Like</span><span class="js-like-count"></span></button>
+        <button type="button" class="post-action-btn js-post-action" data-action="comment">💬 Comment</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="share">↗ Share</button>
       </div>
     </article>
 
     <!-- Alderman thesis sprint -->
-    <article class="feed-post" data-event-id="demo-alderman-thesis">
+    <article
+      class="feed-post"
+      data-event-id="demo-alderman-thesis"
+      data-author-id="person-nora"
+      data-post-kind="event"
+      data-friends-only="true"
+      data-feed-tags="study thesis writing alderman quiet stacks dissertation"
+      data-region="grounds"
+      data-like-base="5"
+    >
       <header class="post-header">
         <div class="avatar avatar--md avatar--color-2" aria-hidden="true">NV</div>
         <div class="post-header-main">
@@ -602,14 +681,23 @@
         Invite circle · 5 going
       </div>
       <div class="post-actions-row">
-        <button type="button" class="post-action-btn">👍 Like</button>
-        <button type="button" class="post-action-btn">💬 Comment</button>
-        <button type="button" class="post-action-btn">↗ Share</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="like" data-like-label="Like">👍 <span class="js-like-text">Like</span><span class="js-like-count"></span></button>
+        <button type="button" class="post-action-btn js-post-action" data-action="comment">💬 Comment</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="share">↗ Share</button>
       </div>
     </article>
 
     <!-- Official + short feedback prompt -->
-    <article class="feed-post" data-event-id="demo-uva-orgfair">
+    <article
+      class="feed-post"
+      data-event-id="demo-uva-orgfair"
+      data-author-id="person-uva-calendar"
+      data-post-kind="event"
+      data-friends-only="false"
+      data-feed-tags="official student org fair lawn south"
+      data-region="grounds"
+      data-like-base="51"
+    >
       <header class="post-header">
         <div class="avatar avatar--md" style="background: linear-gradient(135deg, #232d4b, #e57200); font-size: 0.65rem">UVA</div>
         <div class="post-header-main">
@@ -659,9 +747,9 @@
         Hosted by UVA — public to all students
       </div>
       <div class="post-actions-row">
-        <button type="button" class="post-action-btn">👍 Interested</button>
-        <button type="button" class="post-action-btn">💬 Comment</button>
-        <button type="button" class="post-action-btn">↗ Share</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="like" data-like-label="Interested">👍 <span class="js-like-text">Interested</span><span class="js-like-count"></span></button>
+        <button type="button" class="post-action-btn js-post-action" data-action="comment">💬 Comment</button>
+        <button type="button" class="post-action-btn js-post-action" data-action="share">↗ Share</button>
       </div>
       <section class="event-feedback" aria-labelledby="feedback-title-3">
         <h2 class="event-feedback-title" id="feedback-title-3">
@@ -690,6 +778,7 @@
 
   <script src="js/session.js"></script>
   <script src="js/events-store.js"></script>
+  <script src="js/profile-photo.js"></script>
   <script>
     (function () {
       var signedIn = window.HoosOutSession && window.HoosOutSession.isSignedIn();

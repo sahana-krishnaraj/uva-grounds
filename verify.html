@@ -3,75 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Continue — HoosOut</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css" />
+  <title>Redirecting… — HoosOut</title>
+  <script>
+    window.location.replace("signup.html");
+  </script>
 </head>
 <body>
-  <header class="site-header">
-    <a class="logo" href="index.html">
-      <span class="logo-mark" aria-hidden="true">
-        <img src="images/logo-mark.svg" width="38" height="38" alt="" />
-      </span>
-      <span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span>
-    </a>
-    <nav class="nav-links">
-      <a href="events-uva.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">UVA &amp; Cville</a>
-    </nav>
-  </header>
-
-  <main class="auth-main">
-    <div class="auth-card" id="sso-card" style="display: none">
-      <h1>Almost there</h1>
-      <p class="auth-lead" id="verify-lead">
-        SSO flow (demo): In production your IdP would confirm you. Continue to finish profile setup.
-      </p>
-      <div class="trust-row">
-        <span class="trust-pill">No anonymous noise</span>
-        <span class="trust-pill">Safer meetups</span>
-      </div>
-      <form id="verify-form" novalidate>
-        <button type="submit" class="btn btn-primary btn-full" id="verify-submit">Continue</button>
-      </form>
-    </div>
-
-    <div class="auth-card" id="fallback-card" style="display: none">
-      <h1>Sign in</h1>
-      <p class="auth-lead">Use <a href="login.html">Log in</a> or <a href="signup.html">Sign up</a> — email codes are not used in this demo.</p>
-    </div>
-  </main>
-
-  <script src="js/session.js"></script>
-  <script>
-    (function () {
-      var params = new URLSearchParams(window.location.search);
-      var method = params.get("method");
-      var ssoCard = document.getElementById("sso-card");
-      var fallback = document.getElementById("fallback-card");
-      var form = document.getElementById("verify-form");
-      var lead = document.getElementById("verify-lead");
-      var flow = params.get("flow");
-
-      if (method === "sso") {
-        if (ssoCard) ssoCard.style.display = "";
-        if (lead && flow === "signup") {
-          lead.textContent =
-            "SSO flow (demo): In production your IdP would confirm you. Continue to finish profile setup.";
-        }
-      } else {
-        if (fallback) fallback.style.display = "";
-      }
-
-      if (!form || !window.HoosOutSession || method !== "sso") return;
-
-      form.addEventListener("submit", function (e) {
-        e.preventDefault();
-        window.HoosOutSession.signIn();
-        window.location.href = "profile.html";
-      });
-    })();
-  </script>
+  <p style="font-family: system-ui, sans-serif; padding: 2rem">
+    Email verification is part of <a href="signup.html">sign up</a>. Redirecting…
+  </p>
 </body>
 </html>

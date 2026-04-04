@@ -16,6 +16,10 @@
 
   if (!form || !mapEl || typeof L === "undefined") return;
 
+  var params = new URLSearchParams(window.location.search);
+  var editId = params.get("edit");
+  var existing = editId && window.HoosOutEvents ? window.HoosOutEvents.getById(editId) : null;
+
   var map = L.map(mapEl, { scrollWheelZoom: true }).setView(UVA, DEFAULT_ZOOM);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -46,6 +50,49 @@
   });
 
   setCoords(UVA[0], UVA[1], false);
+
+  function formatDateForInput(d) {
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + day;
+  }
+
+  function formatTimeForInput(d) {
+    var h = String(d.getHours()).padStart(2, "0");
+    var min = String(d.getMinutes()).padStart(2, "0");
+    return h + ":" + min;
+  }
+
+  if (existing) {
+    document.getElementById("title").value = existing.title || "";
+    var typeEl = document.getElementById("type");
+    if (typeEl) typeEl.value = existing.activityType || "";
+    document.getElementById("duration").value = existing.duration || "2 hours";
+    document.getElementById("cap").value = existing.cap || "";
+    document.getElementById("loc").value = existing.placeLabel || "";
+    document.getElementById("vis").value = existing.visibility || "public";
+    document.getElementById("tags").value = existing.tags || "";
+    document.getElementById("vibe").value = existing.vibe || "";
+    document.getElementById("notes").value = existing.notes || "";
+    try {
+      var sd = new Date(existing.startISO);
+      if (!isNaN(sd.getTime())) {
+        document.getElementById("event-date").value = formatDateForInput(sd);
+        document.getElementById("event-time").value = formatTimeForInput(sd);
+      }
+    } catch (err) {}
+    if (existing.lat != null && existing.lng != null) {
+      setCoords(existing.lat, existing.lng, true);
+      map.setView([Number(existing.lat), Number(existing.lng)], 16);
+    }
+    var h1 = document.querySelector("main .section-title");
+    if (h1) h1.textContent = "Edit event";
+    var sub = document.querySelector("main .section-sub");
+    if (sub) sub.innerHTML = "Update details and save — changes show on Home and in <strong>My events</strong>.";
+    var submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.textContent = "Save changes";
+  }
 
   function nominatimSearch(query) {
     if (!query || !query.trim()) return;
@@ -114,7 +161,7 @@
     var startISO = new Date(dateVal + "T" + timeVal).toISOString();
 
     var event = {
-      id: window.HoosOutEvents.generateId(),
+      id: editId && existing ? editId : window.HoosOutEvents.generateId(),
       title: document.getElementById("title").value.trim(),
       activityType: document.getElementById("type").value,
       startISO: startISO,
@@ -128,7 +175,7 @@
       vibe: document.getElementById("vibe").value.trim(),
       notes: document.getElementById("notes").value.trim(),
       hostName: "You",
-      createdAt: new Date().toISOString(),
+      createdAt: existing && existing.createdAt ? existing.createdAt : new Date().toISOString(),
     };
 
     if (!event.title || !event.activityType) {
@@ -136,8 +183,13 @@
       return;
     }
 
-    window.HoosOutEvents.add(event);
-    window.location.href =
-      "home.html?posted=1#" + encodeURIComponent(event.id);
+    if (editId && existing) {
+      window.HoosOutEvents.updateEvent(editId, event);
+      window.location.href = "home.html#" + encodeURIComponent(editId);
+    } else {
+      window.HoosOutEvents.add(event);
+      window.location.href =
+        "home.html?posted=1#" + encodeURIComponent(event.id);
+    }
   });
 })();

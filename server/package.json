@@ -8,6 +8,9 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "express": "^4.21.0"
+    "@supabase/supabase-js": "^2.49.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "nodemailer": "^6.9.16"
   }
 }

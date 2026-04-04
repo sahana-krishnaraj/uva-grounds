@@ -33,7 +33,14 @@
 
   <main class="container me-page">
     <section class="me-hero">
-      <div class="me-hero-avatar" aria-hidden="true">You</div>
+      <div
+        class="me-hero-avatar"
+        data-hoosout-profile-avatar
+        aria-hidden="true"
+      >
+        <img class="js-hoosout-avatar-img me-hero-avatar-img" alt="" hidden />
+        <span class="js-hoosout-avatar-fallback">You</span>
+      </div>
       <div class="me-hero-text">
         <h1 class="me-hero-name">Your HoosOut</h1>
         <p class="me-hero-handle">@you · demo profile · stored on this device only</p>
@@ -57,6 +64,12 @@
         </div>
       </div>
     </section>
+
+    <div class="me-photo-toolbar">
+      <input type="file" class="js-profile-photo-file" accept="image/*" hidden />
+      <button type="button" class="btn btn-ghost btn-sm js-profile-photo-change">Change photo</button>
+      <button type="button" class="btn btn-ghost btn-sm js-profile-photo-remove">Remove photo</button>
+    </div>
 
     <p class="me-intro">
       See who you follow, events you posted, RSVPs, and saved listings — all stored on this device for the demo.
@@ -93,6 +106,7 @@
 
   <script src="js/session.js"></script>
   <script src="js/events-store.js"></script>
+  <script src="js/profile-photo.js"></script>
   <script>
     (function () {
       var uva = document.getElementById("nav-uva-cville");
@@ -102,5 +116,8 @@
     })();
   </script>
   <script src="js/me-page.js"></script>
+  <script>
+    if (window.HoosOutProfilePhoto) window.HoosOutProfilePhoto.initMeEditor(document.body);
+  </script>
 </body>
 </html>

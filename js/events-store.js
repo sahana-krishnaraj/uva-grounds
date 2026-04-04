@@ -30,6 +30,152 @@
     return event;
   }
 
+  function getById(id) {
+    if (!id) return null;
+    var list = getAll();
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) return list[i];
+    }
+    return null;
+  }
+
+  function updateEvent(id, next) {
+    if (!id || !next) return false;
+    var list = getAll();
+    var i;
+    for (i = 0; i < list.length; i++) {
+      if (list[i].id === id) break;
+    }
+    if (i >= list.length) return false;
+    next.id = id;
+    list[i] = next;
+    saveAll(list);
+    return true;
+  }
+
+  function removeEvent(id) {
+    if (!id) return false;
+    var prev = getAll();
+    var list = prev.filter(function (e) {
+      return e.id !== id;
+    });
+    if (list.length === prev.length) return false;
+    saveAll(list);
+    var rsvp = getIdSet(RSVP_KEY).filter(function (x) {
+      return x !== id;
+    });
+    setIdSet(RSVP_KEY, rsvp);
+    var saved = getIdSet(SAVED_KEY).filter(function (x) {
+      return x !== id;
+    });
+    setIdSet(SAVED_KEY, saved);
+    var cm = getCommentsMap();
+    if (cm[id]) {
+      delete cm[id];
+      saveCommentsMap(cm);
+    }
+    var lm = getLikesMap();
+    if (lm[id]) {
+      delete lm[id];
+      saveLikesMap(lm);
+    }
+    var lcm = getLikeCountsMap();
+    if (lcm[id] !== undefined) {
+      delete lcm[id];
+      saveLikeCountsMap(lcm);
+    }
+    return true;
+  }
+
+  var COMMENTS_KEY = "hoosout_post_comments_v1";
+
+  function getCommentsMap() {
+    var raw = localStorage.getItem(COMMENTS_KEY);
+    var o = safeParse(raw, {});
+    return o && typeof o === "object" && !Array.isArray(o) ? o : {};
+  }
+
+  function saveCommentsMap(map) {
+    localStorage.setItem(COMMENTS_KEY, JSON.stringify(map));
+  }
+
+  function getComments(postKey) {
+    var m = getCommentsMap();
+    var arr = m[postKey];
+    return Array.isArray(arr) ? arr : [];
+  }
+
+  function addComment(postKey, text) {
+    text = String(text || "").trim();
+    if (!postKey || !text) return null;
+    var m = getCommentsMap();
+    var arr = Array.isArray(m[postKey]) ? m[postKey].slice() : [];
+    arr.push({ text: text, at: new Date().toISOString() });
+    m[postKey] = arr;
+    saveCommentsMap(m);
+    return arr;
+  }
+
+  var LIKES_KEY = "hoosout_post_likes_v1";
+  var LIKE_COUNT_KEY = "hoosout_post_like_counts_v1";
+
+  function getLikesMap() {
+    var raw = localStorage.getItem(LIKES_KEY);
+    var o = safeParse(raw, {});
+    return o && typeof o === "object" && !Array.isArray(o) ? o : {};
+  }
+
+  function saveLikesMap(map) {
+    localStorage.setItem(LIKES_KEY, JSON.stringify(map));
+  }
+
+  function getLikeCountsMap() {
+    var raw = localStorage.getItem(LIKE_COUNT_KEY);
+    var o = safeParse(raw, {});
+    return o && typeof o === "object" && !Array.isArray(o) ? o : {};
+  }
+
+  function saveLikeCountsMap(map) {
+    localStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(map));
+  }
+
+  function isLiked(postKey) {
+    return !!getLikesMap()[postKey];
+  }
+
+  function getLikeDisplayCount(postKey, domBase) {
+    domBase = Number(domBase) || 0;
+    var c = getLikeCountsMap();
+    if (c[postKey] !== undefined && c[postKey] !== null) {
+      return Math.max(0, Number(c[postKey]));
+    }
+    return domBase + (isLiked(postKey) ? 1 : 0);
+  }
+
+  function toggleLike(postKey, domBase) {
+    domBase = Number(domBase) || 0;
+    if (!postKey) return { liked: false, count: domBase };
+    var counts = getLikeCountsMap();
+    var current;
+    if (counts[postKey] !== undefined && counts[postKey] !== null) {
+      current = Math.max(0, Number(counts[postKey]));
+    } else {
+      current = domBase + (isLiked(postKey) ? 1 : 0);
+    }
+    var m = getLikesMap();
+    var was = !!m[postKey];
+    if (was) {
+      delete m[postKey];
+      counts[postKey] = Math.max(0, current - 1);
+    } else {
+      m[postKey] = true;
+      counts[postKey] = current + 1;
+    }
+    saveLikesMap(m);
+    saveLikeCountsMap(counts);
+    return { liked: !was, count: counts[postKey] };
+  }
+
   function generateId() {
     return "ev_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 9);
   }
@@ -293,9 +439,17 @@
   window.HoosOutEvents = {
     STORAGE_KEY: STORAGE_KEY,
     getAll: getAll,
+    getById: getById,
     getHomeMapEvents: getHomeMapEvents,
     add: add,
+    updateEvent: updateEvent,
+    removeEvent: removeEvent,
     generateId: generateId,
+    getComments: getComments,
+    addComment: addComment,
+    isLiked: isLiked,
+    getLikeDisplayCount: getLikeDisplayCount,
+    toggleLike: toggleLike,
     toggleRsvp: toggleRsvp,
     toggleSaved: toggleSaved,
     isRsvpd: isRsvpd,
