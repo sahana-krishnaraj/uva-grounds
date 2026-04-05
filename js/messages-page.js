@@ -310,12 +310,29 @@ document.getElementById("msg-user-search")?.addEventListener("input", (e) => {
   }, 280);
 });
 
-document.getElementById("messages-compose-form")?.addEventListener("submit", async (e) => {
-  e.preventDefault();
+async function composeSend() {
   const ta = document.getElementById("messages-input");
-  const text = ta && ta.value;
+  const raw = ta && ta.value;
+  const text = raw != null ? String(raw).trim() : "";
+  if (!text) return;
   if (ta) ta.value = "";
-  await sendMessage(text || "");
+  await sendMessage(text);
+}
+
+document.getElementById("messages-compose-form")?.addEventListener("submit", (e) => {
+  e.preventDefault();
+  composeSend();
+});
+
+document.getElementById("messages-send-btn")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  composeSend();
+});
+
+document.getElementById("messages-input")?.addEventListener("keydown", (e) => {
+  if (e.isComposing || e.key !== "Enter" || e.shiftKey) return;
+  e.preventDefault();
+  composeSend();
 });
 
 document.getElementById("nav-logout")?.addEventListener("click", async () => {

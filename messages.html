@@ -51,8 +51,15 @@
         <div id="messages-thread-scroll" class="messages-thread-scroll"></div>
         <div id="messages-empty" class="messages-empty-state">Select a conversation or search for someone.</div>
         <form id="messages-compose-form" class="messages-compose" hidden>
-          <textarea id="messages-input" rows="2" placeholder="Message…"></textarea>
-          <button type="submit" class="btn btn-primary">Send</button>
+          <textarea
+            id="messages-input"
+            rows="2"
+            placeholder="Message…"
+            title="Enter to send · Shift+Enter for a new line"
+          ></textarea>
+          <button type="button" id="messages-send-btn" class="btn btn-primary messages-send-btn" aria-label="Send message">
+            <span class="messages-send-icon" aria-hidden="true">➤</span>
+          </button>
         </form>
       </section>
     </div>

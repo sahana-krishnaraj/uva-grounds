@@ -22,17 +22,6 @@
       <a href="home.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">My Feed</a>
       <a href="messages.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Messages</a>
       <a href="post.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem">Create</a>
-      <div class="nav-notifications-wrap">
-        <button type="button" id="nav-notif-bell" class="nav-notif-bell btn btn-ghost btn-sm" aria-label="Notifications" aria-expanded="false" style="padding: 0.5rem 0.65rem">🔔</button>
-        <span id="nav-notif-badge" class="nav-notif-badge" hidden aria-hidden="true">0</span>
-        <div id="nav-notif-panel" class="nav-notif-panel" hidden role="menu">
-          <div class="nav-notif-panel-head">
-            <span>Notifications</span>
-            <button type="button" class="btn btn-ghost btn-sm nav-notif-mark-all" id="nav-notif-mark-read">Mark all read</button>
-          </div>
-          <div id="nav-notif-dropdown" class="nav-notif-list"></div>
-        </div>
-      </div>
     </nav>
   </header>
  
@@ -76,6 +65,16 @@
             <label for="last-name">Last name <span class="req-mark" aria-hidden="true">*</span></label>
             <input id="last-name" type="text" autocomplete="family-name" required />
           </div>
+                        <div>
+            <label for="preferred-name">User Name<span class="req-mark" aria-hidden="true">*</span></label>
+            <input
+              id="preferred-name"
+              name="HoosOut handle"
+              type="text"
+              autocomplete="nickname"
+              required
+            />
+          </div>
         </div>
 
         <div>
@@ -115,7 +114,7 @@
           <input id="preferred-name" type="text" autocomplete="nickname" />
         </div>
 
-          <div>
+        <div>
           <label for="bio">About</label>
           <textarea id="bio" placeholder="Tell others about yourself (major, hometown, etc.)"></textarea>
         </div>
@@ -130,7 +129,7 @@
           />
         </div>
                 <div>
-          <label for="schedule">Hobbies/Interests <span class="optional-mark">(optional)</span></label>
+          <label for="schedule">Hobbies<span class="optional-mark">(optional)</span></label>
           <input
             id="interests"
             type="text"
@@ -153,7 +152,6 @@
   </main>
 
   <script src="js/session.js"></script>
-  <script src="js/notifications-store.js"></script>
   <script src="js/profile-photo.js"></script>
   <script type="module" src="js/settings-init.js"></script>
 

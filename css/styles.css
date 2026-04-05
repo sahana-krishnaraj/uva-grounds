@@ -1843,6 +1843,7 @@ select {
 
 .messages-compose {
   display: flex;
+  align-items: flex-end;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   border-top: 1px solid var(--border);
@@ -1859,6 +1860,26 @@ select {
   border: 1px solid var(--border);
   font-family: inherit;
   font-size: 0.9rem;
+}
+
+.messages-send-btn {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  box-shadow: 0 4px 14px rgba(229, 114, 0, 0.3);
+}
+
+.messages-send-icon {
+  display: block;
+  transform: translateX(1px);
 }
 
 .messages-empty-state {
