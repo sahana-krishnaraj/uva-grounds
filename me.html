@@ -28,6 +28,7 @@
         hidden
         >UVA Events</a>
       <a href="post.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Create</a>
+      <a href="messages.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Messages</a>
       <a href="index.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem" id="nav-logout">Log out</a>
     </nav>
   </header>
@@ -121,75 +122,9 @@
     </div>
   </main>
 
-<!-- Profile Info Pull -->
-
 <script src="js/session.js"></script>
 <script src="js/events-store.js"></script>
 <script src="js/profile-photo.js"></script>
-<script src="js/me-page.js"></script>
-<script>
-  (function () {
-    // 1. Nav visibility
-    var uvaLink = document.getElementById("nav-uva-cville");
-    if (uvaLink && window.HoosOutSession) {
-      if (window.HoosOutSession.isSignedIn()) uvaLink.removeAttribute("hidden");
-      else uvaLink.setAttribute("hidden", "");
-    }
-
-    // 2. Profile photo
-    if (window.HoosOutProfilePhoto) {
-      window.HoosOutProfilePhoto.initMeEditor(document.body);
-    }
-
-    // 3. Load profile from localStorage
-    var raw = localStorage.getItem("hoosout_profile");
-    if (!raw) return;
-
-    var p;
-    try { p = JSON.parse(raw); }
-    catch (err) { console.warn("HoosOut: could not parse profile", err); return; }
-
-    // 4. Full name + handle
-    
-    var fullName    = [p.firstName, p.lastName].filter(Boolean).join(" ");
-    //var displayName = p.preferredName || p.firstName || "you";
-    var handle      = "@" + p.preferredName.toLowerCase().replace(/\s+/g, "");
-
-    var nameEl   = document.querySelector(".me-hero-name");
-    var handleEl = document.querySelector(".me-hero-handle");
-
-    if (nameEl) nameEl.textContent = fullName || "Your HoosOut";
-    if (handleEl) {
-      var meta = [handle];
-      if (p.year)     meta.push(p.year);
-      if (p.pronouns) meta.push(p.pronouns);
-      handleEl.textContent = meta.join(" · ");
-    }
-
-    // 5. Avatar initials
-    var fallbackEl = document.querySelector(".js-hoosout-avatar-fallback");
-    if (fallbackEl && p.firstName) {
-      var initials = (p.firstName[0] + (p.lastName ? p.lastName[0] : "")).toUpperCase();
-      fallbackEl.textContent = initials;
-    }
-
-    // 6. Bio / intro strip
-// 6. Bio section
-var fields = [
-  { key: "bio",       selector: ".js-bio-bio" },
-  { key: "interests", selector: ".js-bio-interests" },
-  { key: "vibe",      selector: ".js-bio-vibe" },
-  { key: "location",  selector: ".js-bio-location" },
-  { key: "schedule",  selector: ".js-bio-schedule" },
-];
-fields.forEach(function(f) {
-  if (!p[f.key]) return;
-  var item = document.querySelector(f.selector);
-  if (!item) return;
-  item.querySelector(".me-bio-value").textContent = p[f.key];
-  item.removeAttribute("hidden");
-});
-  })();
-</script>
+<script type="module" src="js/me-init.js"></script>
 </body>
 </html>

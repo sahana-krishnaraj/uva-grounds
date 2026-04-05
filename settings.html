@@ -20,6 +20,7 @@
     </a>
     <nav class="nav-links">
       <a href="home.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">My Feed</a>
+      <a href="messages.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Messages</a>
       <a href="post.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem">Create</a>
     </nav>
   </header>
@@ -133,7 +134,7 @@
 
         <div style="display: flex; gap: .5rem; align-items: center">
           <button type="submit" class="btn btn-primary">Save changes</button>
-          <a href="profile.html" class="btn btn-ghost">Cancel</a>
+          <a href="me.html" class="btn btn-ghost">Cancel</a>
         </div>
 
       </form>
@@ -142,56 +143,7 @@
 
   <script src="js/session.js"></script>
   <script src="js/profile-photo.js"></script>
-  <script>
-    (function () {
-      // Init photo editor
-      if (window.HoosOutProfilePhoto) {
-        window.HoosOutProfilePhoto.initMeEditor(document.body);
-      }
-
-      // Pre-fill form from localStorage
-      var raw = localStorage.getItem("hoosout_profile");
-      var p = raw ? JSON.parse(raw) : {};
-
-      document.getElementById("first-name").value     = p.firstName     || "";
-      document.getElementById("last-name").value      = p.lastName      || "";
-      document.getElementById("preferred-name").value = p.preferredName || "";
-      document.getElementById("pronouns").value       = p.pronouns      || "";
-      document.getElementById("year").value           = p.year          || "";
-      document.getElementById("location-dorm").value  = p.location      || "";
-      document.getElementById("interests").value  = p.interests      || "";
-      // document.getElementById("vibe").value           = p.vibe          || "";
-      document.getElementById("schedule").value       = p.schedule      || "";
-      document.getElementById("bio").value            = p.bio           || "";
- 
-      // Save on submit
-      var form = document.getElementById("settings-form");
-      form.addEventListener("submit", function (e) {
-        e.preventDefault();
-        if (!form.reportValidity()) return;
-
-        // Read latest from storage so we don't wipe any keys we don't touch
-        var latest = localStorage.getItem("hoosout_profile");
-        var profile = latest ? JSON.parse(latest) : {};
-
-        profile.firstName     = document.getElementById("first-name").value.trim();
-        profile.lastName      = document.getElementById("last-name").value.trim();
-        profile.preferredName = document.getElementById("preferred-name").value.trim();
-        profile.pronouns      = document.getElementById("pronouns").value.trim();
-        profile.year          = document.getElementById("year").value;
-        profile.location      = document.getElementById("location-dorm").value.trim();
-        profile.interests     = document.getElementById("interests").value.trim();
-        // profile.vibe          = document.getElementById("vibe").value.trim();
-        profile.schedule      = document.getElementById("schedule").value.trim();
-        profile.bio           = document.getElementById("bio").value.trim();
-
-        localStorage.setItem("hoosout_profile", JSON.stringify(profile));
-
-        // Go back to profile after saving
-        window.location.href = "me.html";
-      });
-    })();
-  </script>
+  <script type="module" src="js/settings-init.js"></script>
 
 </body>
 </html>
