@@ -153,6 +153,11 @@
     var form = document.getElementById("profile-form");
     if (!form) return;
 
+    function fieldTrim(id) {
+      var el = document.getElementById(id);
+      return el && el.value != null ? String(el.value).trim() : "";
+    }
+
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       if (!form.reportValidity()) return;
@@ -164,8 +169,8 @@
         pronouns:      document.getElementById("pronouns").value.trim(),
         year:          document.getElementById("year").value,
         location:      document.getElementById("location-dorm").value.trim(),
-        interests:     document.getElementById("interests").value.trim(),
-        vibe:          document.getElementById("vibe").value.trim(),
+        interests:     fieldTrim("interests"),
+        vibe:          fieldTrim("vibe"),
         schedule:      document.getElementById("schedule").value.trim(),
         bio:           document.getElementById("bio").value.trim(),
       };
