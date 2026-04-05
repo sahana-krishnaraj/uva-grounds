@@ -112,9 +112,17 @@
           </datalist>
         </div>
         <div>
-          <label for="bio">About<span class="optional-mark"> (optional)</span> </label>
-          <textarea id="bio" name="bio" placeholder="Tell us about your major, hometown, and interests!"></textarea>
+          <label for="bio">About</label>
+          <textarea id="bio" placeholder="Tell others about yourself (major, hometown, etc.)"></textarea>
         </div>
+                        <div>
+          <label for="schedule">Hobbies/Interests <span class="optional-mark">(optional)</span></label>
+          <input
+            id="interests"
+            type="text"
+            placeholder="e.g. art, gym, hiking, etc."
+          />
+      </div>
         <div>
           <label for="location-dorm">Location/Dorm<span class="optional-mark"> (optional)</span></label>
           <input
@@ -134,10 +142,11 @@
           <input id="vibe" name="vibe" type="text" placeholder="chill, social, academic" />
         </div> -->
         <div>
-          <label for="schedule">Typical Availability (optional)</label>
-          <input id="schedule" name="schedule" type="text" placeholder="Thu afternoons, weekend mornings" />
+          <label for="schedule">Availability <span class="optional-mark">(optional)</span></label>
+          <input id="schedule" type="text" placeholder="Thu afternoons, weekend mornings" />
         </div>
-        <button type="submit" class="btn btn-primary btn-full">Save &amp; Go to Feed</button>
+        <button href="home.html" type="submit" class="btn btn-primary btn-full">Save &amp; Go to Feed</button>
+        <a href="signup.html" class="btn btn-ghost">Cancel</a>
       </form>
     </div>
   </main>
@@ -153,11 +162,6 @@
     var form = document.getElementById("profile-form");
     if (!form) return;
 
-    function fieldTrim(id) {
-      var el = document.getElementById(id);
-      return el && el.value != null ? String(el.value).trim() : "";
-    }
-
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       if (!form.reportValidity()) return;
@@ -169,8 +173,8 @@
         pronouns:      document.getElementById("pronouns").value.trim(),
         year:          document.getElementById("year").value,
         location:      document.getElementById("location-dorm").value.trim(),
-        interests:     fieldTrim("interests"),
-        vibe:          fieldTrim("vibe"),
+        interests:     document.getElementById("interests").value.trim(),
+        // vibe:          document.getElementById("vibe").value.trim(),
         schedule:      document.getElementById("schedule").value.trim(),
         bio:           document.getElementById("bio").value.trim(),
       };
@@ -184,3 +188,4 @@
 </script>
 </body>
 </html>
+
