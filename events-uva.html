@@ -28,6 +28,17 @@
         >UVA Events</a>
       <a href="post.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Create</a>
       <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
+      <div class="nav-notifications-wrap">
+        <button type="button" id="nav-notif-bell" class="nav-notif-bell btn btn-ghost btn-sm" aria-label="Notifications" aria-expanded="false" style="padding: 0.5rem 0.65rem">🔔</button>
+        <span id="nav-notif-badge" class="nav-notif-badge" hidden aria-hidden="true">0</span>
+        <div id="nav-notif-panel" class="nav-notif-panel" hidden role="menu">
+          <div class="nav-notif-panel-head">
+            <span>Notifications</span>
+            <button type="button" class="btn btn-ghost btn-sm nav-notif-mark-all" id="nav-notif-mark-read">Mark all read</button>
+          </div>
+          <div id="nav-notif-dropdown" class="nav-notif-list"></div>
+        </div>
+      </div>
       <a href="index.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem" id="nav-logout">Log out</a>
     </nav>
   </header>
@@ -205,6 +216,11 @@
   </footer>
 
   <script src="js/session.js"></script>
+  <script src="js/notifications-store.js"></script>
+  <script type="module">
+    import { initNotificationsUi } from "./js/notifications-ui.js";
+    initNotificationsUi();
+  </script>
   <script>
     (function () {
       if (!window.HoosOutSession || !window.HoosOutSession.isSignedIn()) {

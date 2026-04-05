@@ -1,5 +1,6 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
+import { initNotificationsUi } from "./notifications-ui.js";
 
 const user = await requireAuth();
 if (!user) throw new Error("");
@@ -92,3 +93,5 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
   }
   window.location.href = "me.html";
 });
+
+await initNotificationsUi();

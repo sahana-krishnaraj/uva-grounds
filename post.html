@@ -35,6 +35,17 @@
       <!-- <a href="post.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Create</a> -->
       <a href="messages.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Messages</a>
       <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
+      <div class="nav-notifications-wrap">
+        <button type="button" id="nav-notif-bell" class="nav-notif-bell btn btn-ghost btn-sm" aria-label="Notifications" aria-expanded="false" style="padding: 0.5rem 0.65rem">🔔</button>
+        <span id="nav-notif-badge" class="nav-notif-badge" hidden aria-hidden="true">0</span>
+        <div id="nav-notif-panel" class="nav-notif-panel" hidden role="menu">
+          <div class="nav-notif-panel-head">
+            <span>Notifications</span>
+            <button type="button" class="btn btn-ghost btn-sm nav-notif-mark-all" id="nav-notif-mark-read">Mark all read</button>
+          </div>
+          <div id="nav-notif-dropdown" class="nav-notif-list"></div>
+        </div>
+      </div>
       <a href="index.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem" id="nav-logout">Log out</a>
     </nav>
   </header>
@@ -42,7 +53,7 @@
   <main class="container" style="max-width: 680px">
     <h1 class="section-title" style="text-align: left; margin-bottom: 0.5rem">Create an event</h1>
     <p class="section-sub" style="text-align: left; margin-bottom: 1.5rem">
-      Pick the <strong>date</strong> and <strong>time</strong> with the calendar controls, and drop a <strong>pin on the map</strong>. Published events are stored in Supabase and appear on everyone’s feed (per visibility).
+      Pick the <strong>date</strong> and <strong>time</strong> with the calendar controls, and drop a <strong>pin on the map</strong>.
     </p>
 
     <div class="auth-card" style="box-shadow: none; width: 100%">
@@ -146,7 +157,7 @@
 
         <div>
           <label for="notes">Notes for attendees (optional)</label>
-          <textarea id="notes" name="notes" placeholder="Bring indoor shoes · we’ll grab Bros after"></textarea>
+          <textarea id="notes" name="notes" placeholder="Bring indoor shoes · we’ll grab Bodos after"></textarea>
         </div>
 
         <button type="submit" class="btn btn-primary btn-full">Publish to feed &amp; map</button>
@@ -158,6 +169,7 @@
 
   <script src="js/session.js"></script>
   <script src="js/events-store.js"></script>
+  <script src="js/notifications-store.js"></script>
   <script>
     (function () {
       var uva = document.getElementById("nav-uva-cville");

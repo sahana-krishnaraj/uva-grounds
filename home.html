@@ -36,6 +36,17 @@
       <a href="post.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Create</a>
       <a href="messages.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Messages</a>
       <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
+      <div class="nav-notifications-wrap">
+        <button type="button" id="nav-notif-bell" class="nav-notif-bell btn btn-ghost btn-sm" aria-label="Notifications" aria-expanded="false" style="padding: 0.5rem 0.65rem">🔔</button>
+        <span id="nav-notif-badge" class="nav-notif-badge" hidden aria-hidden="true">0</span>
+        <div id="nav-notif-panel" class="nav-notif-panel" hidden role="menu">
+          <div class="nav-notif-panel-head">
+            <span>Notifications</span>
+            <button type="button" class="btn btn-ghost btn-sm nav-notif-mark-all" id="nav-notif-mark-read">Mark all read</button>
+          </div>
+          <div id="nav-notif-dropdown" class="nav-notif-list"></div>
+        </div>
+      </div>
       <a href="index.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem" id="nav-logout">Log out</a>
     </nav>
   </header>
@@ -59,6 +70,30 @@
       <button type="button" class="chip" data-tag-filter="study">Study</button>
       <button type="button" class="chip" id="chip-around-cville" hidden data-tag-filter="cville">Around CVille</button>
     </div>
+        <div class="composer-card">
+      <div class="composer-avatar" data-hoosout-profile-avatar aria-hidden="true">
+        <img class="js-hoosout-avatar-img composer-avatar-img" alt="" hidden />
+        <span class="js-hoosout-avatar-fallback">You</span>
+      </div>
+      <div class="composer-input-wrap">
+        <a class="composer-fake-input" href="post.html">Start an event, or share what you’re doing…</a>
+      </div>
+      <div class="composer-shortcuts">
+        <a href="post.html">Post</a>
+      </div>
+    </div>
+
+    <section class="feed-map-section" aria-labelledby="map-heading">
+      <h2 id="map-heading" class="feed-map-heading">Events Map</h2>
+      <p class="feed-map-lead">
+        Map that shows you the location of the events that you posted. Orange pins appear at their map location. Pan and zoom around Grounds and Charlottesville.
+      </p>
+      <p id="feed-map-empty" class="feed-map-empty">
+        No events to show on the map yet.
+        <a href="post.html">Create an event</a>
+      </p>
+      <div id="feed-map" class="feed-map-canvas" role="application" aria-label="Map of posted events"></div>
+    </section>
     <p id="feed-filter-empty" class="feed-filter-empty" hidden style="margin: -0.5rem 0 1rem; font-size: 0.88rem; color: var(--text-muted)">
       No posts match this filter. Try another tab above.
     </p>
@@ -67,19 +102,7 @@
       Loading events…
     </p>
     <div id="feed-posts-mount" class="user-events-feed"></div>
-
-    <section class="feed-map-section" aria-labelledby="map-heading">
-      <h2 id="map-heading" class="feed-map-heading">Events map</h2>
-      <p class="feed-map-lead">
-        Sample feed events and every event you post show up here as orange pins at their map location. Pan and zoom around Grounds and Charlottesville.
-      </p>
-      <p id="feed-map-empty" class="feed-map-empty">
-        No events to show on the map yet.
-        <a href="post.html">Create an event</a>
-      </p>
-      <div id="feed-map" class="feed-map-canvas" role="application" aria-label="Map of posted events"></div>
-    </section>
-
+<!-- 
     <div class="stories-strip" aria-label="Friends and stories">
       <a class="story-ring" href="post.html">
         <div class="story-avatar">
@@ -91,20 +114,7 @@
         <span>Your story</span>
       </a>
       <div id="hoosout-community-stories" class="hoosout-community-stories" style="display: contents"></div>
-    </div>
-
-    <div class="composer-card">
-      <div class="composer-avatar" data-hoosout-profile-avatar aria-hidden="true">
-        <img class="js-hoosout-avatar-img composer-avatar-img" alt="" hidden />
-        <span class="js-hoosout-avatar-fallback">You</span>
-      </div>
-      <div class="composer-input-wrap">
-        <a class="composer-fake-input" href="post.html">Start an event, or share what you’re doing…</a>
-      </div>
-      <div class="composer-shortcuts">
-        <a href="post.html">Event</a>
-      </div>
-    </div>
+    </div> -->
 
   </main>
 
@@ -114,6 +124,7 @@
 
   <script src="js/session.js"></script>
   <script src="js/events-store.js"></script>
+  <script src="js/notifications-store.js"></script>
   <script src="js/profile-photo.js"></script>
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"

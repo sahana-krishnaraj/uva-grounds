@@ -4,6 +4,7 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
 import { syncHoosOutDisplayName, upsertMyProfileRow } from "./hoosout-profile-sync.js";
+import { initNotificationsUi } from "./notifications-ui.js";
 
 const UVA = [38.0336, -78.508];
 
@@ -260,12 +261,16 @@ function renderCommentItems(eventId) {
     .map((r) => {
       const prof = r.profiles || {};
       const who = displayNameFromProfile(prof);
+      const whoHref = r.user_id ? "profile-view.html?id=" + encodeURIComponent(r.user_id) : "";
+      const whoHtml = whoHref
+        ? '<a class="post-comment-author" href="' + escapeHtml(whoHref) + '"><strong>' + escapeHtml(who) + "</strong></a>"
+        : "<strong>" + escapeHtml(who) + "</strong>";
       const age = formatCommentAge(r.created_at);
       const dt = escapeHtml(r.created_at || "");
       return (
-        '<div class="post-comment-item"><p style="margin:0 0 0.25rem;font-size:0.9rem"><strong>' +
-        escapeHtml(who) +
-        "</strong> — " +
+        '<div class="post-comment-item"><p style="margin:0 0 0.25rem;font-size:0.9rem">' +
+        whoHtml +
+        " — " +
         escapeHtml(r.text) +
         '</p><span class="post-comment-meta" style="font-size:0.72rem;color:var(--text-muted)">' +
         '<time datetime="' +
@@ -280,9 +285,10 @@ function renderCommentItems(eventId) {
     .join("");
 }
 
-function renderEventCard(ev, profile, opts) {
+function renderEventCard(ev, profile, opts, attendeesForEvent) {
   const hostLabel = displayNameFromProfile(profile);
   const isSelf = ev.user_id === currentUserId;
+  const profileHref = ev.user_id ? "profile-view.html?id=" + encodeURIComponent(ev.user_id) : "#";
   const notesHtml = ev.notes
     ? '<div class="post-body"><p>' + escapeHtml(ev.notes) + "</p></div>"
     : "";
@@ -304,6 +310,27 @@ function renderEventCard(ev, profile, opts) {
   const avatarHtml = profile && profile.avatar_url
     ? '<img class="js-hoosout-avatar-img" alt="" src="' + escapeHtml(profile.avatar_url) + '" />'
     : '<span class="js-hoosout-avatar-fallback">' + escapeHtml(initials) + "</span>";
+
+  const attendeeBlock =
+    isSelf && attendeesForEvent && attendeesForEvent.length
+      ? '<div class="event-attendees">' +
+        '<p class="event-attendees-heading">RSVP\'d</p>' +
+        '<ul class="event-attendees-list">' +
+        attendeesForEvent
+          .map((a) => {
+            const nm = displayNameFromProfile(a.profile);
+            const href = "profile-view.html?id=" + encodeURIComponent(a.user_id);
+            return (
+              '<li><a class="event-attendee-link" href="' +
+              escapeHtml(href) +
+              '">' +
+              escapeHtml(nm) +
+              "</a></li>"
+            );
+          })
+          .join("") +
+        "</ul></div>"
+      : "";
 
   const fset = opts && opts.followingSet ? opts.followingSet : new Set();
   const followBlock = !isSelf
@@ -340,15 +367,23 @@ function renderEventCard(ev, profile, opts) {
     region +
     '" data-like-base="0">' +
     '<header class="post-header">' +
+    '<a class="post-profile-hit post-profile-hit--avatar" href="' +
+    escapeHtml(profileHref) +
+    '" aria-label="View ' +
+    escapeHtml(hostLabel) +
+    '\'s profile">' +
     '<div class="avatar avatar--md avatar--color-' +
     colorN +
     '" data-hoosout-profile-avatar aria-hidden="true">' +
     avatarHtml +
-    "</div>" +
+    "</div></a>" +
     '<div class="post-header-main">' +
-    '<div class="post-names"><strong>' +
+    '<div class="post-names">' +
+    '<a class="post-profile-hit post-profile-hit--name" href="' +
+    escapeHtml(profileHref) +
+    '"><strong>' +
     escapeHtml(hostLabel) +
-    "</strong> posted an event " +
+    "</strong></a> posted an event " +
     visibilityPill(ev.visibility) +
     "</div>" +
     '<div class="post-meta-line">' +
@@ -389,7 +424,9 @@ function renderEventCard(ev, profile, opts) {
     '<button type="button" class="btn btn-ghost btn-sm js-save-btn" data-event-id="' +
     escapeHtml(ev.id) +
     '">Save</button>' +
-    "</div></div>" +
+    "</div>" +
+    attendeeBlock +
+    "</div>" +
     '<div class="post-stats js-event-status" data-event-id="' +
     escapeHtml(ev.id) +
     '" data-status-base="' +
@@ -490,6 +527,36 @@ async function loadRsvpData(eventIds) {
     .eq("user_id", currentUserId)
     .in("event_id", eventIds);
   if (mine) mine.forEach((r) => myRsvpSet.add(r.event_id));
+}
+
+async function loadAttendeesForHostEvents(rows, hostId) {
+  const m = new Map();
+  if (!hostId) return m;
+  const myEventIds = rows.filter((r) => r.user_id === hostId).map((r) => r.id);
+  if (!myEventIds.length) return m;
+  const { data: rs, error } = await supabase
+    .from("rsvps")
+    .select("event_id, user_id")
+    .in("event_id", myEventIds);
+  if (error || !rs || !rs.length) return m;
+  const uids = [...new Set(rs.map((r) => r.user_id).filter(Boolean))];
+  const pmap = new Map();
+  if (uids.length) {
+    const pr = await supabase
+      .from("profiles")
+      .select("id, first_name, last_name, preferred_name, computing_id, avatar_url")
+      .in("id", uids);
+    (pr.data || []).forEach((p) => pmap.set(p.id, p));
+  }
+  rs.forEach((r) => {
+    if (!r.user_id) return;
+    const list = m.get(r.event_id) || [];
+    if (!list.some((x) => x.user_id === r.user_id)) {
+      list.push({ user_id: r.user_id, profile: pmap.get(r.user_id) || null });
+    }
+    m.set(r.event_id, list);
+  });
+  return m;
 }
 
 async function loadCommentsForEvents(eventIds) {
@@ -648,6 +715,8 @@ async function refreshFeed() {
   await loadRsvpData(eventIds);
   await loadCommentsForEvents(eventIds);
 
+  const attendeesByEvent = await loadAttendeesForHostEvents(rows, currentUserId);
+
   const opts = { followingSet };
 
   if (mount) {
@@ -665,7 +734,8 @@ async function refreshFeed() {
       mount.innerHTML = rows
         .map((row) => {
           const prof = row.profiles;
-          return renderEventCard(row, prof, opts);
+          const att = attendeesByEvent.get(row.id);
+          return renderEventCard(row, prof, opts, att);
         })
         .join("");
     }
@@ -1025,4 +1095,6 @@ function subscribeRealtime() {
       if (window.HoosOutSession) window.HoosOutSession.signOut();
     });
   }
+
+  await initNotificationsUi();
 })();

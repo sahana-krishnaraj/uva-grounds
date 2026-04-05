@@ -56,7 +56,7 @@ export async function initMePage() {
     if (fids.length) {
       const { data: profs } = await supabase
         .from("profiles")
-        .select("id, first_name, last_name, preferred_name, computing_id")
+        .select("id, first_name, last_name, preferred_name, computing_id, avatar_url")
         .in("id", fids);
       following = (profs || []).map((p) => {
         const name =
@@ -68,7 +68,7 @@ export async function initMePage() {
           p.first_name && p.last_name
             ? (p.first_name[0] + p.last_name[0]).toUpperCase()
             : (name || "?").slice(0, 2).toUpperCase();
-        return { id: p.id, name, initials };
+        return { id: p.id, name, initials, avatar_url: p.avatar_url || "" };
       });
     }
 
@@ -93,15 +93,21 @@ export async function initMePage() {
         followingEl.innerHTML = following
           .map(
             (p) =>
-              '<div class="me-row" data-person-id="' +
-              escapeHtml(p.id) +
+              '<div class="me-row me-row--following">' +
+              '<a class="me-row-profile-hit" href="profile-view.html?id=' +
+              encodeURIComponent(p.id) +
               '">' +
-              '<div class="me-row-avatar">' +
-              escapeHtml(p.initials || "?") +
-              "</div>" +
+              (p.avatar_url
+                ? '<img class="me-row-avatar me-row-avatar--img" src="' +
+                  escapeHtml(p.avatar_url) +
+                  '" alt="" />'
+                : '<div class="me-row-avatar">' +
+                  escapeHtml(p.initials || "?") +
+                  "</div>") +
               "<div><strong>" +
               escapeHtml(p.name) +
               '</strong><br><span class="me-row-sub">HoosOut student</span></div>' +
+              "</a>" +
               '<button type="button" class="btn btn-ghost btn-sm js-me-unfollow" data-person-id="' +
               escapeHtml(p.id) +
               '">Unfollow</button>' +

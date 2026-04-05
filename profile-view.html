@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Messages — HoosOut</title>
+  <title>Profile — HoosOut</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
@@ -20,7 +20,8 @@
     <nav class="nav-links">
       <a href="home.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">My Feed</a>
       <a href="post.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Create</a>
-      <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
+      <a href="messages.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Messages</a>
+      <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">My profile</a>
       <div class="nav-notifications-wrap">
         <button type="button" id="nav-notif-bell" class="nav-notif-bell btn btn-ghost btn-sm" aria-label="Notifications" aria-expanded="false" style="padding: 0.5rem 0.65rem">🔔</button>
         <span id="nav-notif-badge" class="nav-notif-badge" hidden aria-hidden="true">0</span>
@@ -36,34 +37,44 @@
     </nav>
   </header>
 
-  <main class="container" style="max-width: 1100px; padding-top: 1rem">
-    <h1 class="section-title" style="text-align: left; margin-bottom: 1rem; font-size: 1.35rem">Messages</h1>
-    <div class="messages-layout">
-      <aside class="messages-sidebar" aria-label="Conversations">
-        <div class="messages-search">
-          <input type="search" id="msg-user-search" placeholder="Search by name to start a chat…" autocomplete="off" aria-label="Find a student" />
+  <main class="container me-page">
+    <p style="margin-bottom: 1rem"><a href="home.html" class="btn btn-ghost btn-sm" style="padding: 0.35rem 0.75rem">← Back to feed</a></p>
+    <section class="me-hero">
+      <div class="me-hero-avatar profile-view-avatar" id="pv-avatar" aria-hidden="true">
+        <img class="js-pv-avatar-img me-hero-avatar-img" alt="" hidden />
+        <span class="js-pv-avatar-fallback">?</span>
+      </div>
+      <div class="me-hero-text">
+        <h1 class="me-hero-name" id="pv-name">…</h1>
+        <p class="me-hero-handle" id="pv-handle">…</p>
+        <div class="profile-view-actions" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem">
+          <button type="button" class="btn btn-primary btn-sm js-follow-btn btn-follow-pill" id="pv-follow" hidden>Follow</button>
+          <a class="btn btn-ghost btn-sm" id="pv-message" href="#" hidden>Message</a>
         </div>
-        <div id="messages-user-hits" class="messages-user-hits" hidden></div>
-        <div id="messages-convo-list" class="messages-convo-list" role="list"></div>
-      </aside>
-      <section class="messages-main" aria-label="Conversation">
-        <div id="messages-thread-header" class="messages-thread-header" hidden></div>
-        <div id="messages-thread-scroll" class="messages-thread-scroll"></div>
-        <div id="messages-empty" class="messages-empty-state">Select a conversation or search for someone.</div>
-        <form id="messages-compose-form" class="messages-compose" hidden>
-          <textarea id="messages-input" rows="2" placeholder="Message…"></textarea>
-          <button type="submit" class="btn btn-primary">Send</button>
-        </form>
-      </section>
-    </div>
+      </div>
+    </section>
+
+    <section class="me-bio-section">
+      <div class="me-bio-grid">
+        <div class="me-bio-item js-pv-bio" hidden>
+          <span class="me-bio-label">About:</span>
+          <span class="me-bio-value"></span>
+        </div>
+        <div class="me-bio-item js-pv-interests" hidden>
+          <span class="me-bio-label">Interests:</span>
+          <span class="me-bio-value"></span>
+        </div>
+        <div class="me-bio-item js-pv-location" hidden>
+          <span class="me-bio-label">Location:</span>
+          <span class="me-bio-value"></span>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <footer class="footer-site">
-    HoosOut · Messages are private between you and the other person.
-  </footer>
-
   <script src="js/session.js"></script>
+  <script src="js/events-store.js"></script>
   <script src="js/notifications-store.js"></script>
-  <script type="module" src="js/messages-page.js"></script>
+  <script type="module" src="js/profile-view.js"></script>
 </body>
 </html>

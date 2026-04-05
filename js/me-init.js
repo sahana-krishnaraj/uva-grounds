@@ -2,6 +2,7 @@ import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
 import { syncProfileToLocalStorage, applyCachedProfileToMeDom } from "./profile-cache.js";
 import { initMePage } from "./me-page.js";
+import { initNotificationsUi } from "./notifications-ui.js";
 
 await requireAuth();
 await syncProfileToLocalStorage();
@@ -22,3 +23,4 @@ if (out) {
   });
 }
 await initMePage();
+await initNotificationsUi();

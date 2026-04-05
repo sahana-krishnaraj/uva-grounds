@@ -3,6 +3,7 @@
  */
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
+import { initNotificationsUi } from "./notifications-ui.js";
 
 const user = await requireAuth();
 if (!user) throw new Error("auth");
@@ -29,6 +30,33 @@ function displayName(p) {
   return (p.computing_id || "").trim() || "Student";
 }
 
+function initialsFromProfile(p) {
+  if (!p) return "?";
+  const fn = (p.first_name || "").trim();
+  const ln = (p.last_name || "").trim();
+  if (fn && ln) return (fn[0] + ln[0]).toUpperCase();
+  if (fn) return fn.slice(0, 2).toUpperCase();
+  const c = (p.computing_id || "").trim();
+  return c ? c.slice(0, 2).toUpperCase() : "?";
+}
+
+function threadAvatarHtml(p, extraClass) {
+  const cls = "msg-avatar" + (extraClass ? " " + extraClass : "");
+  if (p && p.avatar_url) {
+    return (
+      '<span class="' +
+      cls +
+      ' msg-avatar--img" aria-hidden="true"><img class="msg-avatar-img" alt="" src="' +
+      escapeHtml(p.avatar_url) +
+      '" /></span>'
+    );
+  }
+  const ini = initialsFromProfile(p);
+  return (
+    '<span class="' + cls + '" aria-hidden="true"><span class="msg-avatar-fallback">' + escapeHtml(ini) + "</span></span>"
+  );
+}
+
 function partnerForRow(m) {
   return m.sender_id === myId ? m.recipient_id : m.sender_id;
 }
@@ -38,7 +66,7 @@ async function loadProfilesForIds(ids) {
   if (!need.length) return;
   const { data } = await supabase
     .from("profiles")
-    .select("id, first_name, last_name, preferred_name, computing_id")
+    .select("id, first_name, last_name, preferred_name, computing_id, avatar_url")
     .in("id", need);
   (data || []).forEach((p) => profileMap.set(p.id, p));
 }
@@ -79,7 +107,7 @@ async function fetchMessages() {
   }
   allMessages = data || [];
   const partners = allMessages.map(partnerForRow);
-  await loadProfilesForIds(partners);
+  await loadProfilesForIds([...partners, myId]);
 }
 
 function renderConvoList(threads) {
@@ -140,32 +168,57 @@ function renderThread(partnerId) {
   if (!scroll || !header || !empty || !form) return;
 
   const p = profileMap.get(partnerId);
-  header.textContent = displayName(p);
+  header.innerHTML =
+    '<a class="messages-thread-header-link" href="profile-view.html?id=' +
+    encodeURIComponent(partnerId) +
+    '">' +
+    escapeHtml(displayName(p)) +
+    "</a>";
   header.hidden = false;
   empty.hidden = true;
   form.hidden = false;
 
   const msgs = allMessages.filter((m) => partnerForRow(m) === partnerId);
+  const themP = profileMap.get(partnerId);
+  const meP = profileMap.get(myId);
   scroll.innerHTML = msgs
     .map((m) => {
       const mine = m.sender_id === myId;
       const bubble = mine ? "msg-bubble msg-bubble--me" : "msg-bubble msg-bubble--them";
-      const row = mine ? "msg-row msg-row--me" : "msg-row";
+      const row = mine ? "msg-row msg-row--me" : "msg-row msg-row--them";
       const time = new Date(m.created_at).toLocaleString(undefined, {
         month: "short",
         day: "numeric",
         hour: "numeric",
         minute: "2-digit",
       });
-      return (
+      const av = mine ? threadAvatarHtml(meP, "msg-avatar--me") : threadAvatarHtml(themP, "msg-avatar--them");
+      const inner =
         '<div class="' +
-        row +
-        '"><div><div class="' +
         bubble +
         '">' +
         escapeHtml(m.text) +
         '</div><div class="msg-meta">' +
         escapeHtml(time) +
+        "</div>";
+      if (mine) {
+        return (
+          '<div class="' +
+          row +
+          '"><div class="msg-row-inner msg-row-inner--me"><div class="msg-bubble-col">' +
+          inner +
+          '</div>' +
+          av +
+          "</div></div>"
+        );
+      }
+      return (
+        '<div class="' +
+        row +
+        '"><div class="msg-row-inner msg-row-inner--them">' +
+        av +
+        '<div class="msg-bubble-col">' +
+        inner +
         "</div></div></div>"
       );
     })
@@ -176,7 +229,7 @@ function renderThread(partnerId) {
 async function openThread(partnerId) {
   if (!partnerId) return;
   activePartnerId = partnerId;
-  await loadProfilesForIds([partnerId]);
+  await loadProfilesForIds([myId, partnerId]);
   await markThreadRead(partnerId);
   await fetchMessages();
   renderConvoList(buildThreads());
@@ -214,7 +267,7 @@ document.getElementById("msg-user-search")?.addEventListener("input", (e) => {
   searchTimer = setTimeout(async () => {
     const safe = q.replace(/[%]/g, "").slice(0, 48);
     const pat = `%${safe}%`;
-    const sel = "id, first_name, last_name, preferred_name, computing_id";
+    const sel = "id, first_name, last_name, preferred_name, computing_id, avatar_url";
     const [r1, r2, r3] = await Promise.all([
       supabase.from("profiles").select(sel).ilike("first_name", pat).neq("id", myId).limit(8),
       supabase.from("profiles").select(sel).ilike("last_name", pat).neq("id", myId).limit(8),
@@ -291,3 +344,5 @@ const withUser = params.get("with");
 if (withUser) {
   await openThread(withUser);
 }
+
+await initNotificationsUi();
