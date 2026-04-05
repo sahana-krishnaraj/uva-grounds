@@ -23,32 +23,33 @@
       </span>
       <span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span>
     </a>
+
     <nav class="nav-links">
-      <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
+      <!-- <a href="home.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">My Feed</a> -->
       <a
         href="events-uva.html"
         class="btn btn-ghost btn-sm"
         style="padding: 0.5rem 1rem"
         id="nav-uva-cville"
         hidden
-        >UVA &amp; Cville</a
-      >
-      <a href="post.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem">Create</a>
-      <a href="index.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem" id="nav-logout">Log out</a>
+        >UVA Events</a>
+      <a href="post.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Create</a>
+      <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
+      <a href="index.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem" id="nav-logout">Log out</a>
     </nav>
   </header>
 
   <main class="container container--feed">
     <div class="feed-header" style="margin-bottom: 0.5rem">
       <div>
-        <h1 style="font-size: 1.5rem">Home</h1>
+        <h1 style="font-size: 1.5rem">Feed</h1>
         <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem">See posts, events, and feedback from people you know</p>
       </div>
     </div>
 
     <div class="chips" role="toolbar" aria-label="Filter feed" style="margin-bottom: 1rem">
       <button type="button" class="chip active" data-filter="following">Following</button>
-      <button type="button" class="chip" data-filter="friends">Friends’ events</button>
+      <button type="button" class="chip" data-filter="friends">My  Events</button>
       <button type="button" class="chip" data-filter="sports">Sports</button>
       <button type="button" class="chip" data-filter="study">Study</button>
       <button type="button" class="chip" id="chip-around-cville" hidden data-filter="cville">Around CVille</button>

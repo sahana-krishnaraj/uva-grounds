@@ -18,37 +18,37 @@
       <span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span>
     </a>
     <nav class="nav-links">
-      <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
+      <a href="home.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">My Feed</a>
       <a
         href="events-uva.html"
         class="btn btn-ghost btn-sm"
         style="padding: 0.5rem 1rem"
-        aria-current="page"
-        >UVA &amp; Cville</a
-      >
-      <a href="home.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Home</a>
-      <a href="post.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem">Create</a>
-      <a href="index.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem" id="nav-logout-hub">Log out</a>
+        id="nav-uva-cville"
+        hidden
+        >UVA Events</a>
+      <a href="post.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Create</a>
+      <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
+      <a href="index.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem" id="nav-logout">Log out</a>
     </nav>
   </header>
 
   <main class="container">
     <div class="events-hub-intro">
-      <h1>Official UVA &amp; Charlottesville</h1>
+      <h1>Official UVA &amp; Charlottesville Events</h1>
       <p>
         Campus talks, athletics, arts, and what’s happening downtown — pulled from the UVA calendar and local listings.
       </p>
     </div>
 
     <nav class="events-jump" aria-label="Jump to section">
-      <a href="#uva-official">UVA official</a>
-      <a href="#cville" class="is-orange">Charlottesville</a>
-      <a href="home.html">Back to social feed</a>
+      <a href="#uva-official">University Events</a>
+      <a href="#cville">Charlottesville</a>
+      <!-- <a href="home.html">Back to social feed</a> -->
     </nav>
 
     <section class="events-section" id="uva-official">
       <div class="events-section-head">
-        <h2>UVA official events</h2>
+        <h2>UVA Official Events</h2>
         <span>Synced from UVA Calendar</span>
       </div>
       <div class="events-list">
@@ -125,8 +125,8 @@
 
     <section class="events-section" id="cville">
       <div class="events-section-head" style="border-bottom-color: var(--uva-navy)">
-        <h2>Charlottesville &amp; around</h2>
-        <span>Eventbrite &amp; venues · demo</span>
+        <h2>Charlottesville &amp; Around</h2>
+        <span>Eventbrite &amp; Venues</span>
       </div>
       <div class="events-list">
         <article class="hub-card">
