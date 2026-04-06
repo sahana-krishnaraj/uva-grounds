@@ -4,7 +4,8 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
 import { syncHoosOutDisplayName, upsertMyProfileRow } from "./hoosout-profile-sync.js";
-import { initNotificationsUi } from "./notifications-ui.js";
+import { notifyRsvp } from "./app-notifications.js";
+import { initNavActivityBadge } from "./nav-activity-badge.js";
 
 const UVA = [38.0336, -78.508];
 
@@ -307,9 +308,14 @@ function renderEventCard(ev, profile, opts, attendeesForEvent) {
   const feedTags = userEventFeedTags(ev);
   const initials = initialsFromProfile(profile);
   const colorN = hashStoryColor(ev.user_id || ev.id);
-  const avatarHtml = profile && profile.avatar_url
-    ? '<img class="js-hoosout-avatar-img" alt="" src="' + escapeHtml(profile.avatar_url) + '" />'
-    : '<span class="js-hoosout-avatar-fallback">' + escapeHtml(initials) + "</span>";
+  const avatarHtml =
+    profile && profile.avatar_url
+      ? '<img class="js-hoosout-avatar-img" alt="" src="' +
+        escapeHtml(profile.avatar_url) +
+        '" onerror="this.hidden=true;var n=this.nextElementSibling;if(n)n.hidden=false;" /><span class="js-hoosout-avatar-fallback" hidden>' +
+        escapeHtml(initials) +
+        "</span>"
+      : '<span class="js-hoosout-avatar-fallback">' + escapeHtml(initials) + "</span>";
 
   const attendeeBlock =
     isSelf && attendeesForEvent && attendeesForEvent.length
@@ -1013,6 +1019,26 @@ function subscribeRealtime() {
         }
         myRsvpSet.add(id);
         rsvpCountMap.set(id, (rsvpCountMap.get(id) || 0) + 1);
+        const { data: evRow } = await supabase
+          .from("events")
+          .select("user_id, title")
+          .eq("id", id)
+          .maybeSingle();
+        if (evRow && evRow.user_id && evRow.user_id !== currentUserId) {
+          const { data: myProf } = await supabase
+            .from("profiles")
+            .select("first_name, last_name, preferred_name, computing_id")
+            .eq("id", currentUserId)
+            .maybeSingle();
+          const actorName = displayNameFromProfile(myProf);
+          await notifyRsvp({
+            hostId: evRow.user_id,
+            actorId: currentUserId,
+            eventId: id,
+            eventTitle: evRow.title,
+            actorName,
+          });
+        }
       }
       refreshActionButtons(document);
     } else if (save) {
@@ -1096,5 +1122,5 @@ function subscribeRealtime() {
     });
   }
 
-  await initNotificationsUi();
+  await initNavActivityBadge();
 })();

@@ -3,7 +3,8 @@
  */
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
-import { initNotificationsUi } from "./notifications-ui.js";
+import { notifyDirectMessage } from "./app-notifications.js";
+import { initNavActivityBadge } from "./nav-activity-badge.js";
 
 const user = await requireAuth();
 if (!user) throw new Error("auth");
@@ -42,18 +43,20 @@ function initialsFromProfile(p) {
 
 function threadAvatarHtml(p, extraClass) {
   const cls = "msg-avatar" + (extraClass ? " " + extraClass : "");
+  const ini = escapeHtml(initialsFromProfile(p));
   if (p && p.avatar_url) {
     return (
       '<span class="' +
       cls +
-      ' msg-avatar--img" aria-hidden="true"><img class="msg-avatar-img" alt="" src="' +
+      ' msg-avatar--img" aria-hidden="true" data-ini="' +
+      ini +
+      '"><img class="msg-avatar-img" alt="" src="' +
       escapeHtml(p.avatar_url) +
       '" /></span>'
     );
   }
-  const ini = initialsFromProfile(p);
   return (
-    '<span class="' + cls + '" aria-hidden="true"><span class="msg-avatar-fallback">' + escapeHtml(ini) + "</span></span>"
+    '<span class="' + cls + '" aria-hidden="true"><span class="msg-avatar-fallback">' + ini + "</span></span>"
   );
 }
 
@@ -223,6 +226,15 @@ function renderThread(partnerId) {
       );
     })
     .join("");
+  scroll.querySelectorAll(".msg-avatar--img img").forEach((img) => {
+    img.addEventListener("error", function () {
+      const sp = img.closest(".msg-avatar");
+      if (!sp) return;
+      const ini = sp.getAttribute("data-ini") || "?";
+      sp.classList.remove("msg-avatar--img");
+      sp.innerHTML = '<span class="msg-avatar-fallback">' + ini + "</span>";
+    });
+  });
   scroll.scrollTop = scroll.scrollHeight;
 }
 
@@ -238,15 +250,31 @@ async function openThread(partnerId) {
 
 async function sendMessage(text) {
   if (!activePartnerId || !text.trim()) return;
-  const { error } = await supabase.from("messages").insert({
-    sender_id: myId,
-    recipient_id: activePartnerId,
-    text: text.trim(),
-    read: false,
-  });
+  const trimmed = text.trim();
+  const { data: inserted, error } = await supabase
+    .from("messages")
+    .insert({
+      sender_id: myId,
+      recipient_id: activePartnerId,
+      text: trimmed,
+      read: false,
+    })
+    .select("id")
+    .single();
   if (error) {
     alert(error.message);
     return;
+  }
+  await loadProfilesForIds([myId]);
+  const meP = profileMap.get(myId);
+  if (inserted && inserted.id) {
+    await notifyDirectMessage({
+      recipientId: activePartnerId,
+      senderId: myId,
+      messageId: inserted.id,
+      senderName: displayName(meP),
+      preview: trimmed,
+    });
   }
   await fetchMessages();
   renderConvoList(buildThreads());
@@ -362,4 +390,4 @@ if (withUser) {
   await openThread(withUser);
 }
 
-await initNotificationsUi();
+await initNavActivityBadge();

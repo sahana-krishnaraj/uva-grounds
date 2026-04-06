@@ -106,7 +106,7 @@ export async function initMePage() {
                   "</div>") +
               "<div><strong>" +
               escapeHtml(p.name) +
-              '</strong><br><span class="me-row-sub">HoosOut student</span></div>' +
+              '</strong><br><span class="me-row-sub">UVA student</span></div>' +
               "</a>" +
               '<button type="button" class="btn btn-ghost btn-sm js-me-unfollow" data-person-id="' +
               escapeHtml(p.id) +

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Activity — HoosOut</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="home.html">
+      <span class="logo-mark" aria-hidden="true">
+        <img src="images/logo-mark.svg" width="38" height="38" alt="" />
+      </span>
+      <span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span>
+    </a>
+    <nav class="nav-links">
+      <a href="home.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">My Feed</a>
+      <a href="post.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Create</a>
+      <a href="messages.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Messages</a>
+      <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
+      <a href="activity.html" class="btn btn-primary btn-sm nav-activity-link" style="padding: 0.5rem 1rem"
+        >Activity <span id="nav-activity-badge" class="nav-activity-badge" hidden></span></a
+      >
+      <a href="index.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem" id="nav-logout">Log out</a>
+    </nav>
+  </header>
+
+  <main class="container" style="max-width: 560px; padding-top: 1rem">
+    <h1 class="section-title" style="text-align: left; margin-bottom: 0.35rem">Activity</h1>
+    <p class="section-sub" style="text-align: left; margin-bottom: 1rem; color: var(--text-muted); font-size: 0.92rem">
+      RSVPs on your events and new messages.
+    </p>
+    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap">
+      <button type="button" class="btn btn-ghost btn-sm" id="act-mark-all">Mark all read</button>
+    </div>
+    <div id="activity-list" class="activity-list"></div>
+    <p id="activity-empty" class="me-empty" hidden style="margin-top: 1rem">Nothing new yet.</p>
+    <p id="activity-error" class="auth-form-msg" style="display: none; color: #b91c1c; margin-top: 1rem"></p>
+  </main>
+
+  <script src="js/session.js"></script>
+  <script type="module" src="js/activity-page.js"></script>
+</body>
+</html>

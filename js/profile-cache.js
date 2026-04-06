@@ -59,7 +59,7 @@ export function applyCachedProfileToMeDom() {
 
   const nameEl = document.querySelector(".me-hero-name");
   const handleEl = document.querySelector(".me-hero-handle");
-  if (nameEl) nameEl.textContent = fullName || "Your HoosOut";
+  if (nameEl) nameEl.textContent = fullName || "Your profile";
   if (handleEl) {
     const meta = [handle];
     if (p.year) meta.push(p.year);

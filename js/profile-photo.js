@@ -76,18 +76,35 @@
     reader.readAsDataURL(file);
   }
 
+  function avatarUrlFromProfileCache() {
+    try {
+      var raw = localStorage.getItem("hoosout_profile");
+      if (!raw) return "";
+      var p = JSON.parse(raw);
+      return p && p.avatarUrl ? String(p.avatarUrl) : "";
+    } catch (e) {
+      return "";
+    }
+  }
+
   function refreshTargets(root) {
     root = root || document;
-    var dataUrl = get();
+    var dataUrl = get() || avatarUrlFromProfileCache();
     root.querySelectorAll("[data-hoosout-profile-avatar]").forEach(function (container) {
       var img = container.querySelector(".js-hoosout-avatar-img");
       var fb = container.querySelector(".js-hoosout-avatar-fallback");
       container.classList.toggle("has-profile-photo", !!dataUrl);
       if (img) {
         if (dataUrl) {
+          img.onerror = function () {
+            img.removeAttribute("src");
+            img.setAttribute("hidden", "");
+            if (fb) fb.hidden = false;
+          };
           img.src = dataUrl;
           img.removeAttribute("hidden");
         } else {
+          img.onerror = null;
           img.removeAttribute("src");
           img.setAttribute("hidden", "");
         }

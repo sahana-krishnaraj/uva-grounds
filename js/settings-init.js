@@ -1,6 +1,6 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
-import { initNotificationsUi } from "./notifications-ui.js";
+import { initNavActivityBadge } from "./nav-activity-badge.js";
 
 const user = await requireAuth();
 if (!user) throw new Error("");
@@ -69,8 +69,17 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     bio: document.getElementById("bio").value.trim(),
   };
 
+  var photoDataUrl =
+    window.HoosOutProfilePhoto && typeof window.HoosOutProfilePhoto.get === "function"
+      ? window.HoosOutProfilePhoto.get() || ""
+      : "";
+  if (!photoDataUrl && row && row.avatar_url) photoDataUrl = row.avatar_url;
+
   try {
-    localStorage.setItem("hoosout_profile", JSON.stringify(profile));
+    localStorage.setItem(
+      "hoosout_profile",
+      JSON.stringify({ ...profile, avatarUrl: photoDataUrl || "" })
+    );
   } catch (err) {}
 
   const up = {
@@ -84,6 +93,7 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     interests: profile.interests || null,
     schedule: profile.schedule || null,
     bio: profile.bio || null,
+    avatar_url: photoDataUrl || null,
   };
 
   const { error } = await supabase.from("profiles").upsert(up, { onConflict: "id" });
@@ -94,4 +104,4 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
   window.location.href = "me.html";
 });
 
-await initNotificationsUi();
+await initNavActivityBadge();

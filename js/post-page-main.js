@@ -4,7 +4,7 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
 import { syncHoosOutDisplayName } from "./hoosout-profile-sync.js";
-import { initNotificationsUi } from "./notifications-ui.js";
+import { initNavActivityBadge } from "./nav-activity-badge.js";
 
 const UVA = [38.0336, -78.508];
 const DEFAULT_ZOOM = 15;
@@ -222,4 +222,4 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-await initNotificationsUi();
+await initNavActivityBadge();
