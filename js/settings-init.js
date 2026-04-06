@@ -1,10 +1,8 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
 import { initNavActivityBadge } from "./nav-activity-badge.js";
-
 const user = await requireAuth();
 if (!user) throw new Error("");
-
 function rowToLocal(row) {
   return {
     firstName: row.first_name || "",
@@ -20,7 +18,6 @@ function rowToLocal(row) {
     avatarUrl: row.avatar_url || "",
   };
 }
-
 function fillFormFromLocal(p) {
   document.getElementById("first-name").value = p.firstName || "";
   document.getElementById("last-name").value = p.lastName || "";
@@ -32,7 +29,6 @@ function fillFormFromLocal(p) {
   document.getElementById("schedule").value = p.schedule || "";
   document.getElementById("bio").value = p.bio || "";
 }
-
 const { data: row } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
 if (row) {
   try {
@@ -47,16 +43,13 @@ if (row) {
     } catch (e) {}
   }
 }
-
 if (window.HoosOutProfilePhoto && typeof window.HoosOutProfilePhoto.initMeEditor === "function") {
   window.HoosOutProfilePhoto.initMeEditor(document.body);
 }
-
 document.getElementById("settings-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const form = e.target;
   if (!form.reportValidity()) return;
-
   const profile = {
     firstName: document.getElementById("first-name").value.trim(),
     lastName: document.getElementById("last-name").value.trim(),
@@ -68,20 +61,16 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     schedule: document.getElementById("schedule").value.trim(),
     bio: document.getElementById("bio").value.trim(),
   };
-
   var photoDataUrl =
     window.HoosOutProfilePhoto && typeof window.HoosOutProfilePhoto.get === "function"
       ? window.HoosOutProfilePhoto.get() || ""
       : "";
-  if (!photoDataUrl && row && row.avatar_url) photoDataUrl = row.avatar_url;
-
   try {
     localStorage.setItem(
       "hoosout_profile",
       JSON.stringify({ ...profile, avatarUrl: photoDataUrl || "" })
     );
   } catch (err) {}
-
   const up = {
     id: user.id,
     first_name: profile.firstName || null,
@@ -95,7 +84,6 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     bio: profile.bio || null,
     avatar_url: photoDataUrl || null,
   };
-
   const { error } = await supabase.from("profiles").upsert(up, { onConflict: "id" });
   if (error) {
     alert(error.message);
@@ -103,5 +91,4 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
   }
   window.location.href = "me.html";
 });
-
 await initNavActivityBadge();

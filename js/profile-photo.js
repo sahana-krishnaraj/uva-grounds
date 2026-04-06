@@ -27,6 +27,18 @@
 
   function clear() {
     set("");
+    // Also wipe avatarUrl from the profile cache so refreshTargets
+    // doesn't restore the old photo via avatarUrlFromProfileCache().
+    try {
+      var raw = localStorage.getItem("hoosout_profile");
+      if (raw) {
+        var p = JSON.parse(raw);
+        if (p) {
+          p.avatarUrl = "";
+          localStorage.setItem("hoosout_profile", JSON.stringify(p));
+        }
+      }
+    } catch (e) {}
   }
 
   function fileToDataUrl(file, cb) {
@@ -94,8 +106,8 @@
       var img = container.querySelector(".js-hoosout-avatar-img");
       var fb = container.querySelector(".js-hoosout-avatar-fallback");
       container.classList.toggle("has-profile-photo", !!dataUrl);
-      if (img) {
-        if (dataUrl) {
+      if (dataUrl) {
+        if (img) {
           img.onerror = function () {
             img.removeAttribute("src");
             img.setAttribute("hidden", "");
@@ -103,14 +115,15 @@
           };
           img.src = dataUrl;
           img.removeAttribute("hidden");
-        } else {
+        }
+        if (fb) fb.hidden = true;
+      } else {
+        if (img) {
           img.onerror = null;
           img.removeAttribute("src");
           img.setAttribute("hidden", "");
         }
-      }
-      if (fb) {
-        fb.hidden = !!dataUrl;
+        if (fb) fb.hidden = false;
       }
     });
   }
@@ -125,6 +138,14 @@
     function sync() {
       refreshTargets(root);
       refreshTargets(document);
+      // Show Remove only when a photo is actually set
+      if (removeBtn) {
+        if (get() || avatarUrlFromProfileCache()) {
+          removeBtn.removeAttribute("hidden");
+        } else {
+          removeBtn.setAttribute("hidden", "");
+        }
+      }
     }
 
     if (changeBtn) {
