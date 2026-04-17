@@ -66,6 +66,11 @@ export async function upsertMyProfileRow() {
     var metaFn = String(m.first_name || "").trim();
     var metaLn = String(m.last_name || "").trim();
     var metaCid = String(m.computing_id || "").trim();
+    if (!metaCid && u.email) {
+      var em = String(u.email || "").trim();
+      var at = em.indexOf("@");
+      if (at > 0) metaCid = em.slice(0, at);
+    }
 
     var exRes = await supabase.from("profiles").select("*").eq("id", u.id).maybeSingle();
     var ex = exRes.data;

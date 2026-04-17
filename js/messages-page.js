@@ -1,18 +1,35 @@
 /**
- * Direct messages: list threads, send, mark read, Realtime sync.
+ * Direct messages: threads, reactions, read receipts, typing, presence, grouped UI.
  */
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
+import { redirectIfProfileIncomplete } from "./profile-gate.js";
+import {
+  ensureHoosOutOnlinePresence,
+  isPartnerOnline,
+  getHoosOutPresenceChannel,
+  onHoosOutPresenceSync,
+} from "./presence-channel.js";
 import { notifyDirectMessage } from "./app-notifications.js";
 import { initNavActivityBadge } from "./nav-activity-badge.js";
 
 const user = await requireAuth();
 if (!user) throw new Error("auth");
+if (await redirectIfProfileIncomplete(user)) throw new Error("profile_redirect");
 
 const myId = user.id;
+
 let activePartnerId = null;
 let profileMap = new Map();
 let allMessages = [];
+/** @type {Map<string, Array<{ id: string, message_id: string, user_id: string, emoji: string }>>} */
+let reactionsByMessage = new Map();
+let typingChannel = null;
+let typingHideTimer = null;
+let typingRemoteTimer = null;
+let realtimeChannel = null;
+
+const QUICK_REACTIONS = ["👍", "❤️", "😂", "‼️"];
 
 function escapeHtml(s) {
   if (s == null) return "";
@@ -88,13 +105,27 @@ function buildThreads() {
   }
   for (const t of threads.values()) {
     t.messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-    t.unread = t.messages.filter(
-      (m) => m.recipient_id === myId && m.read === false
-    ).length;
+    t.unread = t.messages.filter((m) => m.recipient_id === myId && m.read === false).length;
   }
-  return [...threads.values()].sort(
-    (a, b) => new Date(b.last.created_at) - new Date(a.last.created_at)
-  );
+  return [...threads.values()].sort((a, b) => new Date(b.last.created_at) - new Date(a.last.created_at));
+}
+
+async function loadReactionsForMessages(ids) {
+  reactionsByMessage = new Map();
+  if (!ids.length) return;
+  const { data, error } = await supabase
+    .from("message_reactions")
+    .select("id, message_id, user_id, emoji")
+    .in("message_id", ids);
+  if (error) {
+    console.warn("HoosOut: message_reactions", error.message);
+    return;
+  }
+  (data || []).forEach((r) => {
+    const list = reactionsByMessage.get(r.message_id) || [];
+    list.push(r);
+    reactionsByMessage.set(r.message_id, list);
+  });
 }
 
 async function fetchMessages() {
@@ -111,13 +142,187 @@ async function fetchMessages() {
   allMessages = data || [];
   const partners = allMessages.map(partnerForRow);
   await loadProfilesForIds([...partners, myId]);
+  const mids = allMessages.map((m) => m.id).filter(Boolean);
+  await loadReactionsForMessages(mids);
+}
+
+function formatGroupDivider(iso) {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString(undefined, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch (e) {
+    return iso;
+  }
+}
+
+function renderReactionsLine(messageId) {
+  const rows = reactionsByMessage.get(messageId) || [];
+  if (!rows.length) return "";
+  const counts = new Map();
+  rows.forEach((r) => counts.set(r.emoji, (counts.get(r.emoji) || 0) + 1));
+  const chips = [...counts.entries()]
+    .map(
+      ([emo, n]) =>
+        '<span class="msg-reaction-chip"><span class="msg-reaction-chip-emo">' +
+        escapeHtml(emo) +
+        '</span><span class="msg-reaction-chip-n">' +
+        n +
+        "</span></span>"
+    )
+    .join("");
+  return '<div class="msg-reactions-line">' + chips + "</div>";
+}
+
+function renderReactionPicks(messageId) {
+  return (
+    '<div class="msg-reaction-picks" role="toolbar" aria-label="React">' +
+    QUICK_REACTIONS.map(
+      (emo) =>
+        '<button type="button" class="msg-reaction-pick" data-msg-id="' +
+        escapeHtml(messageId) +
+        '" data-emoji="' +
+        escapeHtml(emo) +
+        '" title="React">' +
+        emo +
+        "</button>"
+    ).join("") +
+    "</div>"
+  );
+}
+
+function groupMessages(msgs) {
+  const groups = [];
+  for (const m of msgs) {
+    const last = groups[groups.length - 1];
+    if (last && last.sender_id === m.sender_id) last.items.push(m);
+    else groups.push({ sender_id: m.sender_id, items: [m] });
+  }
+  return groups;
+}
+
+function lastReadOutgoingMessageId(msgs) {
+  for (let i = msgs.length - 1; i >= 0; i--) {
+    if (msgs[i].sender_id === myId && msgs[i].read) return msgs[i].id;
+  }
+  return null;
+}
+
+function updateThreadHeaderPresence(partnerId) {
+  const header = document.getElementById("messages-thread-header");
+  if (!header || !partnerId) return;
+  const p = profileMap.get(partnerId);
+  const ch = getHoosOutPresenceChannel();
+  const online = isPartnerOnline(ch, partnerId);
+  const dotClass = online ? "presence-dot presence-dot--online" : "presence-dot presence-dot--offline";
+  const status = online ? "Online" : "Offline";
+  header.innerHTML =
+    '<a class="messages-thread-header-link" href="profile-view.html?id=' +
+    encodeURIComponent(partnerId) +
+    '">' +
+    escapeHtml(displayName(p)) +
+    '</a><span class="presence-wrap" title="' +
+    escapeHtml(status) +
+    '"><span class="' +
+    dotClass +
+    '" aria-hidden="true"></span><span class="presence-label">' +
+    escapeHtml(status) +
+    "</span></span>";
+  header.hidden = false;
+}
+
+function renderThread(partnerId) {
+  const header = document.getElementById("messages-thread-header");
+  const scroll = document.getElementById("messages-thread-scroll");
+  const empty = document.getElementById("messages-empty");
+  const form = document.getElementById("messages-compose-form");
+  if (!scroll || !header || !empty || !form) return;
+
+  updateThreadHeaderPresence(partnerId);
+
+  empty.hidden = true;
+  form.hidden = false;
+
+  const msgs = allMessages.filter((m) => partnerForRow(m) === partnerId);
+  const themP = profileMap.get(partnerId);
+  const meP = profileMap.get(myId);
+  const readReceiptId = lastReadOutgoingMessageId(msgs);
+  const groups = groupMessages(msgs);
+
+  const blocks = groups.map((g) => {
+    const mine = g.sender_id === myId;
+    const t0 = g.items[0].created_at;
+    const timeRow =
+      '<div class="msg-group-time"><span>' + escapeHtml(formatGroupDivider(t0)) + "</span></div>";
+
+    const bubbles = g.items
+      .map((m) => {
+        const bubbleCls = mine ? "msg-bubble msg-bubble--me" : "msg-bubble msg-bubble--them";
+        const readHtml =
+          mine && m.id === readReceiptId ? '<div class="msg-read-receipt">Read</div>' : "";
+        return (
+          '<div class="msg-bubble-wrap" data-msg-id="' +
+          escapeHtml(m.id) +
+          '">' +
+          '<div class="' +
+          bubbleCls +
+          '">' +
+          escapeHtml(m.text) +
+          "</div>" +
+          renderReactionsLine(m.id) +
+          renderReactionPicks(m.id) +
+          readHtml +
+          "</div>"
+        );
+      })
+      .join("");
+
+    if (mine) {
+      return (
+        '<div class="msg-group msg-group--me">' +
+        timeRow +
+        '<div class="msg-row-inner msg-row-inner--me">' +
+        '<div class="msg-stack msg-stack--me">' +
+        bubbles +
+        "</div></div></div>"
+      );
+    }
+    return (
+      '<div class="msg-group msg-group--them">' +
+      timeRow +
+      '<div class="msg-row-inner msg-row-inner--them">' +
+      threadAvatarHtml(themP, "msg-avatar--them") +
+      '<div class="msg-stack msg-stack--them">' +
+      bubbles +
+      "</div></div></div>"
+    );
+  });
+
+  scroll.innerHTML = blocks.join("");
+  scroll.querySelectorAll(".msg-avatar--img img").forEach((img) => {
+    img.addEventListener("error", function () {
+      const sp = img.closest(".msg-avatar");
+      if (!sp) return;
+      const ini = sp.getAttribute("data-ini") || "?";
+      sp.classList.remove("msg-avatar--img");
+      sp.innerHTML = '<span class="msg-avatar-fallback">' + ini + "</span>";
+    });
+  });
+  scroll.scrollTop = scroll.scrollHeight;
 }
 
 function renderConvoList(threads) {
   const el = document.getElementById("messages-convo-list");
   if (!el) return;
   if (!threads.length) {
-    el.innerHTML = '<p class="me-empty" style="margin:1rem;border:none">No conversations yet. Search for someone above.</p>';
+    el.innerHTML =
+      '<p class="me-empty" style="margin:1rem;border:none">No conversations yet. Search for someone above.</p>';
     return;
   }
   el.innerHTML = threads
@@ -127,9 +332,7 @@ function renderConvoList(threads) {
       const preview = escapeHtml((t.last.text || "").slice(0, 72));
       const unread =
         t.unread > 0
-          ? '<span class="messages-unread-badge">' +
-            (t.unread > 9 ? "9+" : t.unread) +
-            "</span>"
+          ? '<span class="messages-unread-badge">' + (t.unread > 9 ? "9+" : t.unread) + "</span>"
           : "";
       const active = t.partnerId === activePartnerId ? " is-active" : "";
       return (
@@ -163,79 +366,41 @@ async function markThreadRead(partnerId) {
     .eq("read", false);
 }
 
-function renderThread(partnerId) {
-  const header = document.getElementById("messages-thread-header");
-  const scroll = document.getElementById("messages-thread-scroll");
-  const empty = document.getElementById("messages-empty");
-  const form = document.getElementById("messages-compose-form");
-  if (!scroll || !header || !empty || !form) return;
+function typingChannelName(partnerId) {
+  return [myId, partnerId].sort().join(":") + ":typing";
+}
 
-  const p = profileMap.get(partnerId);
-  header.innerHTML =
-    '<a class="messages-thread-header-link" href="profile-view.html?id=' +
-    encodeURIComponent(partnerId) +
-    '">' +
-    escapeHtml(displayName(p)) +
-    "</a>";
-  header.hidden = false;
-  empty.hidden = true;
-  form.hidden = false;
+function detachTypingChannel() {
+  if (typingChannel) {
+    supabase.removeChannel(typingChannel);
+    typingChannel = null;
+  }
+}
 
-  const msgs = allMessages.filter((m) => partnerForRow(m) === partnerId);
-  const themP = profileMap.get(partnerId);
-  const meP = profileMap.get(myId);
-  scroll.innerHTML = msgs
-    .map((m) => {
-      const mine = m.sender_id === myId;
-      const bubble = mine ? "msg-bubble msg-bubble--me" : "msg-bubble msg-bubble--them";
-      const row = mine ? "msg-row msg-row--me" : "msg-row msg-row--them";
-      const time = new Date(m.created_at).toLocaleString(undefined, {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      });
-      const av = mine ? threadAvatarHtml(meP, "msg-avatar--me") : threadAvatarHtml(themP, "msg-avatar--them");
-      const inner =
-        '<div class="' +
-        bubble +
-        '">' +
-        escapeHtml(m.text) +
-        '</div><div class="msg-meta">' +
-        escapeHtml(time) +
-        "</div>";
-      if (mine) {
-        return (
-          '<div class="' +
-          row +
-          '"><div class="msg-row-inner msg-row-inner--me"><div class="msg-bubble-col">' +
-          inner +
-          '</div>' +
-          av +
-          "</div></div>"
-        );
-      }
-      return (
-        '<div class="' +
-        row +
-        '"><div class="msg-row-inner msg-row-inner--them">' +
-        av +
-        '<div class="msg-bubble-col">' +
-        inner +
-        "</div></div></div>"
-      );
+function attachTypingChannel(partnerId) {
+  detachTypingChannel();
+  if (!partnerId) return;
+  const name = typingChannelName(partnerId);
+  typingChannel = supabase.channel(name, { config: { broadcast: { self: false } } });
+  typingChannel
+    .on("broadcast", { event: "typing" }, ({ payload }) => {
+      if (!payload || payload.from === myId) return;
+      const el = document.getElementById("messages-typing");
+      if (!el) return;
+      el.textContent = displayName(profileMap.get(partnerId)) + " is typing…";
+      el.hidden = false;
+      if (typingRemoteTimer) clearTimeout(typingRemoteTimer);
+      typingRemoteTimer = setTimeout(() => {
+        el.hidden = true;
+        typingRemoteTimer = null;
+      }, 2400);
     })
-    .join("");
-  scroll.querySelectorAll(".msg-avatar--img img").forEach((img) => {
-    img.addEventListener("error", function () {
-      const sp = img.closest(".msg-avatar");
-      if (!sp) return;
-      const ini = sp.getAttribute("data-ini") || "?";
-      sp.classList.remove("msg-avatar--img");
-      sp.innerHTML = '<span class="msg-avatar-fallback">' + ini + "</span>";
-    });
-  });
-  scroll.scrollTop = scroll.scrollHeight;
+    .subscribe();
+}
+
+function sendTypingBroadcast(partnerId) {
+  if (!typingChannel || !partnerId) return;
+  typingChannel.send({ type: "broadcast", event: "typing", payload: { from: myId } });
 }
 
 async function openThread(partnerId) {
@@ -245,6 +410,7 @@ async function openThread(partnerId) {
   await markThreadRead(partnerId);
   await fetchMessages();
   renderConvoList(buildThreads());
+  attachTypingChannel(partnerId);
   renderThread(partnerId);
 }
 
@@ -281,6 +447,31 @@ async function sendMessage(text) {
   renderThread(activePartnerId);
 }
 
+async function toggleReaction(messageId, emoji) {
+  const { data: existing } = await supabase
+    .from("message_reactions")
+    .select("id, emoji")
+    .eq("message_id", messageId)
+    .eq("user_id", myId)
+    .maybeSingle();
+  if (existing) {
+    if (existing.emoji === emoji) {
+      await supabase.from("message_reactions").delete().eq("id", existing.id);
+    } else {
+      await supabase.from("message_reactions").update({ emoji }).eq("id", existing.id);
+    }
+  } else {
+    await supabase.from("message_reactions").insert({
+      message_id: messageId,
+      user_id: myId,
+      emoji,
+    });
+  }
+  await fetchMessages();
+  renderConvoList(buildThreads());
+  if (activePartnerId) renderThread(activePartnerId);
+}
+
 let searchTimer = null;
 document.getElementById("msg-user-search")?.addEventListener("input", (e) => {
   clearTimeout(searchTimer);
@@ -311,7 +502,8 @@ document.getElementById("msg-user-search")?.addEventListener("input", (e) => {
       if (rows.length >= 12) break;
     }
     if (!rows.length) {
-      hits.innerHTML = '<p style="padding:0.5rem 0.75rem;font-size:0.85rem;color:var(--text-muted)">No matches</p>';
+      hits.innerHTML =
+        '<p style="padding:0.5rem 0.75rem;font-size:0.85rem;color:var(--text-muted)">No matches</p>';
       hits.hidden = false;
       return;
     }
@@ -357,10 +549,41 @@ document.getElementById("messages-send-btn")?.addEventListener("click", (e) => {
   composeSend();
 });
 
-document.getElementById("messages-input")?.addEventListener("keydown", (e) => {
+const inputEl = document.getElementById("messages-input");
+inputEl?.addEventListener("keydown", (e) => {
   if (e.isComposing || e.key !== "Enter" || e.shiftKey) return;
   e.preventDefault();
   composeSend();
+});
+
+inputEl?.addEventListener("input", () => {
+  if (!activePartnerId) return;
+  const tip = document.getElementById("messages-typing");
+  if (tip && !tip.hidden && tip.textContent.indexOf("You") === 0) {
+    /* already showing self typing */
+  }
+  sendTypingBroadcast(activePartnerId);
+  const el = document.getElementById("messages-typing");
+  if (el) {
+    el.textContent = "You are typing…";
+    el.hidden = false;
+  }
+  if (typingHideTimer) clearTimeout(typingHideTimer);
+  typingHideTimer = setTimeout(() => {
+    const t = document.getElementById("messages-typing");
+    if (t && t.textContent === "You are typing…") t.hidden = true;
+    typingHideTimer = null;
+  }, 1200);
+});
+
+document.getElementById("messages-thread-scroll")?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".msg-reaction-pick");
+  if (!btn) return;
+  const mid = btn.getAttribute("data-msg-id");
+  const emo = btn.getAttribute("data-emoji");
+  if (!mid || !emo) return;
+  e.preventDefault();
+  toggleReaction(mid, emo);
 });
 
 document.getElementById("nav-logout")?.addEventListener("click", async () => {
@@ -371,11 +594,25 @@ document.getElementById("nav-logout")?.addEventListener("click", async () => {
 await fetchMessages();
 renderConvoList(buildThreads());
 
-supabase
+onHoosOutPresenceSync(() => {
+  if (activePartnerId) updateThreadHeaderPresence(activePartnerId);
+});
+ensureHoosOutOnlinePresence(myId);
+
+realtimeChannel = supabase
   .channel("hoosout-dm")
   .on(
     "postgres_changes",
     { event: "*", schema: "public", table: "messages" },
+    async () => {
+      await fetchMessages();
+      renderConvoList(buildThreads());
+      if (activePartnerId) renderThread(activePartnerId);
+    }
+  )
+  .on(
+    "postgres_changes",
+    { event: "*", schema: "public", table: "message_reactions" },
     async () => {
       await fetchMessages();
       renderConvoList(buildThreads());

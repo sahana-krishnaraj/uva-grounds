@@ -145,47 +145,16 @@
           <label for="schedule">Availability <span class="optional-mark">(optional)</span></label>
           <input id="schedule" type="text" placeholder="Thu afternoons, weekend mornings" />
         </div>
+        <p id="profile-setup-status" hidden style="margin: 0 0 0.75rem; font-size: 0.88rem"></p>
         <button href="home.html" type="submit" class="btn btn-primary btn-full">Save &amp; Go to Feed</button>
         <a href="signup.html" class="btn btn-ghost">Cancel</a>
       </form>
     </div>
   </main>
 
- <script src="js/session.js"></script>
-<script src="js/profile-photo.js"></script>
-<script>
-  (function () {
-    if (window.HoosOutProfilePhoto) {
-      window.HoosOutProfilePhoto.initMeEditor(document.body);
-    }
-
-    var form = document.getElementById("profile-form");
-    if (!form) return;
-
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      if (!form.reportValidity()) return;
-
-      var profile = {
-        firstName:     document.getElementById("first-name").value.trim(),
-        lastName:      document.getElementById("last-name").value.trim(),
-        preferredName: document.getElementById("preferred-name").value.trim(),
-        pronouns:      document.getElementById("pronouns").value.trim(),
-        year:          document.getElementById("year").value,
-        location:      document.getElementById("location-dorm").value.trim(),
-        interests:     document.getElementById("interests").value.trim(),
-        // vibe:          document.getElementById("vibe").value.trim(),
-        schedule:      document.getElementById("schedule").value.trim(),
-        bio:           document.getElementById("bio").value.trim(),
-      };
-
-      localStorage.setItem("hoosout_profile", JSON.stringify(profile));
-
-      if (window.HoosOutSession) window.HoosOutSession.signIn();
-      window.location.href = "home.html";
-    });
-  })();
-</script>
+  <script src="js/session.js"></script>
+  <script src="js/profile-photo.js"></script>
+  <script type="module" src="js/profile-setup.js"></script>
 </body>
 </html>
 

@@ -113,9 +113,16 @@
       btn.disabled = true;
       btn.textContent = "Creating account…";
 
+      const localPart = email.split("@")[0] || "";
+
       const { data, error } = await supabase.auth.signUp({
         email: email,
         password: pw,
+        options: {
+          data: {
+            computing_id: localPart,
+          },
+        },
       });
 
       if (error) {
@@ -125,8 +132,18 @@
         return;
       }
 
-      if (!data.session) {
-        await supabase.auth.signInWithPassword({ email: email, password: pw });
+      let session = data.session;
+      if (!session) {
+        const signInRes = await supabase.auth.signInWithPassword({ email: email, password: pw });
+        if (signInRes.error || !signInRes.data.session) {
+          showError(
+            "If email confirmation is required, check your inbox and then log in. Otherwise try again."
+          );
+          btn.disabled = false;
+          btn.textContent = "Create account";
+          return;
+        }
+        session = signInRes.data.session;
       }
 
       if (window.HoosOutSession) window.HoosOutSession.signIn();

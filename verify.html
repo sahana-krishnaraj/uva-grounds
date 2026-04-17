@@ -116,9 +116,18 @@
       }
 
       // OTP passed — now create the account with email + password
+      const nameParts = String(name || "")
+        .trim()
+        .split(/\s+/);
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
       const { error: signUpError } = await supabase.auth.updateUser({
         password: password,
-        data: { name: name, uva_id: uvaId }
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+          computing_id: String(uvaId || "").trim() || undefined,
+        },
       });
 
       if (signUpError) {

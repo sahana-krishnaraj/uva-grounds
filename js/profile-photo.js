@@ -15,6 +15,7 @@
   }
 
   function set(dataUrl) {
+    if (dataUrl) clearAvatarRemovedFlag();
     try {
       if (dataUrl) localStorage.setItem(KEY, dataUrl);
       else localStorage.removeItem(KEY);
@@ -25,8 +26,31 @@
     }
   }
 
+  var CLEARED_KEY = "hoosout_avatar_cleared_v1";
+
+  function markAvatarRemoved() {
+    try {
+      sessionStorage.setItem(CLEARED_KEY, "1");
+    } catch (e) {}
+  }
+
+  function clearAvatarRemovedFlag() {
+    try {
+      sessionStorage.removeItem(CLEARED_KEY);
+    } catch (e) {}
+  }
+
+  function wasAvatarExplicitlyCleared() {
+    try {
+      return sessionStorage.getItem(CLEARED_KEY) === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
   function clear() {
     set("");
+    markAvatarRemoved();
     // Also wipe avatarUrl from the profile cache so refreshTargets
     // doesn't restore the old photo via avatarUrlFromProfileCache().
     try {
@@ -179,6 +203,8 @@
     get: get,
     set: set,
     clear: clear,
+    wasAvatarExplicitlyCleared: wasAvatarExplicitlyCleared,
+    clearAvatarRemovedFlag: clearAvatarRemovedFlag,
     fileToDataUrl: fileToDataUrl,
     refreshTargets: refreshTargets,
     initMeEditor: initMeEditor,

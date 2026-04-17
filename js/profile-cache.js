@@ -2,12 +2,13 @@
  * Load profiles row into localStorage (hoosout_profile) for existing me.html UI.
  */
 import { supabase } from "./supabase.js";
+import { upsertMyProfileRow } from "./hoosout-profile-sync.js";
 
 export async function syncProfileToLocalStorage() {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return;
 
-  const { data: row, error } = await supabase
+  let { data: row, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", auth.user.id)
@@ -17,7 +18,13 @@ export async function syncProfileToLocalStorage() {
     console.warn("HoosOut: profile load", error.message);
     return;
   }
-  if (!row) return;
+  if (!row) {
+    await upsertMyProfileRow();
+    const again = await supabase.from("profiles").select("*").eq("id", auth.user.id).maybeSingle();
+    row = again.data;
+    error = again.error;
+    if (error || !row) return;
+  }
 
   const p = {
     firstName: row.first_name || "",

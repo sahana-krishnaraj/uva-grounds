@@ -1,8 +1,11 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
 import { initNavActivityBadge } from "./nav-activity-badge.js";
+import { uploadAvatarFromDataUrl } from "./avatar-upload.js";
+
 const user = await requireAuth();
 if (!user) throw new Error("");
+
 function rowToLocal(row) {
   return {
     firstName: row.first_name || "",
@@ -30,6 +33,8 @@ function fillFormFromLocal(p) {
   document.getElementById("bio").value = p.bio || "";
 }
 const { data: row } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+var savedAvatarUrl = row && row.avatar_url ? String(row.avatar_url).trim() : "";
+
 if (row) {
   try {
     localStorage.setItem("hoosout_profile", JSON.stringify(rowToLocal(row)));
@@ -65,10 +70,32 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     window.HoosOutProfilePhoto && typeof window.HoosOutProfilePhoto.get === "function"
       ? window.HoosOutProfilePhoto.get() || ""
       : "";
+  var cleared =
+    window.HoosOutProfilePhoto && typeof window.HoosOutProfilePhoto.wasAvatarExplicitlyCleared === "function"
+      ? window.HoosOutProfilePhoto.wasAvatarExplicitlyCleared()
+      : false;
+
+  var avatar_url = null;
+  if (cleared) {
+    avatar_url = null;
+    if (window.HoosOutProfilePhoto && typeof window.HoosOutProfilePhoto.clearAvatarRemovedFlag === "function") {
+      window.HoosOutProfilePhoto.clearAvatarRemovedFlag();
+    }
+  } else if (photoDataUrl) {
+    const up = await uploadAvatarFromDataUrl(user.id, photoDataUrl);
+    if (!up) {
+      alert("Could not upload photo. Add the “avatars” storage bucket (see supabase/migrations/004).");
+      return;
+    }
+    avatar_url = up;
+  } else {
+    avatar_url = savedAvatarUrl || null;
+  }
+
   try {
     localStorage.setItem(
       "hoosout_profile",
-      JSON.stringify({ ...profile, avatarUrl: photoDataUrl || "" })
+      JSON.stringify({ ...profile, avatarUrl: avatar_url || "" })
     );
   } catch (err) {}
   const up = {
@@ -82,13 +109,14 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     interests: profile.interests || null,
     schedule: profile.schedule || null,
     bio: profile.bio || null,
-    avatar_url: photoDataUrl || null,
+    avatar_url: avatar_url,
   };
   const { error } = await supabase.from("profiles").upsert(up, { onConflict: "id" });
   if (error) {
     alert(error.message);
     return;
   }
+  savedAvatarUrl = avatar_url || "";
   window.location.href = "me.html";
 });
 await initNavActivityBadge();

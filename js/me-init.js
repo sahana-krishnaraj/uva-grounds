@@ -1,10 +1,15 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
+import { redirectIfProfileIncomplete } from "./profile-gate.js";
+import { ensureHoosOutOnlinePresence } from "./presence-channel.js";
 import { syncProfileToLocalStorage, applyCachedProfileToMeDom } from "./profile-cache.js";
 import { initMePage } from "./me-page.js";
 import { initNavActivityBadge } from "./nav-activity-badge.js";
 
-await requireAuth();
+const meUser = await requireAuth();
+if (!meUser) throw new Error("");
+if (await redirectIfProfileIncomplete(meUser)) throw new Error("redirect");
+ensureHoosOutOnlinePresence(meUser.id);
 await syncProfileToLocalStorage();
 applyCachedProfileToMeDom();
 if (window.HoosOutProfilePhoto && typeof window.HoosOutProfilePhoto.initMeEditor === "function") {

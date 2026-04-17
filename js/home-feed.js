@@ -3,6 +3,8 @@
  */
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
+import { redirectIfProfileIncomplete } from "./profile-gate.js";
+import { ensureHoosOutOnlinePresence } from "./presence-channel.js";
 import { syncHoosOutDisplayName, upsertMyProfileRow } from "./hoosout-profile-sync.js";
 import { notifyRsvp } from "./app-notifications.js";
 import { initNavActivityBadge } from "./nav-activity-badge.js";
@@ -926,7 +928,10 @@ function subscribeRealtime() {
 (async function main() {
   const user = await requireAuth();
   if (!user) return;
+  if (await redirectIfProfileIncomplete(user)) return;
   currentUserId = user.id;
+
+  ensureHoosOutOnlinePresence(user.id);
 
   await syncHoosOutDisplayName();
   await upsertMyProfileRow();

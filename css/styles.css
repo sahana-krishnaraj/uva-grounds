@@ -1795,6 +1795,10 @@ select {
   padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--border);
   font-weight: 700;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
 }
 
 .messages-thread-scroll {
@@ -1803,7 +1807,136 @@ select {
   padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0;
+}
+
+.messages-typing {
+  padding: 0.35rem 1rem 0.5rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-style: italic;
+  min-height: 1.25rem;
+}
+
+.msg-group {
+  margin-top: 1rem;
+}
+
+.msg-group:first-child {
+  margin-top: 0;
+}
+
+.msg-group-time {
+  text-align: center;
+  margin: 0.35rem 0 0.65rem;
+}
+
+.msg-group-time span {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+
+.msg-group--me .msg-row-inner--me {
+  justify-content: flex-end;
+}
+
+.msg-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  max-width: 78%;
+}
+
+.msg-stack--me {
+  align-items: flex-end;
+}
+
+.msg-stack--them {
+  align-items: flex-start;
+}
+
+.msg-bubble-wrap {
+  max-width: 100%;
+}
+
+.msg-reactions-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.2rem;
+}
+
+.msg-reaction-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font-size: 0.72rem;
+  padding: 0.08rem 0.35rem;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+
+.msg-reaction-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  margin-top: 0.25rem;
+  opacity: 0.85;
+}
+
+.msg-reaction-pick {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.1rem;
+  border-radius: var(--radius-sm);
+}
+
+.msg-reaction-pick:hover {
+  background: var(--bg-elevated);
+}
+
+.msg-read-receipt {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-align: right;
+  margin-top: 0.15rem;
+  padding-right: 0.15rem;
+}
+
+.presence-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.presence-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.presence-dot--online {
+  background: #22c55e;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
+}
+
+.presence-dot--offline {
+  background: var(--border);
 }
 
 .msg-row {
