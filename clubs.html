@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -45,7 +45,9 @@
       </div>
     </div>
 
-    <section id="club-approval-panel" class="auth-card" style="box-shadow:none;width:100%;margin:1rem 0 1.2rem">
+    <div id="clubs-list" class="events-list"></div>
+
+    <section id="club-approval-panel" class="auth-card" style="box-shadow:none;width:100%;margin:1.5rem 0 0">
       <h3 style="margin:.1rem 0 .45rem">Club pages</h3>
       <p class="section-sub" style="margin:0 0 .85rem;text-align:left">New club pages are reviewed by the HoosOut team. Submit a request with your organization’s details; once approved, you can create your page and post events as that club.</p>
 
@@ -53,10 +55,7 @@
 
       <form id="club-request-form" class="form-grid" hidden>
         <p class="section-sub" style="margin:0 0 .5rem;text-align:left"><strong>Request a club page</strong> — tell us about your organization. We’ll email you in the app once it’s reviewed.</p>
-        <div class="two-col">
-          <div><label for="req-name">Organization name <span class="req-mark" aria-hidden="true">*</span></label><input id="req-name" type="text" required autocomplete="organization" /></div>
-          <div><label for="req-slug">Preferred URL slug</label><input id="req-slug" type="text" placeholder="e.g. robotics-club" /></div>
-        </div>
+        <div><label for="req-name">Organization name <span class="req-mark" aria-hidden="true">*</span></label><input id="req-name" type="text" required autocomplete="organization" /></div>
         <div><label for="req-category">Category <span class="req-mark" aria-hidden="true">*</span></label><select id="req-category" required><option value="academic">Academic</option><option value="cultural">Cultural</option><option value="sports">Sports</option><option value="service">Service</option><option value="arts">Arts</option><option value="professional">Professional</option><option value="other">Other</option></select></div>
         <div><label for="req-description">Description <span class="req-mark" aria-hidden="true">*</span></label><textarea id="req-description" required placeholder="Mission, meeting cadence, who can join…"></textarea></div>
         <div><label for="req-email">Contact email <span class="req-mark" aria-hidden="true">*</span></label><input id="req-email" type="email" required autocomplete="email" placeholder="Officer or org email" /></div>
@@ -66,17 +65,12 @@
 
       <form id="club-create-form" class="form-grid" hidden>
         <p class="section-sub" style="margin:0 0 .5rem;text-align:left"><strong>You’re approved</strong> — create your club page below. You can use the same details you requested or adjust them.</p>
-        <div class="two-col">
-          <div><label for="club-name">Club name <span class="req-mark" aria-hidden="true">*</span></label><input id="club-name" type="text" required /></div>
-          <div><label for="club-slug">Slug <span class="req-mark" aria-hidden="true">*</span></label><input id="club-slug" type="text" required placeholder="latin-student-association" /></div>
-        </div>
+        <div><label for="club-name">Club name <span class="req-mark" aria-hidden="true">*</span></label><input id="club-name" type="text" required /></div>
         <div><label for="club-category">Category <span class="req-mark" aria-hidden="true">*</span></label><select id="club-category"><option value="academic">Academic</option><option value="cultural">Cultural</option><option value="sports">Sports</option><option value="service">Service</option><option value="arts">Arts</option><option value="professional">Professional</option><option value="other">Other</option></select></div>
         <div><label for="club-description">Description</label><textarea id="club-description" placeholder="What your club does"></textarea></div>
         <button type="submit" class="btn btn-primary btn-sm">Create club page</button>
       </form>
     </section>
-
-    <div id="clubs-list" class="events-list"></div>
   </main>
   <script src="js/session.js"></script>
   <script type="module" src="js/clubs-page.js"></script>

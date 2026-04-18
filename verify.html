@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,16 +18,36 @@
       <span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span>
     </a>
     <nav class="nav-links">
-      <a href="clubs.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Clubs</a>
+      <a href="signup.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Sign up</a>
+      <a href="login.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Log in</a>
     </nav>
   </header>
 
   <main class="auth-main">
     <div class="auth-card">
-      <h1>Check your inbox</h1>
-      <p class="auth-lead">
-        We sent a 8-digit code to <strong id="verify-email"></strong>. Enter it below to confirm your account.
+      <p style="margin: 0 0 0.35rem; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--uva-orange)">
+        Verify your email
       </p>
+      <h1 style="margin: 0 0 0.5rem; font-size: 1.65rem; letter-spacing: -0.02em">Enter your verification code</h1>
+      <p class="auth-lead" id="verify-lead">
+        We sent a one-time code to <strong id="verify-email"></strong>. Type the code in the box below — after it’s accepted, you’ll go to the next steps to finish setting up HoosOut.
+      </p>
+
+      <div id="verify-email-manual-row" class="form-grid" hidden style="margin-bottom:1rem">
+        <p class="auth-lead" style="text-align:left;margin:0 0 .5rem;font-size:0.92rem">
+          Start by entering the same @virginia.edu address you used on sign up. Then you’ll see the code field.
+        </p>
+        <label for="verify-email-manual">Your @virginia.edu email</label>
+        <input
+          id="verify-email-manual"
+          type="email"
+          autocomplete="email"
+          placeholder="you@virginia.edu"
+          pattern=".+@virginia\.edu$"
+          title="Must be a @virginia.edu address"
+        />
+        <button type="button" class="btn btn-primary btn-sm" id="verify-email-continue">Continue</button>
+      </div>
 
       <form id="verify-form" novalidate>
         <label for="code">Verification code</label>
@@ -36,8 +56,8 @@
           name="code"
           type="text"
           inputmode="numeric"
-          maxlength="8"
-          placeholder="12345678"
+          maxlength="10"
+          placeholder="6-digit code"
           autocomplete="one-time-code"
           required
         />
@@ -57,23 +77,22 @@
     </div>
   </main>
 
+  <script src="js/session.js"></script>
   <script type="module">
     import { supabase } from "./js/supabase.js";
 
     var params = new URLSearchParams(window.location.search);
     var email = params.get("email") || sessionStorage.getItem("signup_email") || "";
-    var password = sessionStorage.getItem("signup_password") || "";
-    var name = sessionStorage.getItem("signup_name") || "";
-    var uvaId = sessionStorage.getItem("signup_uva_id") || "";
 
     var emailEl = document.getElementById("verify-email");
     var form = document.getElementById("verify-form");
     var msg = document.getElementById("verify-msg");
     var btn = document.getElementById("verify-submit");
     var resend = document.getElementById("resend-link");
-
-    if (emailEl) emailEl.textContent = email;
-    if (!email) window.location.href = "signup.html";
+    var manualRow = document.getElementById("verify-email-manual-row");
+    var manualInput = document.getElementById("verify-email-manual");
+    var manualContinue = document.getElementById("verify-email-continue");
+    var verifyLead = document.getElementById("verify-lead");
 
     function showError(text) {
       msg.style.display = "";
@@ -87,71 +106,138 @@
       msg.textContent = text;
     }
 
+    function setEmailDisplay(addr) {
+      email = (addr || "").trim();
+      if (emailEl) emailEl.textContent = email || "—";
+    }
+
+    if (!email) {
+      if (manualRow) manualRow.hidden = false;
+      if (verifyLead) verifyLead.style.display = "none";
+      if (form) form.hidden = true;
+      if (resend) resend.style.pointerEvents = "none";
+      if (resend) resend.style.opacity = "0.5";
+    } else {
+      setEmailDisplay(email);
+    }
+
+    manualContinue &&
+      manualContinue.addEventListener("click", function () {
+        var v = (manualInput && manualInput.value) || "";
+        v = v.trim();
+        if (!v || !/^.+@virginia\.edu$/i.test(v)) {
+          showError("Enter your @virginia.edu address.");
+          return;
+        }
+        email = v.toLowerCase();
+        try {
+          sessionStorage.setItem("signup_email", email);
+        } catch (e) {}
+        if (manualRow) manualRow.hidden = true;
+        if (verifyLead) verifyLead.style.display = "";
+        if (form) form.hidden = false;
+        if (resend) resend.style.pointerEvents = "";
+        if (resend) resend.style.opacity = "";
+        setEmailDisplay(email);
+        msg.style.display = "none";
+      });
+
+    function clearSignupStorage() {
+      try {
+        sessionStorage.removeItem("signup_email");
+        sessionStorage.removeItem("signup_first_name");
+        sessionStorage.removeItem("signup_last_name");
+        sessionStorage.removeItem("signup_username");
+        sessionStorage.removeItem("signup_computing_id");
+      } catch (e) {}
+    }
+
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
       if (!form.reportValidity()) return;
 
-      var code = document.getElementById("code").value.trim();
+      if (!email) {
+        showError("Enter your @virginia.edu email above first.");
+        return;
+      }
 
-      if (!/^\d{8}$/.test(code)) {
-        showError("Please enter the 8-digit code from your email.");
+      var raw = document.getElementById("code").value.trim().replace(/\s/g, "");
+      if (!/^\d{6,8}$/.test(raw)) {
+        showError("Enter the verification code from your email (6–8 digits).");
         return;
       }
 
       btn.disabled = true;
       btn.textContent = "Verifying…";
 
-      // Verify the OTP code
-      const { error: otpError } = await supabase.auth.verifyOtp({
+      const { data, error: otpError } = await supabase.auth.verifyOtp({
         email: email,
-        token: code,
-        type: "email"
+        token: raw,
+        type: "signup",
       });
 
-      if (otpError) {
-        showError("Invalid or expired code. Try again.");
+      if (otpError || !data.session || !data.session.user) {
+        showError("Invalid or expired code. Try again or use “Resend code”.");
         btn.disabled = false;
         btn.textContent = "Verify & continue";
         return;
       }
 
-      // OTP passed — now create the account with email + password
-      const nameParts = String(name || "")
-        .trim()
-        .split(/\s+/);
-      const firstName = nameParts[0] || "";
-      const lastName = nameParts.slice(1).join(" ") || "";
-      const { error: signUpError } = await supabase.auth.updateUser({
-        password: password,
+      var user = data.session.user;
+      var meta = user.user_metadata || {};
+      var firstName =
+        sessionStorage.getItem("signup_first_name") || meta.first_name || "";
+      var lastName = sessionStorage.getItem("signup_last_name") || meta.last_name || "";
+      var username = sessionStorage.getItem("signup_username") || meta.preferred_name || "";
+      var computingId =
+        sessionStorage.getItem("signup_computing_id") ||
+        meta.computing_id ||
+        (email.split("@")[0] || "");
+
+      const { error: pe } = await supabase.from("profiles").upsert(
+        {
+          id: user.id,
+          first_name: firstName || null,
+          last_name: lastName || null,
+          preferred_name: username || null,
+          computing_id: computingId || null,
+        },
+        { onConflict: "id" }
+      );
+      if (pe) {
+        console.warn("HoosOut: profile after verify", pe.message);
+      }
+
+      await supabase.auth.updateUser({
         data: {
           first_name: firstName,
           last_name: lastName,
-          computing_id: String(uvaId || "").trim() || undefined,
+          preferred_name: username,
+          computing_id: computingId,
         },
       });
 
-      if (signUpError) {
-        showError("Account setup failed. Please try again.");
-        btn.disabled = false;
-        btn.textContent = "Verify & continue";
-        return;
-      }
+      clearSignupStorage();
 
-      // Clean up sessionStorage
-      sessionStorage.removeItem("signup_password");
-      sessionStorage.removeItem("signup_email");
-      sessionStorage.removeItem("signup_name");
-      sessionStorage.removeItem("signup_uva_id");
-
-      // Success — go to profile
-      window.location.href = "profile.html";
+      if (window.HoosOutSession) window.HoosOutSession.signIn();
+      window.location.href = "signup-welcome.html";
     });
 
     resend.addEventListener("click", async function (e) {
       e.preventDefault();
-      const { error } = await supabase.auth.signInWithOtp({ email: email });
-      if (error) { showError("Couldn't resend. Try again."); return; }
-      showSuccess("Code resent! Check your inbox.");
+      if (!email) {
+        showError("Enter your @virginia.edu email first.");
+        return;
+      }
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: email,
+      });
+      if (error) {
+        showError(error.message || "Could not resend. Try again in a moment.");
+        return;
+      }
+      showSuccess("Code resent. Check your inbox (and spam).");
     });
   </script>
 </body>

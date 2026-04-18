@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -26,7 +26,9 @@
   <main class="auth-main">
     <div class="auth-card">
       <h1>Welcome back, Hoos!</h1>
-      <p class="auth-lead">Sign in with your UVA email and password.</p>
+      <p class="auth-lead">
+        Sign in with your UVA email and password. If you just signed up, confirm your email with the code we sent before logging in.
+      </p>
 
       <form id="login-form" novalidate>
         <label for="email">UVA email</label>
@@ -60,6 +62,8 @@
 
       <p class="auth-footer">
         First time here? <a href="signup.html">Create an account</a>
+        &nbsp;·&nbsp;
+        <a href="verify.html">Enter verification code</a>
       </p>
     </div>
   </main>
@@ -94,7 +98,18 @@
       });
 
       if (error) {
-        showError("Incorrect email or password. Try again.");
+        var hint = (error.message || "").toLowerCase();
+        if (
+          hint.indexOf("email not confirmed") !== -1 ||
+          hint.indexOf("not confirmed") !== -1 ||
+          (error.status === 400 && hint.indexOf("confirm") !== -1)
+        ) {
+          showError(
+            "Confirm your email first. Use the verification code from your inbox, or open the link in that email."
+          );
+        } else {
+          showError("Incorrect email or password. Try again.");
+        }
         btn.disabled = false;
         btn.textContent = "Log in";
         return;

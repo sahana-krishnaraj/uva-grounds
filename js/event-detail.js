@@ -84,8 +84,16 @@ function liForProfile(p) {
   const rsvpRes = await supabase.from("rsvps").select("user_id").eq("event_id", id);
   const respondedIds = [...new Set((rsvpRes.data || []).map((r) => r.user_id).filter(Boolean))];
 
-  const followerRows = await supabase.from("follows").select("follower_id").eq("following_id", me.id);
-  const invitePoolIds = [...new Set((followerRows.data || []).map((r) => r.follower_id).filter(Boolean))];
+  const followerRows = ev.club_id
+    ? await supabase.from("club_follows").select("user_id").eq("club_id", ev.club_id)
+    : await supabase.from("follows").select("follower_id").eq("following_id", me.id);
+  const invitePoolIds = ev.club_id
+    ? [...new Set((followerRows.data || []).map((r) => r.user_id).filter(Boolean))]
+    : [...new Set((followerRows.data || []).map((r) => r.follower_id).filter(Boolean))];
+  const pendingLabel = document.getElementById("ed-pending-label");
+  if (pendingLabel) {
+    pendingLabel.textContent = ev.club_id ? "Club followers not yet RSVP'd" : "Not responded yet";
+  }
   const profileIds = [...new Set([...respondedIds, ...invitePoolIds])];
 
   const profRes = profileIds.length

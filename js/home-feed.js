@@ -23,6 +23,8 @@ let eventLikeCountMap = new Map();
 let myLikedEventIds = new Set();
 let myProfileRow = null;
 let blockedUserIds = new Set();
+/** Club ids the current user follows (for Follow club button state). */
+let myFollowedClubIds = new Set();
 
 function escapeHtml(s) {
   if (!s) return "";
@@ -97,6 +99,15 @@ function displayNameFromProfile(p) {
   const ln = (p.last_name || "").trim();
   if (fn || ln) return [fn, ln].filter(Boolean).join(" ");
   return (p.computing_id || "").trim() || "Student";
+}
+
+function initialsFromClubName(name) {
+  const s = String(name || "").trim();
+  if (!s) return "CL";
+  const w = s.split(/\s+/).filter(Boolean);
+  if (w.length >= 2) return (w[0][0] + w[w.length - 1][0]).toUpperCase();
+  if (s.length >= 2) return s.slice(0, 2).toUpperCase();
+  return (s[0] + s[0]).toUpperCase();
 }
 
 function initialsFromProfile(p) {
@@ -310,21 +321,18 @@ function renderCommentItems(eventId) {
 }
 
 function renderEventCard(ev, profile, opts, attendeesForEvent) {
-  const hostLabel = displayNameFromProfile(profile);
-  const clubLine =
-    ev.club && ev.club.slug
-      ? '<div class="post-meta-line"><a class="post-profile-hit" href="club-page.html?slug=' +
-        encodeURIComponent(ev.club.slug) +
-        '"><strong>' +
-        escapeHtml(ev.club.name || "Club") +
-        "</strong></a>" +
-        (ev.club.is_verified ? ' <span class="badge badge-student">Verified</span>' : "") +
-        "</div>"
-      : "";
+  const isClubPost = !!(ev.club_id && ev.club && ev.club.slug);
+  const clubName = isClubPost ? (ev.club.name || "Club") : "";
+  const hostLabel = isClubPost ? clubName : displayNameFromProfile(profile);
+  const clubLine = "";
   const isSelf = ev.user_id === currentUserId;
   const nComments = opts && opts.commentCountMap ? opts.commentCountMap.get(ev.id) || 0 : 0;
   const nLikes = eventLikeCountMap.get(ev.id) || 0;
-  const profileHref = ev.user_id ? "profile-view.html?id=" + encodeURIComponent(ev.user_id) : "#";
+  const profileHref = isClubPost
+    ? "club-page.html?slug=" + encodeURIComponent(ev.club.slug)
+    : ev.user_id
+      ? "profile-view.html?id=" + encodeURIComponent(ev.user_id)
+      : "#";
   const detailHref = "event-detail.html?id=" + encodeURIComponent(ev.id);
   const notesHtml = ev.notes
     ? '<div class="post-body"><p>' + escapeHtml(trimPreview(ev.notes, 140)) + "</p></div>"
@@ -339,19 +347,26 @@ function renderEventCard(ev, profile, opts, attendeesForEvent) {
       .join(" ");
 
   const friendsOnlyAttr =
-    ev.visibility === "friends" || ev.visibility === "invite" ? "true" : "false";
+    !isClubPost && (ev.visibility === "friends" || ev.visibility === "invite") ? "true" : "false";
   const region = regionFromEvent(ev);
   const feedTags = userEventFeedTags(ev);
-  const initials = initialsFromProfile(profile);
-  const colorN = hashStoryColor(ev.user_id || ev.id);
+  const initials = isClubPost ? initialsFromClubName(clubName) : initialsFromProfile(profile);
+  const colorN = isClubPost ? hashStoryColor(ev.club_id || ev.club.slug) : hashStoryColor(ev.user_id || ev.id);
+  const logoUrl = isClubPost && ev.club.logo_url ? String(ev.club.logo_url).trim() : "";
   const avatarHtml =
-    profile && profile.avatar_url
+    isClubPost && logoUrl
       ? '<img class="js-hoosout-avatar-img" alt="" src="' +
-        escapeHtml(profile.avatar_url) +
+        escapeHtml(logoUrl) +
         '" onerror="this.hidden=true;var n=this.nextElementSibling;if(n)n.hidden=false;" /><span class="js-hoosout-avatar-fallback" hidden>' +
         escapeHtml(initials) +
         "</span>"
-      : '<span class="js-hoosout-avatar-fallback">' + escapeHtml(initials) + "</span>";
+      : !isClubPost && profile && profile.avatar_url
+        ? '<img class="js-hoosout-avatar-img" alt="" src="' +
+          escapeHtml(profile.avatar_url) +
+          '" onerror="this.hidden=true;var n=this.nextElementSibling;if(n)n.hidden=false;" /><span class="js-hoosout-avatar-fallback" hidden>' +
+          escapeHtml(initials) +
+          "</span>"
+        : '<span class="js-hoosout-avatar-fallback">' + escapeHtml(initials) + "</span>";
 
   const attendeeBlock =
     attendeesForEvent && attendeesForEvent.length
@@ -375,8 +390,34 @@ function renderEventCard(ev, profile, opts, attendeesForEvent) {
           .join("") +
         "</ul></div>"
       : "";
-  const pendingBlock =
-    isSelf && opts && opts.followingProfiles && opts.followingProfiles.length
+  const clubPendingBlock =
+    isSelf && isClubPost && opts && opts.clubPendingByEvent
+      ? (function () {
+          const pending = opts.clubPendingByEvent.get(ev.id) || [];
+          if (!pending.length) return "";
+          return (
+            '<div class="event-attendees" style="margin-top:0.5rem">' +
+            '<p class="event-attendees-heading">Club followers haven\'t RSVP\'d yet (' +
+            pending.length +
+            ")</p><ul class=\"event-attendees-list\">" +
+            pending
+              .map(function (p) {
+                return (
+                  '<li><a class="event-attendee-link" href="profile-view.html?id=' +
+                  encodeURIComponent(p.id) +
+                  '">' +
+                  escapeHtml(displayNameFromProfile(p)) +
+                  "</a></li>"
+                );
+              })
+              .join("") +
+            "</ul></div>"
+          );
+        })()
+      : "";
+
+  const pendingBlockHoosFriends =
+    isSelf && !isClubPost && opts && opts.followingProfiles && opts.followingProfiles.length
       ? (function () {
           const responded = new Set((attendeesForEvent || []).map((x) => x.user_id));
           const pending = opts.followingProfiles.filter((p) => !responded.has(p.id));
@@ -402,18 +443,30 @@ function renderEventCard(ev, profile, opts, attendeesForEvent) {
         })()
       : "";
 
+  const pendingBlockCombined = isClubPost ? clubPendingBlock : pendingBlockHoosFriends;
+
   const fset = opts && opts.followingSet ? opts.followingSet : new Set();
+  const cfset = opts && opts.myFollowedClubIds ? opts.myFollowedClubIds : new Set();
   const followBlock = !isSelf
-    ? '<div class="post-follow-wrap">' +
-      '<button type="button" class="js-follow-btn btn-follow-pill" data-person-id="' +
-      escapeHtml(ev.user_id) +
-      '" data-person-name="' +
-      escapeHtml(hostLabel) +
-      '" data-person-initials="' +
-      escapeHtml(initials) +
-      '">' +
-      (fset.has(ev.user_id) ? "Following" : "Follow") +
-      '</button><button type="button" class="post-menu" aria-label="Post options">⋯</button></div>'
+    ? isClubPost && ev.club_id
+      ? '<div class="post-follow-wrap">' +
+        '<button type="button" class="js-follow-club-btn btn-follow-pill" data-club-id="' +
+        escapeHtml(ev.club_id) +
+        '" data-club-name="' +
+        escapeHtml(clubName) +
+        '">' +
+        (cfset.has(ev.club_id) ? "Following" : "Follow club") +
+        '</button><button type="button" class="post-menu" aria-label="Post options">⋯</button></div>'
+      : '<div class="post-follow-wrap">' +
+        '<button type="button" class="js-follow-btn btn-follow-pill" data-person-id="' +
+        escapeHtml(ev.user_id) +
+        '" data-person-name="' +
+        escapeHtml(hostLabel) +
+        '" data-person-initials="' +
+        escapeHtml(initials) +
+        '">' +
+        (fset.has(ev.user_id) ? "Following" : "Follow") +
+        '</button><button type="button" class="post-menu" aria-label="Post options">⋯</button></div>'
     : "";
 
   const rsvpN = rsvpCountMap.get(ev.id) || 0;
@@ -429,7 +482,11 @@ function renderEventCard(ev, profile, opts, attendeesForEvent) {
     escapeHtml(ev.id) +
     '" data-author-id="' +
     escapeHtml(ev.user_id) +
-    '" data-post-kind="event" data-friends-only="' +
+    '" data-post-kind="event" data-is-club-post="' +
+    (isClubPost ? "true" : "false") +
+    '" data-club-id="' +
+    (isClubPost && ev.club_id ? escapeHtml(ev.club_id) : "") +
+    '" data-friends-only="' +
     friendsOnlyAttr +
     '" data-feed-tags="' +
     escapeHtml(feedTags) +
@@ -441,9 +498,9 @@ function renderEventCard(ev, profile, opts, attendeesForEvent) {
     '<header class="post-header">' +
     '<a class="post-profile-hit post-profile-hit--avatar" href="' +
     escapeHtml(profileHref) +
-    '" aria-label="View ' +
-    escapeHtml(hostLabel) +
-    '\'s profile">' +
+    '" aria-label="' +
+    (isClubPost ? "View " + escapeHtml(clubName) + " club page" : "View " + escapeHtml(hostLabel) + "'s profile") +
+    '">' +
     '<div class="avatar avatar--md avatar--color-' +
     colorN +
     '" aria-hidden="true">' +
@@ -456,7 +513,7 @@ function renderEventCard(ev, profile, opts, attendeesForEvent) {
     '"><strong>' +
     escapeHtml(hostLabel) +
     "</strong></a> posted an event " +
-    visibilityPill(ev.visibility) +
+    visibilityPill(isClubPost ? "public" : ev.visibility) +
     "</div>" +
     '<div class="post-meta-line">' +
     formatWhen(ev.created_at) +
@@ -469,7 +526,7 @@ function renderEventCard(ev, profile, opts, attendeesForEvent) {
     "</header>" +
     notesHtml +
     '<div class="post-event-box">' +
-    visibilityBadge(ev.visibility) +
+    visibilityBadge(isClubPost ? "public" : ev.visibility) +
     "<h3>" +
     escapeHtml(ev.title) +
     "</h3>" +
@@ -500,7 +557,7 @@ function renderEventCard(ev, profile, opts, attendeesForEvent) {
     '">Save</button>' +
     "</div>" +
     attendeeBlock +
-    pendingBlock +
+    pendingBlockCombined +
     '<div style="margin-top:0.5rem"><a class="btn btn-ghost btn-sm" href="' +
     escapeHtml(detailHref) +
     '">View details</a></div>' +
@@ -548,28 +605,7 @@ async function fetchProfilesByIds(ids) {
   return (data || []).map((p) => withResolvedAvatarUrl(p, supabase));
 }
 
-async function fetchEventsForScope() {
-  const evCols =
-    "id, user_id, club_id, title, activity_type, duration, start_iso, lat, lng, place_label, visibility, tags, vibe, notes, cap, created_at";
-  let query = supabase.from("events").select(evCols);
-
-  if (feedScope === "mine") {
-    query = query.eq("user_id", currentUserId);
-  } else if (feedScope === "discover") {
-    query = query.eq("visibility", "public");
-  } else if (feedScope === "following") {
-    if (!followingIds.length) {
-      return [];
-    }
-    query = query.in("user_id", followingIds);
-  }
-
-  const { data: evs, error } = await query.order("created_at", { ascending: false }).limit(200);
-  if (error) {
-    console.error("HoosOut: events", error.message);
-    return [];
-  }
-  const list = evs || [];
+async function enrichEventRowsWithProfilesAndClubs(list) {
   const uids = [...new Set(list.map((e) => e.user_id).filter(Boolean))];
   const pmap = new Map();
   const cmap = new Map();
@@ -585,12 +621,79 @@ async function fetchEventsForScope() {
   }
   const clubIds = [...new Set(list.map((e) => e.club_id).filter(Boolean))];
   if (clubIds.length) {
-    const { data: clubs } = await supabase.from("clubs").select("id,name,is_verified,slug").in("id", clubIds);
+    const { data: clubs } = await supabase.from("clubs").select("id,name,is_verified,slug,logo_url").in("id", clubIds);
     (clubs || []).forEach((c) => cmap.set(c.id, c));
   }
   return list
     .filter((e) => !blockedUserIds.has(e.user_id))
     .map((e) => ({ ...e, profiles: pmap.get(e.user_id) || null, club: e.club_id ? cmap.get(e.club_id) || null : null }));
+}
+
+async function fetchEventsForScope() {
+  const evCols =
+    "id, user_id, club_id, title, activity_type, duration, start_iso, lat, lng, place_label, visibility, tags, vibe, notes, cap, created_at";
+  let list = [];
+
+  if (feedScope === "mine") {
+    const { data: evs, error } = await supabase
+      .from("events")
+      .select(evCols)
+      .eq("user_id", currentUserId)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) {
+      console.error("HoosOut: events", error.message);
+      return [];
+    }
+    list = evs || [];
+  } else if (feedScope === "discover") {
+    const { data: evs, error } = await supabase
+      .from("events")
+      .select(evCols)
+      .eq("visibility", "public")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) {
+      console.error("HoosOut: events", error.message);
+      return [];
+    }
+    list = evs || [];
+  } else if (feedScope === "following") {
+    const { data: myCf } = await supabase.from("club_follows").select("club_id").eq("user_id", currentUserId);
+    const followedClubIds = [...new Set((myCf || []).map((r) => r.club_id).filter(Boolean))];
+    if (!followingIds.length && !followedClubIds.length) {
+      return [];
+    }
+    const parts = [];
+    if (followingIds.length) {
+      const r = await supabase
+        .from("events")
+        .select(evCols)
+        .in("user_id", followingIds)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (r.error) console.error("HoosOut: events following users", r.error.message);
+      if (r.data) parts.push(...r.data);
+    }
+    if (followedClubIds.length) {
+      const r = await supabase
+        .from("events")
+        .select(evCols)
+        .in("club_id", followedClubIds)
+        .eq("visibility", "public")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (r.error) console.error("HoosOut: events following clubs", r.error.message);
+      if (r.data) parts.push(...r.data);
+    }
+    const byId = new Map();
+    parts.forEach((e) => {
+      if (!byId.has(e.id)) byId.set(e.id, e);
+    });
+    list = [...byId.values()].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 200);
+  }
+
+  return enrichEventRowsWithProfilesAndClubs(list);
 }
 
 async function loadRsvpData(eventIds) {
@@ -638,6 +741,40 @@ async function loadAttendeesForAllEvents(rows) {
     m.set(r.event_id, list);
   });
   return m;
+}
+
+/** For your own club posts: show club followers who have not RSVP'd yet (replaces "HoosOut friends not responded"). */
+async function loadClubFollowerPendingForEvents(rows, attendeesByEvent) {
+  const out = new Map();
+  const selfClubEvents = rows.filter((r) => r.user_id === currentUserId && r.club_id);
+  if (!selfClubEvents.length) return out;
+  const clubIds = [...new Set(selfClubEvents.map((r) => r.club_id))];
+  const { data: follows } = await supabase.from("club_follows").select("club_id, user_id").in("club_id", clubIds);
+  const followersByClub = new Map();
+  (follows || []).forEach((f) => {
+    const list = followersByClub.get(f.club_id) || [];
+    list.push(f.user_id);
+    followersByClub.set(f.club_id, list);
+  });
+  const allPendingIds = [];
+  for (const ev of selfClubEvents) {
+    const followerIds = followersByClub.get(ev.club_id) || [];
+    const responded = new Set((attendeesByEvent.get(ev.id) || []).map((a) => a.user_id));
+    const pendingIds = followerIds.filter((uid) => !responded.has(uid));
+    pendingIds.forEach((id) => allPendingIds.push(id));
+    out.set(ev.id, pendingIds);
+  }
+  const uniq = [...new Set(allPendingIds)];
+  const profs = await fetchProfilesByIds(uniq);
+  const pmap = new Map(profs.map((p) => [p.id, p]));
+  for (const ev of selfClubEvents) {
+    const ids = out.get(ev.id) || [];
+    out.set(
+      ev.id,
+      ids.map((id) => pmap.get(id)).filter(Boolean)
+    );
+  }
+  return out;
 }
 
 async function loadLikeData(eventIds) {
@@ -721,6 +858,9 @@ async function refreshFeed() {
   const followingSet = new Set(followingIds);
   const followingProfiles = await fetchProfilesByIds(followingIds);
 
+  const { data: myCfRows } = await supabase.from("club_follows").select("club_id").eq("user_id", currentUserId);
+  myFollowedClubIds = new Set((myCfRows || []).map((r) => r.club_id).filter(Boolean));
+
   let rows = await fetchEventsForScope();
   feedRows = rows;
 
@@ -744,8 +884,15 @@ async function refreshFeed() {
   eventIds.forEach((id) => commentCountMap.set(id, (commentsByEvent.get(id) || []).length));
 
   const attendeesByEvent = await loadAttendeesForAllEvents(rows);
+  const clubPendingByEvent = await loadClubFollowerPendingForEvents(rows, attendeesByEvent);
 
-  const opts = { followingSet, commentCountMap, followingProfiles };
+  const opts = {
+    followingSet,
+    commentCountMap,
+    followingProfiles,
+    clubPendingByEvent,
+    myFollowedClubIds,
+  };
 
   if (mount) {
     if (!rows.length) {
@@ -753,8 +900,8 @@ async function refreshFeed() {
       if (emptyFeed) {
         emptyFeed.hidden = false;
         emptyFeed.textContent =
-          feedScope === "following" && !followingIds.length
-            ? "Follow people to see their events here, or open Discover for all public events."
+          feedScope === "following" && !followingIds.length && !myFollowedClubIds.size
+            ? "Follow people or clubs to see their events here, or open Discover for all public events."
             : "No events yet. Create one from the top nav.";
       }
     } else {
@@ -778,7 +925,7 @@ async function refreshFeed() {
 
   syncPostSocialUi(document);
   refreshActionButtons(document);
-  refreshFollowButtons(document, followingSet);
+  refreshFollowButtons(document, followingSet, myFollowedClubIds);
 }
 
 function rsvpActiveLabel(btn) {
@@ -819,13 +966,22 @@ function refreshActionButtons(root) {
   });
 }
 
-function refreshFollowButtons(root, followingSet) {
+function refreshFollowButtons(root, followingSet, followedClubIds) {
   const scope = root || document;
+  const clubSet = followedClubIds instanceof Set ? followedClubIds : new Set();
   scope.querySelectorAll(".js-follow-btn").forEach((btn) => {
     const pid = btn.getAttribute("data-person-id");
     if (!pid) return;
     const on = followingSet.has(pid);
     btn.textContent = on ? "Following" : "Follow";
+    btn.classList.toggle("btn-follow-active", on);
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  scope.querySelectorAll(".js-follow-club-btn").forEach((btn) => {
+    const cid = btn.getAttribute("data-club-id");
+    if (!cid) return;
+    const on = clubSet.has(cid);
+    btn.textContent = on ? "Following" : "Follow club";
     btn.classList.toggle("btn-follow-active", on);
     btn.setAttribute("aria-pressed", on ? "true" : "false");
   });
@@ -940,6 +1096,11 @@ function subscribeRealtime() {
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "follows" },
+      () => scheduleRefresh()
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "club_follows" },
       () => scheduleRefresh()
     )
     .on(
@@ -1083,11 +1244,12 @@ function subscribeRealtime() {
   });
 
   document.body.addEventListener("click", async (e) => {
-    const el = e.target.closest && e.target.closest(".js-rsvp-btn, .js-save-btn, .js-follow-btn");
+    const el = e.target.closest && e.target.closest(".js-rsvp-btn, .js-save-btn, .js-follow-btn, .js-follow-club-btn");
     if (!el) return;
     const rsvp = el.closest(".js-rsvp-btn");
     const save = el.closest(".js-save-btn");
     const follow = el.closest(".js-follow-btn");
+    const followClub = el.closest(".js-follow-club-btn");
     if (rsvp) {
       e.preventDefault();
       const id = rsvp.getAttribute("data-event-id");
@@ -1153,7 +1315,24 @@ function subscribeRealtime() {
         followingIds.push(pid);
       }
       const fs = new Set(followingIds);
-      refreshFollowButtons(document, fs);
+      refreshFollowButtons(document, fs, myFollowedClubIds);
+    } else if (followClub) {
+      e.preventDefault();
+      const cid = followClub.getAttribute("data-club-id");
+      if (!cid) return;
+      const isFollowing = myFollowedClubIds.has(cid);
+      if (isFollowing) {
+        await supabase.from("club_follows").delete().eq("club_id", cid).eq("user_id", currentUserId);
+        myFollowedClubIds.delete(cid);
+      } else {
+        const { error } = await supabase.from("club_follows").insert({ club_id: cid, user_id: currentUserId });
+        if (error) {
+          alert(error.message);
+          return;
+        }
+        myFollowedClubIds.add(cid);
+      }
+      refreshFollowButtons(document, new Set(followingIds), myFollowedClubIds);
     }
   });
 

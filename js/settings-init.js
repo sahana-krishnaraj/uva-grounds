@@ -54,7 +54,7 @@ const { data: prefRow } = await supabase
   .eq("user_id", user.id)
   .maybeSingle();
 const prefs = prefRow || {
-  dark_mode: (window.HoosOutSession && window.HoosOutSession.getTheme() === "dark") || false,
+  dark_mode: true,
   notify_rsvp: true,
   notify_likes: true,
   notify_comments: true,
@@ -63,7 +63,6 @@ const prefs = prefRow || {
   profile_visibility: "public",
 };
 
-document.getElementById("dark-mode-toggle").checked = !!prefs.dark_mode;
 document.getElementById("notify-rsvp").checked = !!prefs.notify_rsvp;
 document.getElementById("notify-likes").checked = !!prefs.notify_likes;
 document.getElementById("notify-comments").checked = !!prefs.notify_comments;
@@ -76,11 +75,9 @@ if (window.HoosOutProfilePhoto && typeof window.HoosOutProfilePhoto.initMeEditor
 }
 
 async function savePreferences() {
-  const dark = !!document.getElementById("dark-mode-toggle").checked;
-  if (window.HoosOutSession) window.HoosOutSession.setTheme(dark ? "dark" : "light");
   const payload = {
     user_id: user.id,
-    dark_mode: dark,
+    dark_mode: true,
     notify_rsvp: !!document.getElementById("notify-rsvp").checked,
     notify_likes: !!document.getElementById("notify-likes").checked,
     notify_comments: !!document.getElementById("notify-comments").checked,
@@ -93,7 +90,6 @@ async function savePreferences() {
 }
 
 [
-  "dark-mode-toggle",
   "notify-rsvp",
   "notify-likes",
   "notify-comments",

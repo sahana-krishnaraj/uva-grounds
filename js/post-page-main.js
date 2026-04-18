@@ -146,7 +146,24 @@ if (existing) {
   if (submitBtn) submitBtn.textContent = "Save changes";
 }
 
+function syncClubVisibilityUi() {
+  const visEl = document.getElementById("vis");
+  const clubSel = document.getElementById("club-id");
+  if (!visEl || !clubSel) return;
+  if (clubSel.value) {
+    visEl.value = "public";
+    visEl.disabled = true;
+    visEl.title = "Club posts are shown to anyone at UVA on HoosOut.";
+  } else {
+    visEl.disabled = false;
+    visEl.title = "";
+  }
+}
+
+document.getElementById("club-id")?.addEventListener("change", syncClubVisibilityUi);
+
 await loadMyClubs();
+syncClubVisibilityUi();
 
 function nominatimSearch(query) {
   if (!query || !query.trim()) return;
@@ -240,6 +257,10 @@ form.addEventListener("submit", async (e) => {
   if (!row.title || !row.duration || !row.visibility || !row.place_label) {
     alert("Title, duration, location, and visibility are required.");
     return;
+  }
+
+  if (row.club_id) {
+    row.visibility = "public";
   }
 
   if (editId && existing) {

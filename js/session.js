@@ -3,26 +3,13 @@
  */
 (function () {
   var SESSION_KEY = "hoosout_signed_in_v1";
-  var THEME_KEY = "hoosout_theme_v1";
 
-  function applyTheme(theme) {
+  function applyTheme() {
     if (typeof document === "undefined") return;
-    var t = theme === "dark" ? "dark" : "light";
-    document.documentElement.setAttribute("data-theme", t);
-    try {
-      localStorage.setItem(THEME_KEY, t);
-    } catch (e) {}
+    document.documentElement.setAttribute("data-theme", "dark");
   }
 
-  function currentTheme() {
-    try {
-      var saved = localStorage.getItem(THEME_KEY);
-      if (saved === "dark" || saved === "light") return saved;
-    } catch (e) {}
-    return "dark";
-  }
-
-  applyTheme(currentTheme());
+  applyTheme();
 
   window.HoosOutSession = {
     signIn: function () {
@@ -41,12 +28,6 @@
       } catch (e) {
         return false;
       }
-    },
-    setTheme: function (theme) {
-      applyTheme(theme);
-    },
-    getTheme: function () {
-      return currentTheme();
     },
   };
 })();

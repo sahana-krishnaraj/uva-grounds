@@ -10,6 +10,17 @@ function esc(s) {
   return d.innerHTML;
 }
 
+/** Lowercase URL-safe slug from a display name (no user-facing slug field). */
+function slugFromName(name) {
+  const s = String(name || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return s || "club";
+}
+
 let allClubs = [];
 let myFollowed = new Set();
 /** @type {{ user_id: string } | null} */
@@ -148,8 +159,7 @@ function render() {
 document.getElementById("club-request-form")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const proposed_name = (document.getElementById("req-name").value || "").trim();
-  const rawSlug = (document.getElementById("req-slug").value || "").trim().toLowerCase();
-  const proposed_slug = rawSlug ? rawSlug.replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") : null;
+  const proposed_slug = slugFromName(proposed_name) || null;
   const category = document.getElementById("req-category").value || "other";
   const description = (document.getElementById("req-description").value || "").trim();
   const contact_email = (document.getElementById("req-email").value || "").trim();
@@ -181,10 +191,7 @@ document.getElementById("club-create-form")?.addEventListener("submit", async (e
     return;
   }
   const name = (document.getElementById("club-name").value || "").trim();
-  const slug = (document.getElementById("club-slug").value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "-");
+  const slug = slugFromName(name);
   const category = document.getElementById("club-category").value || "other";
   const description = (document.getElementById("club-description").value || "").trim();
   if (!name || !slug) return;
