@@ -18,7 +18,7 @@ export async function redirectIfProfileIncomplete(user) {
   if (!user || !user.id) return false;
   const path = typeof location !== "undefined" ? location.pathname || "" : "";
   if (
-    /profile\.html|settings\.html|signup\.html|signup-welcome\.html|login\.html|verify\.html|index\.html|activity\.html|profile-view\.html|events-uva\.html|events-map\.html$/i.test(
+    /profile\.html|settings\.html|signup\.html|signup-welcome\.html|login\.html|index\.html|activity\.html|profile-view\.html|events-uva\.html|events-map\.html$/i.test(
       path
     )
   ) {

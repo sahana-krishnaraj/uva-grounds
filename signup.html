@@ -26,9 +26,7 @@
   <main class="auth-main">
     <div class="auth-card">
       <h1>Join the UVA network!</h1>
-      <p class="auth-lead">
-        Create an account with your @virginia.edu email. We’ll send a one-time verification code to that address the first time you sign up.
-      </p>
+      <p class="auth-lead">Create an account with your @virginia.edu email and password.</p>
 
       <form id="signup-form" class="form-grid" novalidate>
         <div class="two-col">
@@ -99,26 +97,10 @@
         <button type="submit" class="btn btn-primary btn-full" id="signup-submit">Create account</button>
       </form>
 
-      <section id="signup-verify-panel" class="auth-card" style="box-shadow: none; margin-top: 0" hidden aria-live="polite">
-        <p style="margin: 0 0 0.35rem; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--uva-orange)">
-          Next step
-        </p>
-        <h2 style="margin: 0 0 0.5rem; font-size: 1.25rem; letter-spacing: -0.02em">Enter your verification code</h2>
-        <p class="auth-lead" style="text-align: left; margin-bottom: 1rem">
-          We emailed a one-time code to <strong id="signup-verify-email-display"></strong>. On the next screen you’ll type that code — then you can finish setting up your account.
-        </p>
-        <a class="btn btn-primary btn-full" id="signup-verify-continue" href="verify.html">Go to verification page</a>
-        <p class="auth-footer" style="margin-top: 1rem; margin-bottom: 0">
-          Wrong email? <a href="signup.html">Start over</a>
-        </p>
-      </section>
-
       <p id="signup-msg" class="auth-form-msg" style="display: none; margin-top: 0.75rem; font-size: 0.88rem"></p>
 
-      <p class="auth-footer" id="signup-footer-default">
+      <p class="auth-footer">
         Already have an account? <a href="login.html">Log in</a>
-        &nbsp;·&nbsp;
-        <a href="verify.html">Already have a code?</a>
       </p>
     </div>
   </main>
@@ -228,30 +210,13 @@
         return;
       }
 
-      /* Email confirmation: no session until they verify with the code from email */
+      /* Supabase may return no session until email is confirmed (project setting). */
       if (!data.session && data.user) {
-        try {
-          sessionStorage.setItem("signup_email", email);
-          sessionStorage.setItem("signup_first_name", firstName);
-          sessionStorage.setItem("signup_last_name", lastName);
-          sessionStorage.setItem("signup_username", username);
-          sessionStorage.setItem("signup_computing_id", localPart);
-        } catch (e) {}
-        var verifyUrl = "verify.html?email=" + encodeURIComponent(email);
-        var panel = document.getElementById("signup-verify-panel");
-        var emailDisp = document.getElementById("signup-verify-email-display");
-        var continueBtn = document.getElementById("signup-verify-continue");
-        var footer = document.getElementById("signup-footer-default");
-        if (emailDisp) emailDisp.textContent = email;
-        if (continueBtn) continueBtn.setAttribute("href", verifyUrl);
-        if (form) form.hidden = true;
-        if (panel) panel.hidden = false;
-        if (footer) footer.hidden = true;
+        showError(
+          "Account created. If your project requires email confirmation, use the link in your email, then log in."
+        );
         btn.disabled = false;
         btn.textContent = "Create account";
-        try {
-          continueBtn && continueBtn.focus();
-        } catch (e2) {}
         return;
       }
 

@@ -26,9 +26,7 @@
   <main class="auth-main">
     <div class="auth-card">
       <h1>Welcome back, Hoos!</h1>
-      <p class="auth-lead">
-        Sign in with your UVA email and password. If you just signed up, confirm your email with the code we sent before logging in.
-      </p>
+      <p class="auth-lead">Sign in with your UVA email and password.</p>
 
       <form id="login-form" novalidate>
         <label for="email">UVA email</label>
@@ -62,8 +60,6 @@
 
       <p class="auth-footer">
         First time here? <a href="signup.html">Create an account</a>
-        &nbsp;·&nbsp;
-        <a href="verify.html">Enter verification code</a>
       </p>
     </div>
   </main>
@@ -104,9 +100,7 @@
           hint.indexOf("not confirmed") !== -1 ||
           (error.status === 400 && hint.indexOf("confirm") !== -1)
         ) {
-          showError(
-            "Confirm your email first. Use the verification code from your inbox, or open the link in that email."
-          );
+          showError("Confirm your email using the link we sent, then try logging in again.");
         } else {
           showError("Incorrect email or password. Try again.");
         }
