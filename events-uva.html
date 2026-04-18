@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>UVA &amp; Charlottesville events — HoosOut</title>
+  <title>Clubs moved — HoosOut</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
@@ -12,220 +12,34 @@
 <body>
   <header class="site-header">
     <a class="logo" href="home.html">
-      <span class="logo-mark" aria-hidden="true">
-        <img src="images/logo-mark.svg" width="38" height="38" alt="" />
-      </span>
+      <span class="logo-mark" aria-hidden="true"><img src="images/logo-mark.svg" width="38" height="38" alt="" /></span>
       <span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span>
     </a>
     <nav class="nav-links">
-      <a href="home.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">My Feed</a>
-      <a href="events-map.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Map</a>
-      <a
-        href="events-uva.html"
-        class="btn btn-ghost btn-sm"
-        style="padding: 0.5rem 1rem"
-        id="nav-uva-cville"
-        hidden
-        >UVA Events</a>
-      <a href="post.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Create</a>
-      <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
-      <a href="activity.html" class="btn btn-ghost btn-sm nav-activity-link" style="padding: 0.5rem 1rem"
-        >Activity <span id="nav-activity-badge" class="nav-activity-badge" hidden></span></a
-      >
-      <a href="index.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem" id="nav-logout">Log out</a>
+      <a href="home.html" class="btn btn-ghost btn-sm" style="padding:.5rem 1rem">My Feed</a>
+      <a href="clubs.html" class="btn btn-primary btn-sm" style="padding:.5rem 1rem">Clubs</a>
+      <a href="post.html" class="btn btn-ghost btn-sm" style="padding:.5rem 1rem">Create</a>
+      <a href="index.html" class="btn btn-ghost btn-sm" style="padding:.5rem 1rem" id="nav-logout">Log out</a>
     </nav>
   </header>
-
-  <main class="container">
-    <div class="events-hub-intro">
-      <h1>Official UVA &amp; Charlottesville Events</h1>
-      <p>
-        Campus talks, athletics, arts, and what’s happening downtown — pulled from the UVA calendar and local listings.
-      </p>
+  <main class="container" style="max-width:720px">
+    <div class="auth-card" style="box-shadow:none">
+      <h1 style="margin-top:0">UVA Events page moved</h1>
+      <p class="hub-card-meta">Clubs and organizations now live natively in HoosOut.</p>
+      <p class="hub-card-meta">Browse clubs, follow them, and discover their events in your main feed.</p>
+      <div class="hub-card-actions">
+        <a href="clubs.html" class="btn btn-primary btn-sm">Open Clubs Directory</a>
+        <a href="home.html" class="btn btn-ghost btn-sm">Back to Feed</a>
+      </div>
     </div>
-
-    <nav class="events-jump" aria-label="Jump to section">
-      <a href="#uva-official">University Events</a>
-      <a href="#cville">Charlottesville</a>
-      <!-- <a href="home.html">Back to social feed</a> -->
-    </nav>
-
-    <section class="events-section" id="uva-official">
-      <div class="events-section-head">
-        <h2>UVA Official Events</h2>
-        <span>Synced from UVA Calendar</span>
-      </div>
-      <div class="events-list">
-        <article class="hub-card">
-          <span class="hub-card-source is-navy">University calendar</span>
-          <h3>Guest lecture — Democracy &amp; data</h3>
-          <p class="hub-card-meta">Nau Hall · Tonight 7:00pm · 90 min · Free</p>
-          <p class="hub-card-meta">Open to students · Registration optional</p>
-          <div class="hub-card-actions">
-            <button type="button" class="btn btn-primary btn-sm">Add to HoosOut plan</button>
-            <button type="button" class="btn-outline-navy">Open on UVA site</button>
-          </div>
-        </article>
-        <article class="hub-card">
-          <span class="hub-card-source is-navy">Arts &amp; culture</span>
-          <h3>Fralin Museum late hours + student tour</h3>
-          <p class="hub-card-meta">The Fralin · Thu 5:00–8:00pm</p>
-          <p class="hub-card-meta">Grounds · Low-key · Good for first-years</p>
-          <div class="hub-card-actions">
-            <button type="button" class="btn btn-primary btn-sm">Interested</button>
-            <button type="button" class="btn-outline-navy">Details</button>
-          </div>
-        </article>
-        <article class="hub-card">
-          <span class="hub-card-source is-navy">Athletics</span>
-          <h3>Men’s lacrosse vs. conference opponent</h3>
-          <p class="hub-card-meta">Klöckner Stadium · Sat 1:00pm</p>
-          <p class="hub-card-meta">Student tickets · Arrive early for student section</p>
-          <div class="hub-card-actions">
-            <button type="button" class="btn btn-primary btn-sm">See on VirginiaSports.com</button>
-          </div>
-        </article>
-        <article class="hub-card">
-          <span class="hub-card-source is-navy">Student life</span>
-          <h3>Organization fair — South Lawn</h3>
-          <p class="hub-card-meta">Thu 11:00am–2:00pm · Rain location TBA</p>
-          <p class="hub-card-meta">Find clubs, service, culture, and intramurals</p>
-          <div class="hub-card-actions">
-            <button type="button" class="btn btn-primary btn-sm">Save the date</button>
-            <button type="button" class="btn-outline-navy">Share with hall group</button>
-          </div>
-        </article>
-        <article class="hub-card">
-          <span class="hub-card-source is-navy">Music</span>
-          <h3>Wind ensemble — family-friendly concert</h3>
-          <p class="hub-card-meta">Old Cabell Hall · Sun 3:00pm · Free with student ID</p>
-          <p class="hub-card-meta">Bring friends · ~1 hr program</p>
-          <div class="hub-card-actions">
-            <button type="button" class="btn btn-primary btn-sm">Add reminder</button>
-            <button type="button" class="btn-outline-navy">Venue map</button>
-          </div>
-        </article>
-        <article class="hub-card">
-          <span class="hub-card-source is-navy">Health &amp; wellness</span>
-          <h3>Mindfulness walk — O-Hill trails</h3>
-          <p class="hub-card-meta">Sat 9:00am · 45 min · Meet at Observatory Hill dining</p>
-          <p class="hub-card-meta">CAPS co-sponsor · Open to all students</p>
-          <div class="hub-card-actions">
-            <button type="button" class="btn btn-primary btn-sm">RSVP (demo)</button>
-          </div>
-        </article>
-        <article class="hub-card">
-          <span class="hub-card-source is-navy">Career</span>
-          <h3>Employer info session — Big Four consulting</h3>
-          <p class="hub-card-meta">Rouss &amp; Robertson Halls · Wed 5:30pm</p>
-          <p class="hub-card-meta">Business formal optional · Resume drop</p>
-          <div class="hub-card-actions">
-            <button type="button" class="btn btn-primary btn-sm">Handshake (demo)</button>
-            <button type="button" class="btn-outline-navy">Dress code FAQ</button>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section class="events-section" id="cville">
-      <div class="events-section-head" style="border-bottom-color: var(--uva-navy)">
-        <h2>Charlottesville &amp; Around</h2>
-        <span>Eventbrite &amp; Venues</span>
-      </div>
-      <div class="events-list">
-        <article class="hub-card">
-          <span class="hub-card-source">Downtown Mall</span>
-          <h3>Live band · The Southern Café</h3>
-          <p class="hub-card-meta">Fri 8:30pm · 21+ · Tickets ~$15</p>
-          <p class="hub-card-meta">Short ride from Grounds · Carpool-friendly</p>
-          <div class="hub-card-actions">
-            <button type="button" class="btn btn-primary btn-sm">View on Eventbrite</button>
-            <button type="button" class="btn-outline-navy">Post “who’s going?”</button>
-          </div>
-        </article>
-        <article class="hub-card">
-          <span class="hub-card-source">IX Art Park</span>
-          <h3>Outdoor market + food trucks</h3>
-          <p class="hub-card-meta">Sat 10:00am–3:00pm · Free entry</p>
-          <p class="hub-card-meta">Easy weekend hang between study blocks</p>
-          <div class="hub-card-actions">
-            <button type="button" class="btn btn-primary btn-sm">Directions</button>
-          </div>
-        </article>
-        <article class="hub-card">
-          <span class="hub-card-source">Belmont / near downtown</span>
-          <h3>Open mic — coffee shop night</h3>
-          <p class="hub-card-meta">Sun 7:00pm · Small room · Chill vibe</p>
-          <p class="hub-card-meta">Listed on local events feed (demo)</p>
-          <div class="hub-card-actions">
-            <button type="button" class="btn btn-primary btn-sm">Save</button>
-            <button type="button" class="btn-outline-navy">Invite friends</button>
-          </div>
-        </article>
-        <article class="hub-card">
-          <span class="hub-card-source">Shenandoah day trip</span>
-          <h3>Hiking meetup — carpool from Barracks</h3>
-          <p class="hub-card-meta">Next Sat · Early start · Spots limited</p>
-          <p class="hub-card-meta">Not UVA-run; use HoosOut to coordinate rides</p>
-          <div class="hub-card-actions">
-            <button type="button" class="btn btn-primary btn-sm">Open student post</button>
-          </div>
-        </article>
-        <article class="hub-card">
-          <span class="hub-card-source">Vinegar Hill Theater</span>
-          <h3>Indie film + director Q&amp;A</h3>
-          <p class="hub-card-meta">Thu 7:30pm · Student discount · ~2 hrs</p>
-          <p class="hub-card-meta">Walkable from Downtown Mall</p>
-          <div class="hub-card-actions">
-            <button type="button" class="btn btn-primary btn-sm">Tickets</button>
-            <button type="button" class="btn-outline-navy">Trailer</button>
-          </div>
-        </article>
-        <article class="hub-card">
-          <span class="hub-card-source">Farmers’ market</span>
-          <h3>IX Park winter market</h3>
-          <p class="hub-card-meta">Sun 9:00am–1:00pm · Local farms + hot drinks</p>
-          <p class="hub-card-meta">Good stop before library blocks</p>
-          <div class="hub-card-actions">
-            <button type="button" class="btn btn-primary btn-sm">Vendor list</button>
-          </div>
-        </article>
-        <article class="hub-card">
-          <span class="hub-card-source">Seminole trail</span>
-          <h3>Group ride — gravel-friendly pace</h3>
-          <p class="hub-card-meta">Sun 8:00am · Helmets required · Regroup at Barracks</p>
-          <p class="hub-card-meta">Student cycling club (demo listing)</p>
-          <div class="hub-card-actions">
-            <button type="button" class="btn btn-primary btn-sm">Route GPX</button>
-            <button type="button" class="btn-outline-navy">Waivers</button>
-          </div>
-        </article>
-      </div>
-    </section>
   </main>
-
-  <footer class="footer-site">
-    HoosOut Concept Demo · Not directly affiliated with the University of Virginia.
-  </footer>
-
   <script src="js/session.js"></script>
   <script type="module">
-    import { initNavActivityBadge } from "./js/nav-activity-badge.js";
-    initNavActivityBadge();
-  </script>
-  <script>
-    (function () {
-      if (!window.HoosOutSession || !window.HoosOutSession.isSignedIn()) {
-        window.location.replace("login.html");
-        return;
-      }
-      var out = document.getElementById("nav-logout-hub");
-      if (out && window.HoosOutSession) {
-        out.addEventListener("click", function () {
-          window.HoosOutSession.signOut();
-        });
-      }
-    })();
+    import { supabase } from "./js/supabase.js";
+    document.getElementById("nav-logout")?.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      if (window.HoosOutSession) window.HoosOutSession.signOut();
+    });
   </script>
 </body>
 </html>

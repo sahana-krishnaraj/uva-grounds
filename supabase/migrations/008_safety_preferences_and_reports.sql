@@ -1,5 +1,13 @@
 -- Safety, preferences, moderation, and username constraints.
 
+update public.profiles
+set preferred_name = left(trim(preferred_name), 7)
+where preferred_name is not null
+  and char_length(trim(preferred_name)) > 7;
+
+alter table public.profiles
+  drop constraint if exists profiles_preferred_name_len;
+
 alter table public.profiles
   add constraint profiles_preferred_name_len
   check (preferred_name is null or char_length(trim(preferred_name)) <= 7);

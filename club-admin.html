@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Club admin — HoosOut</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="home.html"><span class="logo-mark" aria-hidden="true"><img src="images/logo-mark.svg" width="38" height="38" alt="" /></span><span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span></a>
+    <nav class="nav-links">
+      <a href="home.html" class="btn btn-ghost btn-sm" style="padding:.5rem 1rem">My Feed</a>
+      <a href="clubs.html" class="btn btn-ghost btn-sm" style="padding:.5rem 1rem">Clubs</a>
+      <a href="club-admin.html" class="btn btn-primary btn-sm" style="padding:.5rem 1rem">Club admin</a>
+      <a href="me.html" class="btn btn-ghost btn-sm" style="padding:.5rem 1rem">Profile</a>
+      <a href="index.html" class="btn btn-ghost btn-sm" style="padding:.5rem 1rem" id="nav-logout">Log out</a>
+    </nav>
+  </header>
+  <main class="container" style="max-width:720px">
+    <h1 class="section-title" style="text-align:left;margin-bottom:.35rem">Club admin</h1>
+    <p class="section-sub" style="text-align:left;margin-bottom:1rem">
+      HoosOut does not use a separate club password. Sign in with the same student account you use for the app. After the HoosOut team approves your organization, you can create your club page from the <a href="clubs.html">Clubs directory</a> while signed in as that account.
+    </p>
+
+    <section id="club-admin-guest" class="auth-card" style="box-shadow:none;margin-bottom:1rem" hidden>
+      <h2 style="margin:.1rem 0 .5rem;font-size:1.1rem">Sign in to manage your club</h2>
+      <p class="auth-lead" style="text-align:left;margin-bottom:1rem">Use your UVA email and HoosOut password — the same login as the rest of the app.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem">
+        <a class="btn btn-primary btn-sm" id="club-admin-login-link" href="login.html">Log in</a>
+        <a class="btn btn-ghost btn-sm" href="signup.html">Sign up</a>
+      </div>
+    </section>
+
+    <section id="club-admin-dashboard" class="auth-card" style="box-shadow:none;margin-bottom:1rem" hidden>
+      <h2 style="margin:.1rem 0 .5rem;font-size:1.1rem">Your organizations</h2>
+      <p class="section-sub" style="text-align:left;margin:0 0 .75rem">Post events as a club, share your page, and review RSVPs on each event.</p>
+      <div id="club-admin-list" class="events-list"></div>
+      <p id="club-admin-empty" class="me-empty" hidden>You are not listed as an admin or editor for any club yet. Request a club page on the <a href="clubs.html">Clubs</a> page — once it is approved, create your page while logged into this account.</p>
+    </section>
+
+    <section class="auth-card" style="box-shadow:none">
+      <h2 style="margin:.1rem 0 .5rem;font-size:1.05rem">How approval works</h2>
+      <ol style="margin:0;padding-left:1.2rem;line-height:1.55;color:var(--text-muted);font-size:0.92rem">
+        <li>Submit a request on the Clubs page with your org details.</li>
+        <li>After a developer approves it in our system, this account gets a one-time slot to <strong>create</strong> the club page.</li>
+        <li>You always sign in here with your normal HoosOut credentials — there is no separate “club login.”</li>
+      </ol>
+    </section>
+  </main>
+  <script src="js/session.js"></script>
+  <script type="module" src="js/club-admin-page.js"></script>
+</body>
+</html>

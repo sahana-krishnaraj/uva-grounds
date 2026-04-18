@@ -19,7 +19,7 @@
       var saved = localStorage.getItem(THEME_KEY);
       if (saved === "dark" || saved === "light") return saved;
     } catch (e) {}
-    return "light";
+    return "dark";
   }
 
   applyTheme(currentTheme());

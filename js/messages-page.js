@@ -50,6 +50,14 @@ function displayName(p) {
   return (p.computing_id || "").trim() || "Student";
 }
 
+function fullNameFromProfile(p) {
+  if (!p) return "Student";
+  const fn = String(p.first_name || "").trim();
+  const ln = String(p.last_name || "").trim();
+  const full = [fn, ln].filter(Boolean).join(" ").trim();
+  return full || displayName(p);
+}
+
 function usernameFromProfile(p) {
   if (!p) return "";
   return String(p.preferred_name || p.computing_id || "").trim();
@@ -344,9 +352,12 @@ function renderConvoList(threads) {
   el.innerHTML = threads
     .map((t) => {
       const p = profileMap.get(t.partnerId);
-      const name = escapeHtml(displayName(p));
+      const full = fullNameFromProfile(p);
+      const name = escapeHtml(full);
       const preview = escapeHtml((t.last.text || "").slice(0, 72));
-      const uname = escapeHtml(usernameFromProfile(p));
+      const rawUname = usernameFromProfile(p);
+      const uname = escapeHtml(rawUname);
+      const showUname = !!rawUname && rawUname.toLowerCase() !== full.toLowerCase();
       const av = threadAvatarHtml(p, "msg-avatar--convo");
       const unread =
         t.unread > 0
@@ -363,7 +374,7 @@ function renderConvoList(threads) {
         '<span class="messages-convo-text"><strong>' +
         name +
         "</strong>" +
-        (uname ? '<span class="messages-user-hit-meta">@' + uname + "</span>" : "") +
+        (showUname ? '<span class="messages-user-hit-meta">@' + uname + "</span>" : '<span class="messages-user-hit-meta"> </span>') +
         '<span class="messages-convo-preview">' +
         preview +
         "</span></span>" +

@@ -34,3 +34,19 @@ export async function notifyDirectMessage({ recipientId, senderId, messageId, se
   });
   if (ins.error) console.warn("notifyDirectMessage", ins.error.message);
 }
+
+export async function notifyClubPost({ recipientId, actorId, eventId, clubName, eventTitle }) {
+  if (!recipientId || !actorId || recipientId === actorId || !eventId) return;
+  var title = "New club event";
+  var body = (clubName || "A club") + " posted: " + (eventTitle || "new event");
+  var ins = await supabase.from("app_notifications").insert({
+    recipient_id: recipientId,
+    actor_id: actorId,
+    type: "club_post",
+    title,
+    body,
+    event_id: eventId,
+    read: false,
+  });
+  if (ins.error) console.warn("notifyClubPost", ins.error.message);
+}

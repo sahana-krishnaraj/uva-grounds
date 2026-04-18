@@ -101,7 +101,12 @@
       }
 
       if (window.HoosOutSession) window.HoosOutSession.signIn();
-      window.location.href = "home.html";
+      var next = new URLSearchParams(window.location.search).get("next");
+      var safe =
+        next && typeof next === "string" && /^[a-zA-Z0-9._-]+\.html(\?.*)?$/.test(next)
+          ? next
+          : "home.html";
+      window.location.href = safe;
     });
   </script>
 </body>

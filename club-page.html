@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Club — HoosOut</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="home.html"><span class="logo-mark" aria-hidden="true"><img src="images/logo-mark.svg" width="38" height="38" alt="" /></span><span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span></a>
+    <nav class="nav-links">
+      <a href="home.html" class="btn btn-ghost btn-sm" style="padding:.5rem 1rem">My Feed</a>
+      <a href="clubs.html" class="btn btn-ghost btn-sm" style="padding:.5rem 1rem">Clubs</a>
+      <a href="post.html" class="btn btn-ghost btn-sm" style="padding:.5rem 1rem">Create</a>
+      <a href="club-admin.html" class="btn btn-ghost btn-sm" style="padding:.5rem 1rem">Club admin</a>
+    </nav>
+  </header>
+  <main class="container" style="max-width:860px">
+    <a href="clubs.html" class="btn btn-ghost btn-sm" style="margin-bottom:0.75rem">← Back to clubs</a>
+    <section class="auth-card" style="box-shadow:none">
+      <h1 id="club-title" style="margin:.1rem 0 .3rem">Club</h1>
+      <p id="club-meta" class="section-sub" style="text-align:left;margin:0 0 .7rem"></p>
+      <p id="club-desc" class="hub-card-meta"></p>
+      <p id="club-followers" class="hub-card-meta" style="margin:.3rem 0 .75rem"></p>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+        <button type="button" id="club-follow-btn" class="btn btn-primary btn-sm">Follow</button>
+        <a id="club-create-link" class="btn btn-ghost btn-sm" href="post.html">Create event as club</a>
+        <a id="club-manage-link" class="btn btn-ghost btn-sm" href="club-admin.html" hidden>Club admin</a>
+      </div>
+    </section>
+    <h2 class="me-panel-title" style="margin-top:1rem">Upcoming events</h2>
+    <div id="club-events-upcoming" class="events-list"></div>
+    <h2 class="me-panel-title" style="margin-top:1rem">Past events</h2>
+    <div id="club-events-past" class="events-list"></div>
+  </main>
+  <script src="js/session.js"></script>
+  <script type="module" src="js/club-page.js"></script>
+</body>
+</html>

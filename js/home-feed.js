@@ -183,6 +183,14 @@ function renderProfileProgressBar(row) {
     return;
   }
   wrap.hidden = false;
+  wrap.style.cursor = "pointer";
+  wrap.title = "Complete your profile";
+  if (!wrap.getAttribute("data-click-bound")) {
+    wrap.setAttribute("data-click-bound", "1");
+    wrap.addEventListener("click", function () {
+      window.location.href = "settings.html";
+    });
+  }
   label.textContent = pct + "% complete";
   fill.style.width = pct + "%";
   var track = wrap.querySelector(".feed-profile-progress-track");
@@ -303,6 +311,16 @@ function renderCommentItems(eventId) {
 
 function renderEventCard(ev, profile, opts, attendeesForEvent) {
   const hostLabel = displayNameFromProfile(profile);
+  const clubLine =
+    ev.club && ev.club.slug
+      ? '<div class="post-meta-line"><a class="post-profile-hit" href="club-page.html?slug=' +
+        encodeURIComponent(ev.club.slug) +
+        '"><strong>' +
+        escapeHtml(ev.club.name || "Club") +
+        "</strong></a>" +
+        (ev.club.is_verified ? ' <span class="badge badge-student">Verified</span>' : "") +
+        "</div>"
+      : "";
   const isSelf = ev.user_id === currentUserId;
   const nComments = opts && opts.commentCountMap ? opts.commentCountMap.get(ev.id) || 0 : 0;
   const nLikes = eventLikeCountMap.get(ev.id) || 0;
@@ -444,7 +462,9 @@ function renderEventCard(ev, profile, opts, attendeesForEvent) {
     formatWhen(ev.created_at) +
     " · " +
     escapeHtml(ev.place_label || "") +
-    "</div></div>" +
+    "</div>" +
+    clubLine +
+    "</div>" +
     followBlock +
     "</header>" +
     notesHtml +
@@ -530,7 +550,7 @@ async function fetchProfilesByIds(ids) {
 
 async function fetchEventsForScope() {
   const evCols =
-    "id, user_id, title, activity_type, duration, start_iso, lat, lng, place_label, visibility, tags, vibe, notes, cap, created_at";
+    "id, user_id, club_id, title, activity_type, duration, start_iso, lat, lng, place_label, visibility, tags, vibe, notes, cap, created_at";
   let query = supabase.from("events").select(evCols);
 
   if (feedScope === "mine") {
@@ -552,6 +572,7 @@ async function fetchEventsForScope() {
   const list = evs || [];
   const uids = [...new Set(list.map((e) => e.user_id).filter(Boolean))];
   const pmap = new Map();
+  const cmap = new Map();
   if (uids.length) {
     const { data: profs, error: pErr } = await supabase
       .from("profiles")
@@ -562,9 +583,14 @@ async function fetchEventsForScope() {
       pmap.set(p.id, withResolvedAvatarUrl(p, supabase));
     });
   }
+  const clubIds = [...new Set(list.map((e) => e.club_id).filter(Boolean))];
+  if (clubIds.length) {
+    const { data: clubs } = await supabase.from("clubs").select("id,name,is_verified,slug").in("id", clubIds);
+    (clubs || []).forEach((c) => cmap.set(c.id, c));
+  }
   return list
     .filter((e) => !blockedUserIds.has(e.user_id))
-    .map((e) => ({ ...e, profiles: pmap.get(e.user_id) || null }));
+    .map((e) => ({ ...e, profiles: pmap.get(e.user_id) || null, club: e.club_id ? cmap.get(e.club_id) || null : null }));
 }
 
 async function loadRsvpData(eventIds) {
@@ -703,6 +729,14 @@ async function refreshFeed() {
 
   const eventIds = rows.map((r) => r.id);
   await loadRsvpData(eventIds);
+  if (feedScope === "discover") {
+    rows = rows.slice().sort((a, b) => {
+      const ar = rsvpCountMap.get(a.id) || 0;
+      const br = rsvpCountMap.get(b.id) || 0;
+      if (br !== ar) return br - ar;
+      return new Date(b.created_at) - new Date(a.created_at);
+    });
+  }
   await loadCommentsForEvents(eventIds);
   await loadLikeData(eventIds);
 

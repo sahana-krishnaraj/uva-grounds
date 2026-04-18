@@ -5,6 +5,8 @@ import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
 import { syncHoosOutDisplayName } from "./hoosout-profile-sync.js";
 import { initNavActivityBadge } from "./nav-activity-badge.js";
+import { notifyClubPost } from "./app-notifications.js";
+import { ensureClubOwnerMembership, fetchMyClubPostMemberships } from "./club-membership.js";
 
 const UVA = [38.0336, -78.508];
 const DEFAULT_ZOOM = 15;
@@ -31,6 +33,7 @@ if (!form || !mapEl || typeof L === "undefined") {
 
 const params = new URLSearchParams(window.location.search);
 const editId = params.get("edit");
+const preselectedClubId = params.get("club");
 
 let existing = null;
 if (editId) {
@@ -42,6 +45,29 @@ if (editId) {
     .maybeSingle();
   if (error) console.warn(error.message);
   existing = data;
+}
+
+async function loadMyClubs() {
+  const sel = document.getElementById("club-id");
+  if (!sel) return;
+  await ensureClubOwnerMembership(supabase, user.id);
+  const { rows, error } = await fetchMyClubPostMemberships(supabase, user.id);
+  if (error) {
+    console.warn("HoosOut: loadMyClubs", error.message);
+    return;
+  }
+  rows.forEach((r) => {
+    const opt = document.createElement("option");
+    opt.value = r.club_id;
+    opt.textContent = r.name || "Club";
+    sel.appendChild(opt);
+  });
+  if (preselectedClubId) {
+    sel.value = preselectedClubId;
+    if (sel.value !== preselectedClubId) {
+      console.warn("HoosOut: club not in list — check club_members for", preselectedClubId);
+    }
+  }
 }
 
 const map = L.map(mapEl, { scrollWheelZoom: true }).setView(UVA, DEFAULT_ZOOM);
@@ -97,6 +123,8 @@ if (existing) {
   document.getElementById("vis").value = existing.visibility || "public";
   document.getElementById("tags").value = existing.tags || "";
   document.getElementById("notes").value = existing.notes || "";
+  const clubSel = document.getElementById("club-id");
+  if (clubSel && existing.club_id) clubSel.value = existing.club_id;
   try {
     const sd = new Date(existing.start_iso);
     if (!isNaN(sd.getTime())) {
@@ -117,6 +145,8 @@ if (existing) {
   const submitBtn = form.querySelector('button[type="submit"]');
   if (submitBtn) submitBtn.textContent = "Save changes";
 }
+
+await loadMyClubs();
 
 function nominatimSearch(query) {
   if (!query || !query.trim()) return;
@@ -193,6 +223,7 @@ form.addEventListener("submit", async (e) => {
 
   const row = {
     user_id: user.id,
+    club_id: document.getElementById("club-id")?.value || null,
     title: document.getElementById("title").value.trim(),
     activity_type: document.getElementById("type").value,
     start_iso: startISO,
@@ -225,6 +256,24 @@ form.addEventListener("submit", async (e) => {
       return;
     }
     const newId = data && data.id ? data.id : "";
+    if (row.club_id && newId) {
+      const [{ data: club }, { data: fl }] = await Promise.all([
+        supabase.from("clubs").select("id,name").eq("id", row.club_id).maybeSingle(),
+        supabase.from("club_follows").select("user_id").eq("club_id", row.club_id),
+      ]);
+      const recipients = [...new Set((fl || []).map((x) => x.user_id).filter((id) => id && id !== user.id))];
+      await Promise.all(
+        recipients.map((recipientId) =>
+          notifyClubPost({
+            recipientId,
+            actorId: user.id,
+            eventId: newId,
+            clubName: club && club.name ? club.name : "A club",
+            eventTitle: row.title,
+          })
+        )
+      );
+    }
     window.location.href = "home.html?posted=1#" + encodeURIComponent(newId);
   }
 });

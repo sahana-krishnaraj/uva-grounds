@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clubs — HoosOut</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="home.html"><span class="logo-mark" aria-hidden="true"><img src="images/logo-mark.svg" width="38" height="38" alt="" /></span><span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span></a>
+    <nav class="nav-links">
+      <a href="home.html" class="btn btn-ghost btn-sm" style="padding:.5rem 1rem">My Feed</a>
+      <a href="clubs.html" class="btn btn-primary btn-sm" style="padding:.5rem 1rem">Clubs</a>
+      <a href="club-admin.html" class="btn btn-ghost btn-sm" style="padding:.5rem 1rem">Club admin</a>
+      <a href="events-map.html" class="btn btn-ghost btn-sm" style="padding:.5rem 1rem">Map</a>
+      <a href="post.html" class="btn btn-ghost btn-sm" style="padding:.5rem 1rem">Create</a>
+      <a href="me.html" class="btn btn-ghost btn-sm" style="padding:.5rem 1rem">Profile</a>
+      <a href="index.html" class="btn btn-ghost btn-sm" style="padding:.5rem 1rem" id="nav-logout">Log out</a>
+    </nav>
+  </header>
+  <main class="container" style="max-width:900px">
+    <h1 class="section-title" style="text-align:left;margin-bottom:.35rem">Clubs Directory</h1>
+    <p class="section-sub" style="text-align:left;margin-bottom:1rem">Follow official and student-run organizations to get their events in your activity feed.</p>
+    <div class="two-col">
+      <div>
+        <label for="clubs-category">Category</label>
+        <select id="clubs-category">
+          <option value="">All</option>
+          <option value="academic">Academic</option>
+          <option value="cultural">Cultural</option>
+          <option value="sports">Sports</option>
+          <option value="service">Service</option>
+          <option value="arts">Arts</option>
+          <option value="professional">Professional</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div>
+        <label for="clubs-search">Search clubs</label>
+        <input id="clubs-search" type="search" placeholder="Search by name" />
+      </div>
+    </div>
+
+    <section id="club-approval-panel" class="auth-card" style="box-shadow:none;width:100%;margin:1rem 0 1.2rem">
+      <h3 style="margin:.1rem 0 .45rem">Club pages</h3>
+      <p class="section-sub" style="margin:0 0 .85rem;text-align:left">New club pages are reviewed by the HoosOut team. Submit a request with your organization’s details; once approved, you can create your page and post events as that club.</p>
+
+      <div id="club-status-message" class="club-approval-status" hidden></div>
+
+      <form id="club-request-form" class="form-grid" hidden>
+        <p class="section-sub" style="margin:0 0 .5rem;text-align:left"><strong>Request a club page</strong> — tell us about your organization. We’ll email you in the app once it’s reviewed.</p>
+        <div class="two-col">
+          <div><label for="req-name">Organization name <span class="req-mark" aria-hidden="true">*</span></label><input id="req-name" type="text" required autocomplete="organization" /></div>
+          <div><label for="req-slug">Preferred URL slug</label><input id="req-slug" type="text" placeholder="e.g. robotics-club" /></div>
+        </div>
+        <div><label for="req-category">Category <span class="req-mark" aria-hidden="true">*</span></label><select id="req-category" required><option value="academic">Academic</option><option value="cultural">Cultural</option><option value="sports">Sports</option><option value="service">Service</option><option value="arts">Arts</option><option value="professional">Professional</option><option value="other">Other</option></select></div>
+        <div><label for="req-description">Description <span class="req-mark" aria-hidden="true">*</span></label><textarea id="req-description" required placeholder="Mission, meeting cadence, who can join…"></textarea></div>
+        <div><label for="req-email">Contact email <span class="req-mark" aria-hidden="true">*</span></label><input id="req-email" type="email" required autocomplete="email" placeholder="Officer or org email" /></div>
+        <div><label for="req-message">Anything else?</label><textarea id="req-message" placeholder="Link to constitution, UVA org listing, etc."></textarea></div>
+        <button type="submit" class="btn btn-primary btn-sm">Submit request</button>
+      </form>
+
+      <form id="club-create-form" class="form-grid" hidden>
+        <p class="section-sub" style="margin:0 0 .5rem;text-align:left"><strong>You’re approved</strong> — create your club page below. You can use the same details you requested or adjust them.</p>
+        <div class="two-col">
+          <div><label for="club-name">Club name <span class="req-mark" aria-hidden="true">*</span></label><input id="club-name" type="text" required /></div>
+          <div><label for="club-slug">Slug <span class="req-mark" aria-hidden="true">*</span></label><input id="club-slug" type="text" required placeholder="latin-student-association" /></div>
+        </div>
+        <div><label for="club-category">Category <span class="req-mark" aria-hidden="true">*</span></label><select id="club-category"><option value="academic">Academic</option><option value="cultural">Cultural</option><option value="sports">Sports</option><option value="service">Service</option><option value="arts">Arts</option><option value="professional">Professional</option><option value="other">Other</option></select></div>
+        <div><label for="club-description">Description</label><textarea id="club-description" placeholder="What your club does"></textarea></div>
+        <button type="submit" class="btn btn-primary btn-sm">Create club page</button>
+      </form>
+    </section>
+
+    <div id="clubs-list" class="events-list"></div>
+  </main>
+  <script src="js/session.js"></script>
+  <script type="module" src="js/clubs-page.js"></script>
+</body>
+</html>

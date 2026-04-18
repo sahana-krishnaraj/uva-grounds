@@ -34,7 +34,7 @@ function liForProfile(p) {
 
   const evRes = await supabase
     .from("events")
-    .select("id,user_id,title,activity_type,start_iso,duration,place_label,notes,created_at")
+    .select("id,user_id,club_id,title,activity_type,start_iso,duration,place_label,notes,created_at")
     .eq("id", id)
     .maybeSingle();
   if (evRes.error || !evRes.data) {
@@ -66,7 +66,18 @@ function liForProfile(p) {
     });
   }
 
-  if (ev.user_id !== me.id) return;
+  let canManage = ev.user_id === me.id;
+  if (!canManage && ev.club_id) {
+    const cm = await supabase
+      .from("club_members")
+      .select("club_id, role")
+      .eq("club_id", ev.club_id)
+      .eq("user_id", me.id)
+      .in("role", ["owner", "admin", "editor"])
+      .maybeSingle();
+    canManage = !!cm.data;
+  }
+  if (!canManage) return;
   const ownerBlock = document.getElementById("ed-owner-rsvp");
   ownerBlock.hidden = false;
 
