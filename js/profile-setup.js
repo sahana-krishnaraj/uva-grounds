@@ -16,6 +16,14 @@ function showStatus(el, msg, isErr) {
   el.style.color = isErr ? "#b91c1c" : "var(--text-muted)";
 }
 
+function setFieldIfEmpty(id, value) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  if (String(el.value || "").trim()) return;
+  if (value == null) return;
+  el.value = String(value);
+}
+
 (async function () {
   var sessionRes = await supabase.auth.getSession();
   var user = sessionRes.data && sessionRes.data.session ? sessionRes.data.session.user : null;
@@ -29,12 +37,28 @@ function showStatus(el, msg, isErr) {
   }
 
   var savedDbAvatar = "";
-  var pr = await supabase.from("profiles").select("avatar_url").eq("id", user.id).maybeSingle();
+  var pr = await supabase
+    .from("profiles")
+    .select("first_name,last_name,preferred_name,year,pronouns,bio,location,interests,schedule,avatar_url")
+    .eq("id", user.id)
+    .maybeSingle();
   if (pr.data && pr.data.avatar_url) savedDbAvatar = String(pr.data.avatar_url).trim();
 
   var form = document.getElementById("profile-form");
   var statusEl = document.getElementById("profile-setup-status");
   if (!form) return;
+
+  var md = user.user_metadata || {};
+  var db = pr.data || {};
+  setFieldIfEmpty("first-name", db.first_name || md.first_name || "");
+  setFieldIfEmpty("last-name", db.last_name || md.last_name || "");
+  setFieldIfEmpty("preferred-name", db.preferred_name || md.preferred_name || "");
+  setFieldIfEmpty("year", db.year || "");
+  setFieldIfEmpty("pronouns", db.pronouns || "");
+  setFieldIfEmpty("bio", db.bio || "");
+  setFieldIfEmpty("location-dorm", db.location || "");
+  setFieldIfEmpty("interests", db.interests || "");
+  setFieldIfEmpty("schedule", db.schedule || "");
 
   if (window.HoosOutProfilePhoto && typeof window.HoosOutProfilePhoto.initMeEditor === "function") {
     window.HoosOutProfilePhoto.initMeEditor(document.body);
@@ -54,6 +78,14 @@ function showStatus(el, msg, isErr) {
     var firstName = fieldTrim("first-name");
     var lastName = fieldTrim("last-name");
     var preferredName = fieldTrim("preferred-name");
+    if (preferredName.length > 7) {
+      showStatus(statusEl, "Username must be 7 characters or fewer.", true);
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Save & Go to Feed";
+      }
+      return;
+    }
     var photoDataUrl =
       window.HoosOutProfilePhoto && typeof window.HoosOutProfilePhoto.get === "function"
         ? window.HoosOutProfilePhoto.get() || ""
@@ -97,7 +129,6 @@ function showStatus(el, msg, isErr) {
       year: document.getElementById("year") ? document.getElementById("year").value : "",
       location: fieldTrim("location-dorm"),
       interests: fieldTrim("interests"),
-      vibe: fieldTrim("vibe"),
       schedule: fieldTrim("schedule"),
       bio: fieldTrim("bio"),
       computingId: "",
@@ -124,7 +155,6 @@ function showStatus(el, msg, isErr) {
       year: profileLocal.year || null,
       location: profileLocal.location || null,
       interests: profileLocal.interests || null,
-      vibe: profileLocal.vibe || null,
       schedule: profileLocal.schedule || null,
       bio: profileLocal.bio || null,
       avatar_url: avatarPublicUrl,

@@ -3,7 +3,6 @@
  */
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
-import { mustAbortForIncompleteProfile } from "./profile-actions.js";
 import { syncHoosOutDisplayName } from "./hoosout-profile-sync.js";
 import { initNavActivityBadge } from "./nav-activity-badge.js";
 
@@ -97,7 +96,6 @@ if (existing) {
   document.getElementById("loc").value = existing.place_label || "";
   document.getElementById("vis").value = existing.visibility || "public";
   document.getElementById("tags").value = existing.tags || "";
-  document.getElementById("vibe").value = existing.vibe || "";
   document.getElementById("notes").value = existing.notes || "";
   try {
     const sd = new Date(existing.start_iso);
@@ -166,7 +164,6 @@ setTimeout(() => map.invalidateSize(), 200);
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (await mustAbortForIncompleteProfile()) return;
   const lat = parseFloat(latInput.value);
   const lng = parseFloat(lngInput.value);
   if (!isFinite(lat) || !isFinite(lng)) {
@@ -181,7 +178,16 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  const startISO = new Date(dateVal + "T" + timeVal).toISOString();
+  const startAt = new Date(dateVal + "T" + timeVal);
+  if (isNaN(startAt.getTime())) {
+    alert("Enter a valid date and time.");
+    return;
+  }
+  if (startAt.getTime() < Date.now()) {
+    alert("Event time must be now or in the future.");
+    return;
+  }
+  const startISO = startAt.toISOString();
   const capRaw = document.getElementById("cap").value.trim();
   const capNum = capRaw ? parseInt(capRaw, 10) : null;
 
@@ -197,12 +203,11 @@ form.addEventListener("submit", async (e) => {
     place_label: locLabel.value.trim() || "Pinned location",
     visibility: document.getElementById("vis").value,
     tags: document.getElementById("tags").value.trim(),
-    vibe: document.getElementById("vibe").value.trim(),
     notes: document.getElementById("notes").value.trim(),
   };
 
-  if (!row.title || !row.activity_type) {
-    alert("Title and activity type are required.");
+  if (!row.title || !row.duration || !row.visibility || !row.place_label) {
+    alert("Title, duration, location, and visibility are required.");
     return;
   }
 

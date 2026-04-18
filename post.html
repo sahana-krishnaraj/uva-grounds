@@ -25,6 +25,7 @@
     </a>
     <nav class="nav-links">
       <a href="home.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">My Feed</a>
+      <a href="events-map.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Map</a>
       <a
         href="events-uva.html"
         class="btn btn-ghost btn-sm"
@@ -50,33 +51,10 @@
 
     <div class="auth-card" style="box-shadow: none; width: 100%">
       <form id="event-form" class="form-grid" novalidate>
+        <h3 style="margin:0;color:var(--uva-navy);font-size:1rem">Required details</h3>
         <div>
           <label for="title">Title</label>
           <input id="title" name="title" type="text" required placeholder="Pickup basketball at AFC" />
-        </div>
-
-        <div class="two-col">
-          <div>
-            <label for="type">Activity type</label>
-            <select id="type" name="type" required>
-              <option value="">Select</option>
-              <option value="Sports">Sports</option>
-              <option value="Study">Study</option>
-              <option value="Food run">Food run</option>
-              <option value="Gaming">Gaming</option>
-              <option value="Movie night">Movie night</option>
-              <option value="Wellness / gym">Wellness / gym</option>
-              <option value="Social">Social</option>
-            </select>
-          </div>
-          <div>
-            <label for="duration">Duration</label>
-            <select id="duration" name="duration">
-              <option value="1 hour">1 hour</option>
-              <option value="2 hours" selected>2 hours</option>
-              <option value="3+ hours">3+ hours</option>
-            </select>
-          </div>
         </div>
 
         <div class="two-col">
@@ -87,6 +65,25 @@
           <div>
             <label for="event-time">Time</label>
             <input id="event-time" name="event-time" type="time" required />
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div>
+            <label for="duration">Duration</label>
+            <select id="duration" name="duration" required>
+              <option value="1 hour">1 hour</option>
+              <option value="2 hours" selected>2 hours</option>
+              <option value="3+ hours">3+ hours</option>
+            </select>
+          </div>
+          <div>
+            <label for="vis">Who can see this?</label>
+            <select id="vis" name="vis" required>
+              <option value="public">Anyone at UVA (public)</option>
+              <option value="friends">Friends only</option>
+              <option value="invite">Invite-only</option>
+            </select>
           </div>
         </div>
 
@@ -126,25 +123,22 @@
         </div>
 
         <div>
-          <label for="vis">Who can see this?</label>
-          <select id="vis" name="vis">
-            <option value="public">Anyone at UVA (public)</option>
-            <option value="friends">Friends only</option>
-            <option value="invite">Invite-only</option>
+          <label for="type">Activity type (optional)</label>
+          <select id="type" name="type">
+            <option value="">Select</option>
+            <option value="Sports">Sports</option>
+            <option value="Study">Study</option>
+            <option value="Food run">Food run</option>
+            <option value="Gaming">Gaming</option>
+            <option value="Movie night">Movie night</option>
+            <option value="Wellness / gym">Wellness / gym</option>
+            <option value="Social">Social</option>
           </select>
-          <p style="margin: -0.5rem 0 0; font-size: 0.82rem; color: var(--text-muted)">
-            Friends-only posts are labeled in the feed; full privacy needs a real friends list on the server.
-          </p>
         </div>
 
         <div>
           <label for="tags">Tags</label>
           <input id="tags" name="tags" type="text" placeholder="sports, basketball, AFC, chill" />
-        </div>
-
-        <div>
-          <label for="vibe">Vibe</label>
-          <input id="vibe" name="vibe" type="text" placeholder="chill, social, competitive…" />
         </div>
 
         <div>

@@ -47,8 +47,9 @@
             type="text"
             autocomplete="username"
             required
-            pattern="[a-zA-Z0-9._-]{2,32}"
-            title="2–32 characters: letters, numbers, dot, underscore, or hyphen"
+            maxlength="7"
+            pattern="[a-zA-Z0-9._-]{2,7}"
+            title="2-7 characters: letters, numbers, dot, underscore, or hyphen"
             placeholder="your.handle"
           />
         </div>
@@ -76,6 +77,9 @@
             required
             minlength="8"
           />
+          <p id="password-strength" class="auth-form-msg" style="display:block;margin-top:0.4rem;font-size:0.82rem;color:var(--text-muted)">
+            Strength: —
+          </p>
         </div>
         <div>
           <label for="password-confirm">Confirm password <span class="req-mark" aria-hidden="true">*</span></label>
@@ -108,12 +112,47 @@
     var form = document.getElementById("signup-form");
     var msg = document.getElementById("signup-msg");
     var btn = document.getElementById("signup-submit");
+    var passwordEl = document.getElementById("password");
+    var strengthEl = document.getElementById("password-strength");
 
     function showError(text) {
       msg.style.display = "";
       msg.style.color = "red";
       msg.textContent = text;
     }
+
+    function scorePassword(pw) {
+      var s = 0;
+      if (pw.length >= 8) s += 1;
+      if (pw.length >= 12) s += 1;
+      if (/[a-z]/.test(pw)) s += 1;
+      if (/[A-Z]/.test(pw)) s += 1;
+      if (/\d/.test(pw)) s += 1;
+      if (/[^A-Za-z0-9]/.test(pw)) s += 1;
+      return s;
+    }
+
+    function updatePasswordStrength() {
+      if (!strengthEl || !passwordEl) return;
+      var pw = passwordEl.value || "";
+      if (!pw) {
+        strengthEl.textContent = "Strength: —";
+        strengthEl.style.color = "var(--text-muted)";
+        return;
+      }
+      var score = scorePassword(pw);
+      if (score <= 2) {
+        strengthEl.textContent = "Strength: Weak";
+        strengthEl.style.color = "#b91c1c";
+      } else if (score <= 4) {
+        strengthEl.textContent = "Strength: Moderate";
+        strengthEl.style.color = "#a16207";
+      } else {
+        strengthEl.textContent = "Strength: Strong";
+        strengthEl.style.color = "#166534";
+      }
+    }
+    passwordEl && passwordEl.addEventListener("input", updatePasswordStrength);
 
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -128,6 +167,10 @@
 
       if (!firstName || !lastName || !username) {
         showError("First name, last name, and username are required.");
+        return;
+      }
+      if (username.length > 7) {
+        showError("Username must be 7 characters or fewer.");
         return;
       }
       if (pw !== pw2) {

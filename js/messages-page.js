@@ -11,8 +11,8 @@ import {
 } from "./presence-channel.js";
 import { notifyDirectMessage } from "./app-notifications.js";
 import { initNavActivityBadge } from "./nav-activity-badge.js";
-import { mustAbortForIncompleteProfile } from "./profile-actions.js";
 import { resolveProfileAvatarUrl, withResolvedAvatarUrl } from "./avatar-url.js";
+import { getBlockedUserIds } from "./user-safety.js";
 
 const user = await requireAuth();
 if (!user) throw new Error("auth");
@@ -28,6 +28,8 @@ let typingChannel = null;
 let typingHideTimer = null;
 let typingRemoteTimer = null;
 let realtimeChannel = null;
+let blockedUserIds = new Set();
+let refreshTimer = null;
 
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "‼️"];
 
@@ -46,6 +48,11 @@ function displayName(p) {
   const ln = (p.last_name || "").trim();
   if (fn || ln) return [fn, ln].filter(Boolean).join(" ");
   return (p.computing_id || "").trim() || "Student";
+}
+
+function usernameFromProfile(p) {
+  if (!p) return "";
+  return String(p.preferred_name || p.computing_id || "").trim();
 }
 
 function initialsFromProfile(p) {
@@ -148,7 +155,7 @@ async function fetchMessages() {
     console.error(error);
     return;
   }
-  allMessages = data || [];
+  allMessages = (data || []).filter((m) => !blockedUserIds.has(m.sender_id) && !blockedUserIds.has(m.recipient_id));
   const partners = allMessages.map(partnerForRow);
   await loadProfilesForIds([...partners, myId]);
   const mids = allMessages.map((m) => m.id).filter(Boolean);
@@ -339,6 +346,8 @@ function renderConvoList(threads) {
       const p = profileMap.get(t.partnerId);
       const name = escapeHtml(displayName(p));
       const preview = escapeHtml((t.last.text || "").slice(0, 72));
+      const uname = escapeHtml(usernameFromProfile(p));
+      const av = threadAvatarHtml(p, "msg-avatar--convo");
       const unread =
         t.unread > 0
           ? '<span class="messages-unread-badge">' + (t.unread > 9 ? "9+" : t.unread) + "</span>"
@@ -349,11 +358,15 @@ function renderConvoList(threads) {
         active +
         '" data-partner-id="' +
         escapeHtml(t.partnerId) +
-        '"><strong>' +
+        '">' +
+        av +
+        '<span class="messages-convo-text"><strong>' +
         name +
-        '</strong><span class="messages-convo-preview">' +
+        "</strong>" +
+        (uname ? '<span class="messages-user-hit-meta">@' + uname + "</span>" : "") +
+        '<span class="messages-convo-preview">' +
         preview +
-        "</span>" +
+        "</span></span>" +
         unread +
         "</button>"
       );
@@ -425,7 +438,6 @@ async function openThread(partnerId) {
 
 async function sendMessage(text) {
   if (!activePartnerId || !text.trim()) return;
-  if (await mustAbortForIncompleteProfile()) return;
   const trimmed = text.trim();
   const { data: inserted, error } = await supabase
     .from("messages")
@@ -506,6 +518,7 @@ document.getElementById("msg-user-search")?.addEventListener("input", (e) => {
     const seen = new Set();
     const rows = [];
     for (const x of merged) {
+      if (blockedUserIds.has(x.id)) continue;
       if (seen.has(x.id)) continue;
       seen.add(x.id);
       rows.push(x);
@@ -524,7 +537,12 @@ document.getElementById("msg-user-search")?.addEventListener("input", (e) => {
           '<button type="button" class="messages-user-hit" data-user-id="' +
           escapeHtml(r.id) +
           '">' +
-          escapeHtml(displayName(r)) +
+          threadAvatarHtml(r, "msg-avatar--search") +
+          '<span><span class="messages-user-hit-name">' +
+          escapeHtml([r.first_name, r.last_name].filter(Boolean).join(" ") || displayName(r)) +
+          '</span><span class="messages-user-hit-meta">@' +
+          escapeHtml(usernameFromProfile(r) || "student") +
+          "</span></span>" +
           "</button>"
         );
       })
@@ -596,11 +614,30 @@ document.getElementById("messages-thread-scroll")?.addEventListener("click", (e)
   toggleReaction(mid, emo);
 });
 
+document.getElementById("messages-thread-scroll")?.addEventListener("contextmenu", (e) => {
+  const wrap = e.target.closest && e.target.closest(".msg-bubble-wrap");
+  if (!wrap) return;
+  e.preventDefault();
+  document.querySelectorAll(".msg-bubble-wrap--react-open").forEach((el) => {
+    if (el !== wrap) el.classList.remove("msg-bubble-wrap--react-open");
+  });
+  wrap.classList.toggle("msg-bubble-wrap--react-open");
+});
+
+document.addEventListener("click", (e) => {
+  const inPicker = e.target.closest && e.target.closest(".msg-reaction-picks, .msg-bubble-wrap");
+  if (inPicker) return;
+  document.querySelectorAll(".msg-bubble-wrap--react-open").forEach((el) => {
+    el.classList.remove("msg-bubble-wrap--react-open");
+  });
+});
+
 document.getElementById("nav-logout")?.addEventListener("click", async () => {
   await supabase.auth.signOut();
   if (window.HoosOutSession) window.HoosOutSession.signOut();
 });
 
+blockedUserIds = await getBlockedUserIds(myId);
 await fetchMessages();
 renderConvoList(buildThreads());
 
@@ -614,22 +651,25 @@ realtimeChannel = supabase
   .on(
     "postgres_changes",
     { event: "*", schema: "public", table: "messages" },
-    async () => {
-      await fetchMessages();
-      renderConvoList(buildThreads());
-      if (activePartnerId) renderThread(activePartnerId);
-    }
+    () => scheduleRealtimeRefresh()
   )
   .on(
     "postgres_changes",
     { event: "*", schema: "public", table: "message_reactions" },
-    async () => {
-      await fetchMessages();
-      renderConvoList(buildThreads());
-      if (activePartnerId) renderThread(activePartnerId);
-    }
+    () => scheduleRealtimeRefresh()
   )
   .subscribe();
+
+function scheduleRealtimeRefresh() {
+  if (refreshTimer) return;
+  refreshTimer = setTimeout(async () => {
+    refreshTimer = null;
+    blockedUserIds = await getBlockedUserIds(myId);
+    await fetchMessages();
+    renderConvoList(buildThreads());
+    if (activePartnerId) renderThread(activePartnerId);
+  }, 120);
+}
 
 const params = new URLSearchParams(window.location.search);
 const withUser = params.get("with");

@@ -20,6 +20,18 @@
   --shadow-soft: 0 4px 24px rgba(35, 45, 75, 0.07);
 }
 
+:root[data-theme="dark"] {
+  --bg: #0d1222;
+  --bg-card: #141c31;
+  --bg-elevated: #1d2943;
+  --text: #e7ecf7;
+  --text-muted: #b6c0d4;
+  --border: rgba(231, 236, 247, 0.14);
+  --accent-soft: rgba(229, 114, 0, 0.16);
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --shadow-soft: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
 *,
 *::before,
 *::after {
@@ -397,12 +409,16 @@ label .optional-mark {
 
 input[type="email"],
 input[type="text"],
-input[type="password"] {
+input[type="password"],
+input[type="search"],
+input[type="date"],
+input[type="time"],
+input[type="number"] {
   width: 100%;
   padding: 0.85rem 1rem;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(30, 22, 53, 0.12);
-  background: #fff;
+  background: var(--bg-card);
   color: var(--text);
   font-family: inherit;
   font-size: 1rem;
@@ -774,6 +790,23 @@ input:focus {
   font-weight: 800;
   flex-shrink: 0;
   color: #fff;
+  overflow: hidden;
+  position: relative;
+}
+
+.avatar .js-hoosout-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.avatar .js-hoosout-avatar-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
 }
 
 .avatar--md {
@@ -1127,7 +1160,7 @@ textarea {
   padding: 0.85rem 1rem;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(30, 22, 53, 0.12);
-  background: #fff;
+  background: var(--bg-card);
   color: var(--text);
   font-family: inherit;
   font-size: 1rem;
@@ -1141,7 +1174,7 @@ select {
   padding: 0.85rem 1rem;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(30, 22, 53, 0.12);
-  background: #fff;
+  background: var(--bg-card);
   color: var(--text);
   font-family: inherit;
   font-size: 1rem;
@@ -1324,12 +1357,16 @@ select {
 }
 
 #event-map,
-#feed-map {
+.feed-map-canvas {
   width: 100%;
   height: min(320px, 55vh);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   z-index: 1;
+}
+
+.events-map-page .events-map-canvas {
+  height: min(520px, 72vh);
 }
 
 .mini-map-wrap {
@@ -1715,10 +1752,12 @@ select {
 }
 
 .messages-user-hit {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   width: 100%;
   text-align: left;
-  padding: 0.5rem 0.75rem;
+  padding: 0.55rem 0.75rem;
   border: none;
   background: transparent;
   font: inherit;
@@ -1736,21 +1775,26 @@ select {
 }
 
 .messages-convo-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   width: 100%;
   text-align: left;
-  padding: 0.75rem 1rem;
+  min-height: 68px;
+  padding: 0.75rem 0.9rem;
   border: none;
   border-bottom: 1px solid var(--border);
   background: transparent;
   font: inherit;
   cursor: pointer;
   position: relative;
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
 }
 
 .messages-convo-item:hover,
 .messages-convo-item.is-active {
-  background: #fff;
+  background: var(--bg-card);
+  transform: translateY(-1px);
 }
 
 .messages-convo-item.is-active {
@@ -1765,6 +1809,20 @@ select {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.messages-convo-text {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.msg-avatar--convo {
+  width: 42px;
+  height: 42px;
+  font-size: 0.78rem;
 }
 
 .messages-unread-badge {
@@ -1808,6 +1866,7 @@ select {
   display: flex;
   flex-direction: column;
   gap: 0;
+  scroll-behavior: smooth;
 }
 
 .messages-typing {
@@ -1819,7 +1878,9 @@ select {
 }
 
 .msg-group {
-  margin-top: 1rem;
+  margin-top: 0.9rem;
+  opacity: 1;
+  transition: opacity 0.16s ease;
 }
 
 .msg-group:first-child {
@@ -1884,11 +1945,16 @@ select {
 }
 
 .msg-reaction-picks {
-  display: flex;
+  display: none;
   flex-wrap: wrap;
   gap: 0.2rem;
   margin-top: 0.25rem;
   opacity: 0.85;
+}
+
+.msg-bubble-wrap:hover .msg-reaction-picks,
+.msg-bubble-wrap--react-open .msg-reaction-picks {
+  display: flex;
 }
 
 .msg-reaction-pick {
@@ -1993,6 +2059,49 @@ select {
   border: 1px solid var(--border);
   font-family: inherit;
   font-size: 0.9rem;
+  margin-bottom: 0;
+}
+
+.messages-user-hit-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.messages-user-hit-meta {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.msg-avatar--search {
+  width: 34px;
+  height: 34px;
+}
+
+.settings-sections {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.settings-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 0.9rem;
+  background: var(--bg-card);
+}
+
+.settings-section h3 {
+  margin: 0 0 0.55rem;
+  font-size: 0.96rem;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
 }
 
 .messages-send-btn {
@@ -2350,6 +2459,44 @@ select {
   line-height: 1.5;
   max-height: 200px;
   overflow-y: auto;
+}
+
+.feed-profile-progress {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  padding: 0.75rem 0.85rem;
+  margin-bottom: 0.9rem;
+}
+
+.feed-profile-progress-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.feed-profile-progress-track {
+  margin-top: 0.45rem;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #e5e7eb;
+}
+
+#feed-profile-progress-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--uva-orange), #f59e0b);
+}
+
+.feed-profile-progress-copy {
+  margin: 0.45rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
 }
 
 .event-attendee-link {

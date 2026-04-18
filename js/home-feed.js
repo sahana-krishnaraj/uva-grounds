@@ -3,14 +3,12 @@
  */
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
-import { mustAbortForIncompleteProfile } from "./profile-actions.js";
 import { ensureHoosOutOnlinePresence } from "./presence-channel.js";
 import { syncHoosOutDisplayName, upsertMyProfileRow } from "./hoosout-profile-sync.js";
 import { notifyRsvp } from "./app-notifications.js";
 import { initNavActivityBadge } from "./nav-activity-badge.js";
 import { withResolvedAvatarUrl } from "./avatar-url.js";
-
-const UVA = [38.0336, -78.508];
+import { blockUser, getBlockedUserIds, submitEventReport } from "./user-safety.js";
 
 let currentUserId = null;
 let feedScope = "discover";
@@ -23,6 +21,8 @@ let realtimeChannel = null;
 /** Server-backed like counts / my likes (see supabase/migrations/007_event_likes.sql) */
 let eventLikeCountMap = new Map();
 let myLikedEventIds = new Set();
+let myProfileRow = null;
+let blockedUserIds = new Set();
 
 function escapeHtml(s) {
   if (!s) return "";
@@ -145,6 +145,50 @@ function regionFromEvent(ev) {
   return "grounds";
 }
 
+function trimPreview(text, maxLen) {
+  var s = String(text || "").trim();
+  if (!s) return "";
+  if (s.length <= maxLen) return s;
+  return s.slice(0, Math.max(0, maxLen - 1)).trim() + "…";
+}
+
+function profileCompletionPercent(row) {
+  if (!row) return 0;
+  var checks = [
+    row.first_name,
+    row.last_name,
+    row.preferred_name,
+    row.year,
+    row.pronouns,
+    row.bio,
+    row.location,
+    row.interests,
+    row.schedule,
+    row.avatar_url,
+  ];
+  var done = checks.filter(function (x) {
+    return String(x || "").trim().length > 0;
+  }).length;
+  return Math.round((done / checks.length) * 100);
+}
+
+function renderProfileProgressBar(row) {
+  var wrap = document.getElementById("feed-profile-progress");
+  var label = document.getElementById("feed-profile-progress-label");
+  var fill = document.getElementById("feed-profile-progress-fill");
+  if (!wrap || !label || !fill) return;
+  var pct = profileCompletionPercent(row);
+  if (pct >= 100) {
+    wrap.hidden = true;
+    return;
+  }
+  wrap.hidden = false;
+  label.textContent = pct + "% complete";
+  fill.style.width = pct + "%";
+  var track = wrap.querySelector(".feed-profile-progress-track");
+  if (track) track.setAttribute("aria-valuenow", String(pct));
+}
+
 async function loadCommunityStories() {
   const mount = document.getElementById("hoosout-community-stories");
   if (!mount) return;
@@ -263,8 +307,9 @@ function renderEventCard(ev, profile, opts, attendeesForEvent) {
   const nComments = opts && opts.commentCountMap ? opts.commentCountMap.get(ev.id) || 0 : 0;
   const nLikes = eventLikeCountMap.get(ev.id) || 0;
   const profileHref = ev.user_id ? "profile-view.html?id=" + encodeURIComponent(ev.user_id) : "#";
+  const detailHref = "event-detail.html?id=" + encodeURIComponent(ev.id);
   const notesHtml = ev.notes
-    ? '<div class="post-body"><p>' + escapeHtml(ev.notes) + "</p></div>"
+    ? '<div class="post-body"><p>' + escapeHtml(trimPreview(ev.notes, 140)) + "</p></div>"
     : "";
   const tags =
     ev.tags &&
@@ -311,6 +356,32 @@ function renderEventCard(ev, profile, opts, attendeesForEvent) {
           })
           .join("") +
         "</ul></div>"
+      : "";
+  const pendingBlock =
+    isSelf && opts && opts.followingProfiles && opts.followingProfiles.length
+      ? (function () {
+          const responded = new Set((attendeesForEvent || []).map((x) => x.user_id));
+          const pending = opts.followingProfiles.filter((p) => !responded.has(p.id));
+          if (!pending.length) return "";
+          return (
+            '<div class="event-attendees" style="margin-top:0.5rem">' +
+            '<p class="event-attendees-heading">Not responded yet (' +
+            pending.length +
+            ")</p><ul class=\"event-attendees-list\">" +
+            pending
+              .map(function (p) {
+                return (
+                  '<li><a class="event-attendee-link" href="profile-view.html?id=' +
+                  encodeURIComponent(p.id) +
+                  '">' +
+                  escapeHtml(displayNameFromProfile(p)) +
+                  "</a></li>"
+                );
+              })
+              .join("") +
+            "</ul></div>"
+          );
+        })()
       : "";
 
   const fset = opts && opts.followingSet ? opts.followingSet : new Set();
@@ -409,6 +480,10 @@ function renderEventCard(ev, profile, opts, attendeesForEvent) {
     '">Save</button>' +
     "</div>" +
     attendeeBlock +
+    pendingBlock +
+    '<div style="margin-top:0.5rem"><a class="btn btn-ghost btn-sm" href="' +
+    escapeHtml(detailHref) +
+    '">View details</a></div>' +
     "</div>" +
     '<div class="post-stats js-event-status" data-event-id="' +
     escapeHtml(ev.id) +
@@ -440,6 +515,17 @@ async function fetchFollowingIds() {
     return [];
   }
   return (data || []).map((r) => r.following_id);
+}
+
+async function fetchProfilesByIds(ids) {
+  const uniq = [...new Set((ids || []).filter(Boolean))];
+  if (!uniq.length) return [];
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, first_name, last_name, preferred_name, computing_id, avatar_url")
+    .in("id", uniq);
+  if (error) return [];
+  return (data || []).map((p) => withResolvedAvatarUrl(p, supabase));
 }
 
 async function fetchEventsForScope() {
@@ -476,7 +562,9 @@ async function fetchEventsForScope() {
       pmap.set(p.id, withResolvedAvatarUrl(p, supabase));
     });
   }
-  return list.map((e) => ({ ...e, profiles: pmap.get(e.user_id) || null }));
+  return list
+    .filter((e) => !blockedUserIds.has(e.user_id))
+    .map((e) => ({ ...e, profiles: pmap.get(e.user_id) || null }));
 }
 
 async function loadRsvpData(eventIds) {
@@ -562,7 +650,9 @@ async function loadCommentsForEvents(eventIds) {
       .in("id", uids);
     (pr.data || []).forEach((p) => pmap.set(p.id, withResolvedAvatarUrl(p, supabase)));
   }
-  const data = (q2.data || []).map((c) => ({ ...c, profiles: pmap.get(c.user_id) || null }));
+  const data = (q2.data || [])
+    .filter((c) => !blockedUserIds.has(c.user_id))
+    .map((c) => ({ ...c, profiles: pmap.get(c.user_id) || null }));
   (data || []).forEach((c) => {
     const list = commentsByEvent.get(c.event_id) || [];
     list.push(c);
@@ -600,79 +690,10 @@ function initMiniMaps() {
   });
 }
 
-let mainMap = null;
-
-function rebuildMap(rows) {
-  const mainMapEl = document.getElementById("feed-map");
-  const emptyMapMsg = document.getElementById("feed-map-empty");
-  if (!mainMapEl || typeof L === "undefined") return;
-
-  if (emptyMapMsg) emptyMapMsg.style.display = rows.length ? "none" : "block";
-
-  if (mainMap) {
-    mainMap.remove();
-    mainMap = null;
-  }
-
-  mainMap = L.map(mainMapEl, { scrollWheelZoom: true }).setView(UVA, 14);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 19,
-  }).addTo(mainMap);
-
-  const bounds = [];
-  rows.forEach((row) => {
-    const ev = row;
-    const lat = Number(ev.lat);
-    const lng = Number(ev.lng);
-    if (!isFinite(lat) || !isFinite(lng)) return;
-    bounds.push([lat, lng]);
-    const m = L.circleMarker([lat, lng], {
-      radius: 10,
-      fillColor: "#e57200",
-      color: "#232d4b",
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 0.9,
-    }).addTo(mainMap);
-    const whenLine = ev.start_iso ? escapeHtml(formatWhen(ev.start_iso)) + "<br>" : "";
-    const place = escapeHtml(ev.place_label || "");
-    const whereBlock =
-      '<p style="margin:0.4rem 0 0;font-size:0.88rem;color:#333"><strong>Where:</strong> ' +
-      (place || "See map pin") +
-      "</p>";
-    const feedLink =
-      '<p class="map-popup-feed" style="margin:0.5rem 0 0;font-size:0.86rem">' +
-      '<a href="#" class="map-popup-view-more" data-event-id="' +
-      escapeHtml(ev.id) +
-      '">View more</a></p>';
-    m.bindPopup("<strong>" + escapeHtml(ev.title) + "</strong><br>" + whenLine + whereBlock + feedLink);
-  });
-
-  if (bounds.length === 1) mainMap.setView(bounds[0], 16);
-  else if (bounds.length > 1) mainMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
-
-  mainMapEl.onclick = (e) => {
-    const a = e.target.closest && e.target.closest("a.map-popup-view-more");
-    if (!a || !mainMapEl.contains(a)) return;
-    e.preventDefault();
-    const id = a.getAttribute("data-event-id");
-    const esc = String(id).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-    const post = document.querySelector('.feed-post[data-event-id="' + esc + '"]');
-    if (post) {
-      post.scrollIntoView({ behavior: "smooth", block: "center" });
-      post.classList.add("feed-post--map-focus");
-      setTimeout(() => post.classList.remove("feed-post--map-focus"), 2400);
-    }
-    mainMap.closePopup();
-  };
-
-  setTimeout(() => mainMap.invalidateSize(), 300);
-}
-
 async function refreshFeed() {
   followingIds = await fetchFollowingIds();
   const followingSet = new Set(followingIds);
+  const followingProfiles = await fetchProfilesByIds(followingIds);
 
   let rows = await fetchEventsForScope();
   feedRows = rows;
@@ -690,7 +711,7 @@ async function refreshFeed() {
 
   const attendeesByEvent = await loadAttendeesForAllEvents(rows);
 
-  const opts = { followingSet, commentCountMap };
+  const opts = { followingSet, commentCountMap, followingProfiles };
 
   if (mount) {
     if (!rows.length) {
@@ -714,7 +735,6 @@ async function refreshFeed() {
     }
   }
 
-  rebuildMap(rows);
   initMiniMaps();
 
   if (window.HoosOutProfilePhoto && window.HoosOutProfilePhoto.refreshTargets) {
@@ -735,7 +755,6 @@ function rsvpActiveLabel(btn) {
 
 function refreshActionButtons(root) {
   const scope = root || document;
-  if (!window.HoosOutEvents) return;
   scope.querySelectorAll(".js-rsvp-btn").forEach((btn) => {
     const id = btn.getAttribute("data-event-id");
     if (!id) return;
@@ -746,6 +765,7 @@ function refreshActionButtons(root) {
     btn.setAttribute("aria-pressed", on ? "true" : "false");
   });
   scope.querySelectorAll(".js-save-btn").forEach((btn) => {
+    if (!window.HoosOutEvents) return;
     const id = btn.getAttribute("data-event-id");
     if (!id) return;
     const on = window.HoosOutEvents.isSaved(id);
@@ -760,7 +780,7 @@ function refreshActionButtons(root) {
     const base = n + " Hoos " + (n === 1 ? "is" : "are") + " going";
     const parts = [];
     if (myRsvpSet.has(id)) parts.push("You're registered");
-    if (window.HoosOutEvents.isSaved(id)) parts.push("saved");
+    if (window.HoosOutEvents && window.HoosOutEvents.isSaved(id)) parts.push("saved");
     el.textContent = base + (parts.length ? " · " + parts.join(" · ") : "");
   });
 }
@@ -900,32 +920,73 @@ function subscribeRealtime() {
   const user = await requireAuth();
   if (!user) return;
   currentUserId = user.id;
+  blockedUserIds = await getBlockedUserIds(currentUserId);
 
   ensureHoosOutOnlinePresence(user.id);
 
   await syncHoosOutDisplayName();
   await upsertMyProfileRow();
+  const myPr = await supabase
+    .from("profiles")
+    .select("first_name,last_name,preferred_name,year,pronouns,bio,location,interests,schedule,avatar_url")
+    .eq("id", currentUserId)
+    .maybeSingle();
+  myProfileRow = myPr.data || null;
+  renderProfileProgressBar(myProfileRow);
   await loadCommunityStories();
 
   document.querySelectorAll(".chip[data-feed-scope]").forEach((c) => {
     c.addEventListener("click", () => {
       document.querySelectorAll(".chip[data-feed-scope]").forEach((x) => x.classList.remove("active"));
       c.classList.add("active");
-      feedScope = c.getAttribute("data-feed-scope") || "following";
+      feedScope = c.getAttribute("data-feed-scope") || "discover";
       refreshFeed();
     });
   });
 
-  document.querySelector(".composer-card")?.addEventListener("click", async (e) => {
-    const a = e.target.closest && e.target.closest('a[href="post.html"]');
-    if (!a) return;
-    if (await mustAbortForIncompleteProfile()) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  });
-
   document.body.addEventListener("click", (e) => {
+    const card = e.target.closest && e.target.closest(".feed-post");
+    if (card) {
+      const interactive = e.target.closest(
+        "button,a,textarea,input,select,label,.post-comment-panel,.post-actions-row,.event-actions"
+      );
+      if (!interactive) {
+        const id = card.getAttribute("data-event-id");
+        if (id) {
+          window.location.href = "event-detail.html?id=" + encodeURIComponent(id);
+          return;
+        }
+      }
+    }
+    const menuBtn = e.target.closest && e.target.closest(".post-menu");
+    if (menuBtn) {
+      e.preventDefault();
+      const articleEl = menuBtn.closest(".feed-post");
+      const evId = articleEl && articleEl.getAttribute("data-event-id");
+      const authorId = articleEl && articleEl.getAttribute("data-author-id");
+      if (!evId) return;
+      const choice = window.prompt('Type "report" to report this post, or "block" to block the author.');
+      if (!choice) return;
+      if (choice.toLowerCase() === "report") {
+        const reason = window.prompt("Reason for report:");
+        if (!reason || !reason.trim()) return;
+        void (async () => {
+          const { error } = await submitEventReport(currentUserId, evId, reason);
+          if (error) return alert(error.message);
+          alert("Report submitted.");
+        })();
+      } else if (choice.toLowerCase() === "block" && authorId && authorId !== currentUserId) {
+        void (async () => {
+          const why = window.prompt("Optional reason for blocking:");
+          const { error } = await blockUser(currentUserId, authorId, why || "");
+          if (error) return alert(error.message);
+          blockedUserIds = await getBlockedUserIds(currentUserId);
+          scheduleRefresh();
+        })();
+      }
+      return;
+    }
+
     const btn = e.target.closest && e.target.closest(".js-post-action");
     if (!btn) return;
     const article = btn.closest(".feed-post");
@@ -936,7 +997,6 @@ function subscribeRealtime() {
     if (action === "like") {
       e.preventDefault();
       void (async () => {
-        if (await mustAbortForIncompleteProfile()) return;
         try {
           if (myLikedEventIds.has(key)) {
             const { error } = await supabase
@@ -960,16 +1020,10 @@ function subscribeRealtime() {
       })();
     } else if (action === "comment") {
       e.preventDefault();
-      void (async () => {
-        if (await mustAbortForIncompleteProfile()) return;
-        toggleCommentPanel(article);
-      })();
+      toggleCommentPanel(article);
     } else if (action === "share") {
       e.preventDefault();
-      void (async () => {
-        if (await mustAbortForIncompleteProfile()) return;
-        sharePost(article);
-      })();
+      sharePost(article);
     }
   });
 
@@ -977,7 +1031,6 @@ function subscribeRealtime() {
     const form = e.target.closest && e.target.closest(".js-comment-form");
     if (!form || !form.closest("main.container--feed")) return;
     e.preventDefault();
-    if (await mustAbortForIncompleteProfile()) return;
     const key = form.getAttribute("data-post-key");
     const ta = form.querySelector(".js-comment-input");
     const text = ta && ta.value.trim();
@@ -1003,7 +1056,6 @@ function subscribeRealtime() {
     const follow = el.closest(".js-follow-btn");
     if (rsvp) {
       e.preventDefault();
-      if (await mustAbortForIncompleteProfile()) return;
       const id = rsvp.getAttribute("data-event-id");
       if (!id) return;
       if (myRsvpSet.has(id)) {
@@ -1043,14 +1095,12 @@ function subscribeRealtime() {
       scheduleRefresh();
     } else if (save) {
       e.preventDefault();
-      if (await mustAbortForIncompleteProfile()) return;
       const sid = save.getAttribute("data-event-id");
       if (!sid) return;
       window.HoosOutEvents.toggleSaved(sid);
       refreshActionButtons(document);
     } else if (follow) {
       e.preventDefault();
-      if (await mustAbortForIncompleteProfile()) return;
       const pid = follow.getAttribute("data-person-id");
       if (!pid || pid === currentUserId) return;
       const isFollowing = followingIds.includes(pid);

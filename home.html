@@ -33,9 +33,11 @@
         id="nav-uva-cville"
         hidden
         >UVA Events</a>
+      <a href="events-map.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Map</a>
       <a href="post.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Create</a>
       <a href="messages.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Messages</a>
       <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
+      <a href="settings.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Settings</a>
       <a href="index.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem" id="nav-logout">Log out</a>
     </nav>
   </header>
@@ -53,6 +55,16 @@
       <button type="button" class="chip" data-feed-scope="following">Following</button>
       <button type="button" class="chip" data-feed-scope="mine">My Events</button>
     </div>
+    <section id="feed-profile-progress" class="feed-profile-progress" hidden aria-live="polite">
+      <div class="feed-profile-progress-head">
+        <strong>Complete your profile</strong>
+        <span id="feed-profile-progress-label"></span>
+      </div>
+      <div class="feed-profile-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <span id="feed-profile-progress-fill"></span>
+      </div>
+      <p class="feed-profile-progress-copy">Add photo, bio, and details to help others recognize you.</p>
+    </section>
         <div class="composer-card">
       <div class="composer-avatar" data-hoosout-profile-avatar aria-hidden="true">
         <img class="js-hoosout-avatar-img composer-avatar-img" alt="" hidden />
@@ -66,17 +78,6 @@
       </div>
     </div>
 
-    <section class="feed-map-section" aria-labelledby="map-heading">
-      <h2 id="map-heading" class="feed-map-heading">Events Map</h2>
-      <p class="feed-map-lead">
-        Map that shows you the location of the events that were posted. Orange pins appear at their map location. Pan and zoom around Grounds and Charlottesville.
-      </p>
-      <p id="feed-map-empty" class="feed-map-empty">
-        No events to show on the map yet.
-        <a href="post.html">Create an event</a>
-      </p>
-      <div id="feed-map" class="feed-map-canvas" role="application" aria-label="Map of posted events"></div>
-    </section>
     <p id="feed-posts-empty" class="feed-empty-user-events" hidden style="margin-bottom: 0.75rem">
       Loading events…
     </p>

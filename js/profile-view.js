@@ -5,6 +5,7 @@ import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
 import { initNavActivityBadge } from "./nav-activity-badge.js";
 import { resolveProfileAvatarUrl, withResolvedAvatarUrl } from "./avatar-url.js";
+import { blockUser, submitUserReport } from "./user-safety.js";
 
 function escapeHtml(s) {
   if (s == null) return "";
@@ -165,6 +166,37 @@ function renderUserRows(profiles, mount, opts) {
     window.location.replace("me.html");
     return;
   }
+  const blockCheck = await supabase
+    .from("user_blocks")
+    .select("blocker_id, blocked_id")
+    .or("and(blocker_id.eq." + me.id + ",blocked_id.eq." + id + "),and(blocker_id.eq." + id + ",blocked_id.eq." + me.id + ")")
+    .limit(1);
+  if ((blockCheck.data || []).length) {
+    document.getElementById("pv-name").textContent = "Profile unavailable";
+    document.getElementById("pv-handle").textContent = "One of you has blocked the other.";
+    return;
+  }
+
+  const prefRes = await supabase
+    .from("user_preferences")
+    .select("profile_visibility")
+    .eq("user_id", id)
+    .maybeSingle();
+  const vis = prefRes.data && prefRes.data.profile_visibility ? prefRes.data.profile_visibility : "public";
+  if (vis === "following_only") {
+    const rel = await supabase
+      .from("follows")
+      .select("id")
+      .eq("follower_id", me.id)
+      .eq("following_id", id)
+      .maybeSingle();
+    if (!rel.data) {
+      document.getElementById("pv-name").textContent = "Private profile";
+      document.getElementById("pv-handle").textContent = "This profile is only visible to people this user follows.";
+      return;
+    }
+  }
+
   profileUserId = id;
 
   const { data: row, error } = await supabase.from("profiles").select("*").eq("id", id).maybeSingle();
@@ -308,6 +340,23 @@ function renderUserRows(profiles, mount, opts) {
     msgA.removeAttribute("hidden");
     msgA.href = "messages.html?with=" + encodeURIComponent(id);
   }
+
+  document.getElementById("pv-report-btn")?.addEventListener("click", async () => {
+    const reason = window.prompt("Why are you reporting this user?");
+    if (!reason || !reason.trim()) return;
+    const { error } = await submitUserReport(me.id, id, reason);
+    if (error) return alert(error.message);
+    alert("Report submitted. Our team has been notified.");
+  });
+
+  document.getElementById("pv-block-btn")?.addEventListener("click", async () => {
+    if (!window.confirm("Block this user? They will no longer appear in search/feed or interact with you.")) return;
+    const why = window.prompt("Optional reason for block:");
+    const { error } = await blockUser(me.id, id, why || "");
+    if (error) return alert(error.message);
+    alert("User blocked.");
+    window.location.href = "home.html";
+  });
 
   const dialog = document.getElementById("pv-dialog");
   const dialogTitle = document.getElementById("pv-dialog-title");
