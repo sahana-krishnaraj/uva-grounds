@@ -65,6 +65,7 @@ export async function upsertMyProfileRow() {
     var m = u.user_metadata || {};
     var metaFn = String(m.first_name || "").trim();
     var metaLn = String(m.last_name || "").trim();
+    var metaPn = String(m.preferred_name || "").trim();
     var metaCid = String(m.computing_id || "").trim();
     if (!metaCid && u.email) {
       var em = String(u.email || "").trim();
@@ -80,6 +81,7 @@ export async function upsertMyProfileRow() {
         id: u.id,
         first_name: metaFn || null,
         last_name: metaLn || null,
+        preferred_name: metaPn || null,
         computing_id: metaCid || null,
       });
       return;
@@ -88,6 +90,7 @@ export async function upsertMyProfileRow() {
     var patch = {};
     if (!String(ex.first_name || "").trim() && metaFn) patch.first_name = metaFn;
     if (!String(ex.last_name || "").trim() && metaLn) patch.last_name = metaLn;
+    if (!String(ex.preferred_name || "").trim() && metaPn) patch.preferred_name = metaPn;
     if (!String(ex.computing_id || "").trim() && metaCid) patch.computing_id = metaCid;
     if (Object.keys(patch).length) {
       await supabase.from("profiles").update(patch).eq("id", u.id);

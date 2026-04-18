@@ -2,6 +2,7 @@
  * Profile tabs: following, my events, RSVPs (Supabase); saved uses localStorage.
  */
 import { supabase } from "./supabase.js";
+import { withResolvedAvatarUrl } from "./avatar-url.js";
 
 function escapeHtml(s) {
   if (s == null) return "";
@@ -58,7 +59,8 @@ export async function initMePage() {
         .from("profiles")
         .select("id, first_name, last_name, preferred_name, computing_id, avatar_url")
         .in("id", fids);
-      following = (profs || []).map((p) => {
+      following = (profs || []).map((raw) => {
+        const p = withResolvedAvatarUrl(raw, supabase);
         const name =
           (p.preferred_name || "").trim() ||
           [p.first_name, p.last_name].filter(Boolean).join(" ") ||

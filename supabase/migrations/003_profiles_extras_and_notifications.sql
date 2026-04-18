@@ -29,5 +29,5 @@ create index if not exists app_notifications_recipient_created_idx
 create index if not exists app_notifications_recipient_unread_idx
   on public.app_notifications (recipient_id) where read = false;
 
--- RLS: run policies in supabase/rls_policies.sql (app_notifications section).
+-- RLS for app_notifications: run 005_app_notifications_rls.sql (or supabase/rls_policies.sql).
 -- Realtime: Dashboard → Database → Replication → enable public.app_notifications

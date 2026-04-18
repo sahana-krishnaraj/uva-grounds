@@ -153,6 +153,7 @@ function showStatus(el, msg, isErr) {
       data: {
         first_name: firstName,
         last_name: lastName,
+        preferred_name: preferredName,
         computing_id: metaCid || null,
       },
     });

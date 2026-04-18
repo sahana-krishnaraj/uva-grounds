@@ -3,7 +3,6 @@
  */
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
-import { redirectIfProfileIncomplete } from "./profile-gate.js";
 import {
   ensureHoosOutOnlinePresence,
   isPartnerOnline,
@@ -12,10 +11,11 @@ import {
 } from "./presence-channel.js";
 import { notifyDirectMessage } from "./app-notifications.js";
 import { initNavActivityBadge } from "./nav-activity-badge.js";
+import { mustAbortForIncompleteProfile } from "./profile-actions.js";
+import { resolveProfileAvatarUrl, withResolvedAvatarUrl } from "./avatar-url.js";
 
 const user = await requireAuth();
 if (!user) throw new Error("auth");
-if (await redirectIfProfileIncomplete(user)) throw new Error("profile_redirect");
 
 const myId = user.id;
 
@@ -50,25 +50,34 @@ function displayName(p) {
 
 function initialsFromProfile(p) {
   if (!p) return "?";
+  const pref = (p.preferred_name || "").trim();
+  if (pref.length >= 2) return pref.slice(0, 2).toUpperCase();
+  if (pref.length === 1) return (pref[0] + pref[0]).toUpperCase();
   const fn = (p.first_name || "").trim();
   const ln = (p.last_name || "").trim();
   if (fn && ln) return (fn[0] + ln[0]).toUpperCase();
-  if (fn) return fn.slice(0, 2).toUpperCase();
+  if (fn.length >= 2) return fn.slice(0, 2).toUpperCase();
+  if (fn.length === 1) return (fn[0] + (ln[0] || fn[0])).toUpperCase();
   const c = (p.computing_id || "").trim();
-  return c ? c.slice(0, 2).toUpperCase() : "?";
+  if (c.length >= 2) return c.slice(0, 2).toUpperCase();
+  if (c.length === 1) return (c + c).toUpperCase();
+  const id = String(p.id || "").replace(/-/g, "");
+  if (id.length >= 2) return id.slice(0, 2).toUpperCase();
+  return "?";
 }
 
 function threadAvatarHtml(p, extraClass) {
   const cls = "msg-avatar" + (extraClass ? " " + extraClass : "");
   const ini = escapeHtml(initialsFromProfile(p));
-  if (p && p.avatar_url) {
+  const av = p ? resolveProfileAvatarUrl(p.avatar_url, supabase) : "";
+  if (p && av) {
     return (
       '<span class="' +
       cls +
       ' msg-avatar--img" aria-hidden="true" data-ini="' +
       ini +
       '"><img class="msg-avatar-img" alt="" src="' +
-      escapeHtml(p.avatar_url) +
+      escapeHtml(av) +
       '" /></span>'
     );
   }
@@ -88,7 +97,7 @@ async function loadProfilesForIds(ids) {
     .from("profiles")
     .select("id, first_name, last_name, preferred_name, computing_id, avatar_url")
     .in("id", need);
-  (data || []).forEach((p) => profileMap.set(p.id, p));
+  (data || []).forEach((p) => profileMap.set(p.id, withResolvedAvatarUrl(p, supabase)));
 }
 
 function buildThreads() {
@@ -416,6 +425,7 @@ async function openThread(partnerId) {
 
 async function sendMessage(text) {
   if (!activePartnerId || !text.trim()) return;
+  if (await mustAbortForIncompleteProfile()) return;
   const trimmed = text.trim();
   const { data: inserted, error } = await supabase
     .from("messages")
@@ -509,7 +519,7 @@ document.getElementById("msg-user-search")?.addEventListener("input", (e) => {
     }
     hits.innerHTML = rows
       .map((r) => {
-        profileMap.set(r.id, r);
+        profileMap.set(r.id, withResolvedAvatarUrl(r, supabase));
         return (
           '<button type="button" class="messages-user-hit" data-user-id="' +
           escapeHtml(r.id) +

@@ -3,23 +3,26 @@
  */
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
-import { redirectIfProfileIncomplete } from "./profile-gate.js";
+import { mustAbortForIncompleteProfile } from "./profile-actions.js";
 import { ensureHoosOutOnlinePresence } from "./presence-channel.js";
 import { syncHoosOutDisplayName, upsertMyProfileRow } from "./hoosout-profile-sync.js";
 import { notifyRsvp } from "./app-notifications.js";
 import { initNavActivityBadge } from "./nav-activity-badge.js";
+import { withResolvedAvatarUrl } from "./avatar-url.js";
 
 const UVA = [38.0336, -78.508];
 
 let currentUserId = null;
-let feedScope = "following";
-let tagFilter = "all";
+let feedScope = "discover";
 let feedRows = [];
 let followingIds = [];
 let rsvpCountMap = new Map();
 let myRsvpSet = new Set();
 let commentsByEvent = new Map();
 let realtimeChannel = null;
+/** Server-backed like counts / my likes (see supabase/migrations/007_event_likes.sql) */
+let eventLikeCountMap = new Map();
+let myLikedEventIds = new Set();
 
 function escapeHtml(s) {
   if (!s) return "";
@@ -101,9 +104,17 @@ function initialsFromProfile(p) {
   const fn = (p.first_name || "").trim();
   const ln = (p.last_name || "").trim();
   if (fn && ln) return (fn[0] + ln[0]).toUpperCase();
-  if (fn) return fn.slice(0, 2).toUpperCase();
+  if (fn.length >= 2) return fn.slice(0, 2).toUpperCase();
+  if (ln.length >= 2) return ln.slice(0, 2).toUpperCase();
+  if (fn.length === 1) return (fn[0] + fn[0]).toUpperCase();
+  if (ln.length === 1) return (ln[0] + ln[0]).toUpperCase();
+  const pref = (p.preferred_name || "").trim();
+  if (pref.length >= 2) return pref.slice(0, 2).toUpperCase();
+  if (pref.length === 1) return (pref[0] + pref[0]).toUpperCase();
   const c = (p.computing_id || "").trim();
-  return c ? c.slice(0, 2).toUpperCase() : "?";
+  if (c.length >= 2) return c.slice(0, 2).toUpperCase();
+  if (c.length === 1) return (c + c).toUpperCase();
+  return "?";
 }
 
 function userEventFeedTags(ev) {
@@ -132,48 +143,6 @@ function regionFromEvent(ev) {
   const lng = Number(ev.lng);
   if (isFinite(lng) && lng > -78.49) return "cville";
   return "grounds";
-}
-
-function matchesSports(tags, bodyFallback) {
-  const s = ((tags || "") + " " + (bodyFallback || "").slice(0, 800)).toLowerCase();
-  return /\b(sports?|gym|wellness|volleyball|soccer|hoops|basketball|basket|lift|lifting|afc|pickup|kickaround|runs?|hoop|turf|field|grass)\b/.test(
-    s
-  );
-}
-
-function matchesStudy(tags, bodyFallback) {
-  const s = ((tags || "") + " " + (bodyFallback || "").slice(0, 800)).toLowerCase();
-  return /\b(study|studying|econ|thesis|dissertation|writing|problem|clemons|alderman|quiet|midterm|prob|stacks)\b/.test(
-    s
-  );
-}
-
-function matchesCville(article) {
-  if (article.getAttribute("data-region") === "cville") return true;
-  const s = (article.getAttribute("data-feed-tags") || "").toLowerCase();
-  return /\b(cville|charlottesville|downtown|mall|grit)\b/.test(s);
-}
-
-function passesTagFilter(article, filter) {
-  if (filter === "all") return true;
-  const tags = article.getAttribute("data-feed-tags") || "";
-  const bodyTxt = article.textContent || "";
-  if (filter === "sports") return matchesSports(tags, bodyTxt);
-  if (filter === "study") return matchesStudy(tags, bodyTxt);
-  if (filter === "cville") return matchesCville(article);
-  return true;
-}
-
-function applyTagFilterToDom() {
-  const articles = document.querySelectorAll("#feed-posts-mount .feed-post");
-  let n = 0;
-  articles.forEach((art) => {
-    const show = passesTagFilter(art, tagFilter);
-    art.classList.toggle("feed-post--filtered-out", !show);
-    if (show) n += 1;
-  });
-  const emptyEl = document.getElementById("feed-filter-empty");
-  if (emptyEl) emptyEl.hidden = n > 0;
 }
 
 async function loadCommunityStories() {
@@ -291,6 +260,8 @@ function renderCommentItems(eventId) {
 function renderEventCard(ev, profile, opts, attendeesForEvent) {
   const hostLabel = displayNameFromProfile(profile);
   const isSelf = ev.user_id === currentUserId;
+  const nComments = opts && opts.commentCountMap ? opts.commentCountMap.get(ev.id) || 0 : 0;
+  const nLikes = eventLikeCountMap.get(ev.id) || 0;
   const profileHref = ev.user_id ? "profile-view.html?id=" + encodeURIComponent(ev.user_id) : "#";
   const notesHtml = ev.notes
     ? '<div class="post-body"><p>' + escapeHtml(ev.notes) + "</p></div>"
@@ -320,9 +291,11 @@ function renderEventCard(ev, profile, opts, attendeesForEvent) {
       : '<span class="js-hoosout-avatar-fallback">' + escapeHtml(initials) + "</span>";
 
   const attendeeBlock =
-    isSelf && attendeesForEvent && attendeesForEvent.length
+    attendeesForEvent && attendeesForEvent.length
       ? '<div class="event-attendees">' +
-        '<p class="event-attendees-heading">RSVP\'d</p>' +
+        '<p class="event-attendees-heading">Who\'s going (' +
+        attendeesForEvent.length +
+        ")</p>" +
         '<ul class="event-attendees-list">' +
         attendeesForEvent
           .map((a) => {
@@ -373,7 +346,9 @@ function renderEventCard(ev, profile, opts, attendeesForEvent) {
     escapeHtml(feedTags) +
     '" data-region="' +
     region +
-    '" data-like-base="0">' +
+    '" data-like-count="' +
+    nLikes +
+    '">' +
     '<header class="post-header">' +
     '<a class="post-profile-hit post-profile-hit--avatar" href="' +
     escapeHtml(profileHref) +
@@ -382,7 +357,7 @@ function renderEventCard(ev, profile, opts, attendeesForEvent) {
     '\'s profile">' +
     '<div class="avatar avatar--md avatar--color-' +
     colorN +
-    '" data-hoosout-profile-avatar aria-hidden="true">' +
+    '" aria-hidden="true">' +
     avatarHtml +
     "</div></a>" +
     '<div class="post-header-main">' +
@@ -445,7 +420,9 @@ function renderEventCard(ev, profile, opts, attendeesForEvent) {
     "</div>" +
     '<div class="post-actions-row">' +
     '<button type="button" class="post-action-btn js-post-action" data-action="like" data-like-label="Like">👍 <span class="js-like-text">Like</span><span class="js-like-count"></span></button>' +
-    '<button type="button" class="post-action-btn js-post-action" data-action="comment">💬 Comment</button>' +
+    '<button type="button" class="post-action-btn js-post-action" data-action="comment">💬 Comment <span class="js-comment-count">' +
+    (nComments ? "(" + nComments + ")" : "") +
+    "</span></button>" +
     '<button type="button" class="post-action-btn js-post-action" data-action="share">↗ Share</button>' +
     "</div>" +
     commentPanelHtml(ev.id) +
@@ -466,11 +443,9 @@ async function fetchFollowingIds() {
 }
 
 async function fetchEventsForScope() {
-  const profileSelect = `id, user_id, title, activity_type, duration, start_iso, lat, lng, place_label,
-    visibility, tags, vibe, notes, cap, created_at,
-    profiles ( id, first_name, last_name, preferred_name, computing_id, avatar_url )`;
-
-  let query = supabase.from("events").select(profileSelect);
+  const evCols =
+    "id, user_id, title, activity_type, duration, start_iso, lat, lng, place_label, visibility, tags, vibe, notes, cap, created_at";
+  let query = supabase.from("events").select(evCols);
 
   if (feedScope === "mine") {
     query = query.eq("user_id", currentUserId);
@@ -483,37 +458,25 @@ async function fetchEventsForScope() {
     query = query.in("user_id", followingIds);
   }
 
-  let { data, error } = await query.order("created_at", { ascending: false }).limit(200);
-
+  const { data: evs, error } = await query.order("created_at", { ascending: false }).limit(200);
   if (error) {
-    console.warn("HoosOut: events join retry", error.message);
-    let q2 = supabase
-      .from("events")
-      .select(
-        "id, user_id, title, activity_type, duration, start_iso, lat, lng, place_label, visibility, tags, vibe, notes, cap, created_at"
-      );
-    if (feedScope === "mine") q2 = q2.eq("user_id", currentUserId);
-    else if (feedScope === "discover") q2 = q2.eq("visibility", "public");
-    else if (feedScope === "following") {
-      if (!followingIds.length) return [];
-      q2 = q2.in("user_id", followingIds);
-    }
-    const r2 = await q2.order("created_at", { ascending: false }).limit(200);
-    if (r2.error) {
-      console.error("HoosOut: events", r2.error);
-      return [];
-    }
-    const evs = r2.data || [];
-    const uids = [...new Set(evs.map((e) => e.user_id).filter(Boolean))];
-    if (!uids.length) return evs.map((e) => ({ ...e, profiles: null }));
-    const { data: profs } = await supabase
+    console.error("HoosOut: events", error.message);
+    return [];
+  }
+  const list = evs || [];
+  const uids = [...new Set(list.map((e) => e.user_id).filter(Boolean))];
+  const pmap = new Map();
+  if (uids.length) {
+    const { data: profs, error: pErr } = await supabase
       .from("profiles")
       .select("id, first_name, last_name, preferred_name, computing_id, avatar_url")
       .in("id", uids);
-    const pmap = new Map((profs || []).map((p) => [p.id, p]));
-    return evs.map((e) => ({ ...e, profiles: pmap.get(e.user_id) || null }));
+    if (pErr) console.warn("HoosOut: profiles for feed", pErr.message);
+    (profs || []).forEach((p) => {
+      pmap.set(p.id, withResolvedAvatarUrl(p, supabase));
+    });
   }
-  return data || [];
+  return list.map((e) => ({ ...e, profiles: pmap.get(e.user_id) || null }));
 }
 
 async function loadRsvpData(eventIds) {
@@ -537,15 +500,11 @@ async function loadRsvpData(eventIds) {
   if (mine) mine.forEach((r) => myRsvpSet.add(r.event_id));
 }
 
-async function loadAttendeesForHostEvents(rows, hostId) {
+async function loadAttendeesForAllEvents(rows) {
   const m = new Map();
-  if (!hostId) return m;
-  const myEventIds = rows.filter((r) => r.user_id === hostId).map((r) => r.id);
-  if (!myEventIds.length) return m;
-  const { data: rs, error } = await supabase
-    .from("rsvps")
-    .select("event_id, user_id")
-    .in("event_id", myEventIds);
+  const eventIds = (rows || []).map((r) => r.id).filter(Boolean);
+  if (!eventIds.length) return m;
+  const { data: rs, error } = await supabase.from("rsvps").select("event_id, user_id").in("event_id", eventIds);
   if (error || !rs || !rs.length) return m;
   const uids = [...new Set(rs.map((r) => r.user_id).filter(Boolean))];
   const pmap = new Map();
@@ -554,7 +513,7 @@ async function loadAttendeesForHostEvents(rows, hostId) {
       .from("profiles")
       .select("id, first_name, last_name, preferred_name, computing_id, avatar_url")
       .in("id", uids);
-    (pr.data || []).forEach((p) => pmap.set(p.id, p));
+    (pr.data || []).forEach((p) => pmap.set(p.id, withResolvedAvatarUrl(p, supabase)));
   }
   rs.forEach((r) => {
     if (!r.user_id) return;
@@ -567,41 +526,43 @@ async function loadAttendeesForHostEvents(rows, hostId) {
   return m;
 }
 
+async function loadLikeData(eventIds) {
+  eventLikeCountMap = new Map();
+  myLikedEventIds = new Set();
+  if (!eventIds.length) return;
+  const { data, error } = await supabase.from("event_likes").select("event_id, user_id").in("event_id", eventIds);
+  if (error) {
+    console.warn("HoosOut: event_likes", error.message);
+    return;
+  }
+  (data || []).forEach((r) => {
+    eventLikeCountMap.set(r.event_id, (eventLikeCountMap.get(r.event_id) || 0) + 1);
+    if (r.user_id === currentUserId) myLikedEventIds.add(r.event_id);
+  });
+}
+
 async function loadCommentsForEvents(eventIds) {
   commentsByEvent = new Map();
   if (!eventIds.length) return;
-  let data;
-  const q1 = await supabase
+  const q2 = await supabase
     .from("comments")
-    .select(
-      `id, user_id, event_id, text, created_at,
-      profiles ( first_name, last_name, preferred_name, computing_id, avatar_url )`
-    )
+    .select("id, user_id, event_id, text, created_at")
     .in("event_id", eventIds)
     .order("created_at", { ascending: true });
-  if (q1.error) {
-    const q2 = await supabase
-      .from("comments")
-      .select("id, user_id, event_id, text, created_at")
-      .in("event_id", eventIds)
-      .order("created_at", { ascending: true });
-    if (q2.error) {
-      console.warn("HoosOut: comments", q2.error.message);
-      return;
-    }
-    const uids = [...new Set((q2.data || []).map((c) => c.user_id).filter(Boolean))];
-    let pmap = new Map();
-    if (uids.length) {
-      const pr = await supabase
-        .from("profiles")
-        .select("id, first_name, last_name, preferred_name, computing_id, avatar_url")
-        .in("id", uids);
-      (pr.data || []).forEach((p) => pmap.set(p.id, p));
-    }
-    data = (q2.data || []).map((c) => ({ ...c, profiles: pmap.get(c.user_id) || null }));
-  } else {
-    data = q1.data || [];
+  if (q2.error) {
+    console.warn("HoosOut: comments", q2.error.message);
+    return;
   }
+  const uids = [...new Set((q2.data || []).map((c) => c.user_id).filter(Boolean))];
+  const pmap = new Map();
+  if (uids.length) {
+    const pr = await supabase
+      .from("profiles")
+      .select("id, first_name, last_name, preferred_name, computing_id, avatar_url")
+      .in("id", uids);
+    (pr.data || []).forEach((p) => pmap.set(p.id, withResolvedAvatarUrl(p, supabase)));
+  }
+  const data = (q2.data || []).map((c) => ({ ...c, profiles: pmap.get(c.user_id) || null }));
   (data || []).forEach((c) => {
     const list = commentsByEvent.get(c.event_id) || [];
     list.push(c);
@@ -722,10 +683,14 @@ async function refreshFeed() {
   const eventIds = rows.map((r) => r.id);
   await loadRsvpData(eventIds);
   await loadCommentsForEvents(eventIds);
+  await loadLikeData(eventIds);
 
-  const attendeesByEvent = await loadAttendeesForHostEvents(rows, currentUserId);
+  const commentCountMap = new Map();
+  eventIds.forEach((id) => commentCountMap.set(id, (commentsByEvent.get(id) || []).length));
 
-  const opts = { followingSet };
+  const attendeesByEvent = await loadAttendeesForAllEvents(rows);
+
+  const opts = { followingSet, commentCountMap };
 
   if (mount) {
     if (!rows.length) {
@@ -752,10 +717,9 @@ async function refreshFeed() {
   rebuildMap(rows);
   initMiniMaps();
 
-  applyTagFilterToDom();
-
   if (window.HoosOutProfilePhoto && window.HoosOutProfilePhoto.refreshTargets) {
-    window.HoosOutProfilePhoto.refreshTargets(document);
+    var composer = document.querySelector(".composer-card");
+    if (composer) window.HoosOutProfilePhoto.refreshTargets(composer);
   }
 
   syncPostSocialUi(document);
@@ -814,29 +778,31 @@ function refreshFollowButtons(root, followingSet) {
 }
 
 function updateLikeButton(btn, article) {
-  if (!btn || !article || !window.HoosOutEvents) return;
+  if (!btn || !article) return;
   const key = article.getAttribute("data-post-key") || article.getAttribute("data-event-id");
   if (!key) return;
-  const base = parseInt(article.getAttribute("data-like-base") || "0", 10) || 0;
-  const count = window.HoosOutEvents.getLikeDisplayCount(key, base);
-  const liked = window.HoosOutEvents.isLiked(key);
+  const count = eventLikeCountMap.get(key) || 0;
+  const liked = myLikedEventIds.has(key);
   const label = btn.getAttribute("data-like-label") || "Like";
   const textSpan = btn.querySelector(".js-like-text");
   const countSpan = btn.querySelector(".js-like-count");
   btn.classList.toggle("post-action-btn--active", liked);
   btn.setAttribute("aria-pressed", liked ? "true" : "false");
   if (textSpan) textSpan.textContent = liked ? "Liked" : label;
-  if (countSpan) countSpan.textContent = " · " + count;
+  if (countSpan) countSpan.textContent = count ? " · " + count : "";
 }
 
 function syncPostSocialUi(scope) {
   const root = scope || document;
-  if (!window.HoosOutEvents) return;
   root.querySelectorAll(".feed-post").forEach((art) => {
     const key = art.getAttribute("data-post-key") || art.getAttribute("data-event-id");
     if (!key) return;
     art.querySelectorAll('.js-post-action[data-action="like"]').forEach((btn) => {
       updateLikeButton(btn, art);
+    });
+    const n = (commentsByEvent.get(key) || []).length;
+    art.querySelectorAll(".js-comment-count").forEach((el) => {
+      el.textContent = n ? "(" + n + ")" : "";
     });
     art.querySelectorAll(".js-comment-list").forEach((listEl) => {
       const eid = listEl.getAttribute("data-post-key");
@@ -922,13 +888,17 @@ function subscribeRealtime() {
       { event: "*", schema: "public", table: "follows" },
       () => scheduleRefresh()
     )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "event_likes" },
+      () => scheduleRefresh()
+    )
     .subscribe();
 }
 
 (async function main() {
   const user = await requireAuth();
   if (!user) return;
-  if (await redirectIfProfileIncomplete(user)) return;
   currentUserId = user.id;
 
   ensureHoosOutOnlinePresence(user.id);
@@ -946,13 +916,13 @@ function subscribeRealtime() {
     });
   });
 
-  document.querySelectorAll(".chip[data-tag-filter]").forEach((c) => {
-    c.addEventListener("click", () => {
-      document.querySelectorAll(".chip[data-tag-filter]").forEach((x) => x.classList.remove("active"));
-      c.classList.add("active");
-      tagFilter = c.getAttribute("data-tag-filter") || "all";
-      applyTagFilterToDom();
-    });
+  document.querySelector(".composer-card")?.addEventListener("click", async (e) => {
+    const a = e.target.closest && e.target.closest('a[href="post.html"]');
+    if (!a) return;
+    if (await mustAbortForIncompleteProfile()) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
   });
 
   document.body.addEventListener("click", (e) => {
@@ -962,20 +932,44 @@ function subscribeRealtime() {
     if (!article) return;
     const action = btn.getAttribute("data-action");
     const key = article.getAttribute("data-post-key") || article.getAttribute("data-event-id");
-    if (!key || !window.HoosOutEvents || !action) return;
+    if (!key || !action) return;
     if (action === "like") {
       e.preventDefault();
-      const base = parseInt(article.getAttribute("data-like-base") || "0", 10) || 0;
-      window.HoosOutEvents.toggleLike(key, base);
-      article.querySelectorAll('.js-post-action[data-action="like"]').forEach((b) => {
-        updateLikeButton(b, article);
-      });
+      void (async () => {
+        if (await mustAbortForIncompleteProfile()) return;
+        try {
+          if (myLikedEventIds.has(key)) {
+            const { error } = await supabase
+              .from("event_likes")
+              .delete()
+              .eq("event_id", key)
+              .eq("user_id", currentUserId);
+            if (error) throw error;
+          } else {
+            const { error } = await supabase.from("event_likes").insert({
+              event_id: key,
+              user_id: currentUserId,
+            });
+            if (error) throw error;
+          }
+        } catch (err) {
+          alert((err && err.message) || "Could not update like. Run supabase/migrations/007_event_likes.sql if needed.");
+          return;
+        }
+        scheduleRefresh();
+      })();
     } else if (action === "comment") {
       e.preventDefault();
-      toggleCommentPanel(article);
+      void (async () => {
+        if (await mustAbortForIncompleteProfile()) return;
+        toggleCommentPanel(article);
+      })();
     } else if (action === "share") {
       e.preventDefault();
-      sharePost(article);
+      void (async () => {
+        if (await mustAbortForIncompleteProfile()) return;
+        sharePost(article);
+      })();
     }
   });
 
@@ -983,6 +977,7 @@ function subscribeRealtime() {
     const form = e.target.closest && e.target.closest(".js-comment-form");
     if (!form || !form.closest("main.container--feed")) return;
     e.preventDefault();
+    if (await mustAbortForIncompleteProfile()) return;
     const key = form.getAttribute("data-post-key");
     const ta = form.querySelector(".js-comment-input");
     const text = ta && ta.value.trim();
@@ -997,9 +992,7 @@ function subscribeRealtime() {
       return;
     }
     if (ta) ta.value = "";
-    await loadCommentsForEvents([key]);
-    const listEl = form.closest(".post-comment-panel") && form.closest(".post-comment-panel").querySelector(".js-comment-list");
-    if (listEl) listEl.innerHTML = renderCommentItems(key);
+    scheduleRefresh();
   });
 
   document.body.addEventListener("click", async (e) => {
@@ -1010,6 +1003,7 @@ function subscribeRealtime() {
     const follow = el.closest(".js-follow-btn");
     if (rsvp) {
       e.preventDefault();
+      if (await mustAbortForIncompleteProfile()) return;
       const id = rsvp.getAttribute("data-event-id");
       if (!id) return;
       if (myRsvpSet.has(id)) {
@@ -1046,14 +1040,17 @@ function subscribeRealtime() {
         }
       }
       refreshActionButtons(document);
+      scheduleRefresh();
     } else if (save) {
       e.preventDefault();
+      if (await mustAbortForIncompleteProfile()) return;
       const sid = save.getAttribute("data-event-id");
       if (!sid) return;
       window.HoosOutEvents.toggleSaved(sid);
       refreshActionButtons(document);
     } else if (follow) {
       e.preventDefault();
+      if (await mustAbortForIncompleteProfile()) return;
       const pid = follow.getAttribute("data-person-id");
       if (!pid || pid === currentUserId) return;
       const isFollowing = followingIds.includes(pid);
@@ -1113,11 +1110,6 @@ function subscribeRealtime() {
   if (uva && window.HoosOutSession) {
     if (signedIn) uva.removeAttribute("hidden");
     else uva.setAttribute("hidden", "");
-  }
-  const cvilleChip = document.getElementById("chip-around-cville");
-  if (cvilleChip && window.HoosOutSession) {
-    if (signedIn) cvilleChip.removeAttribute("hidden");
-    else cvilleChip.setAttribute("hidden", "");
   }
   const out = document.getElementById("nav-logout");
   if (out) {

@@ -2348,6 +2348,8 @@ select {
   padding-left: 1.1rem;
   font-size: 0.86rem;
   line-height: 1.5;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .event-attendee-link {

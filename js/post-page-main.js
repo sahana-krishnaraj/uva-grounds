@@ -3,7 +3,7 @@
  */
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
-import { redirectIfProfileIncomplete } from "./profile-gate.js";
+import { mustAbortForIncompleteProfile } from "./profile-actions.js";
 import { syncHoosOutDisplayName } from "./hoosout-profile-sync.js";
 import { initNavActivityBadge } from "./nav-activity-badge.js";
 
@@ -13,9 +13,6 @@ const DEFAULT_ZOOM = 15;
 const user = await requireAuth();
 if (!user) {
   throw new Error("Not signed in");
-}
-if (await redirectIfProfileIncomplete(user)) {
-  throw new Error("redirect");
 }
 
 await syncHoosOutDisplayName();
@@ -169,6 +166,7 @@ setTimeout(() => map.invalidateSize(), 200);
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
+  if (await mustAbortForIncompleteProfile()) return;
   const lat = parseFloat(latInput.value);
   const lng = parseFloat(lngInput.value);
   if (!isFinite(lat) || !isFinite(lng)) {

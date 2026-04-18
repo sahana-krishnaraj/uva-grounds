@@ -4,6 +4,7 @@
 import { supabase } from "./supabase.js";
 import { requireAuth } from "./auth-guard.js";
 import { initNavActivityBadge } from "./nav-activity-badge.js";
+import { resolveProfileAvatarUrl, withResolvedAvatarUrl } from "./avatar-url.js";
 
 function escapeHtml(s) {
   if (s == null) return "";
@@ -24,12 +25,20 @@ function displayName(row) {
 
 function initials(row) {
   if (!row) return "?";
+  const pref = (row.preferred_name || "").trim();
+  if (pref.length >= 2) return pref.slice(0, 2).toUpperCase();
+  if (pref.length === 1) return (pref[0] + pref[0]).toUpperCase();
   const fn = (row.first_name || "").trim();
   const ln = (row.last_name || "").trim();
   if (fn && ln) return (fn[0] + ln[0]).toUpperCase();
-  if (fn) return fn.slice(0, 2).toUpperCase();
+  if (fn.length >= 2) return fn.slice(0, 2).toUpperCase();
+  if (fn.length === 1) return (fn[0] + (ln[0] || fn[0])).toUpperCase();
   const c = (row.computing_id || "").trim();
-  return c ? c.slice(0, 2).toUpperCase() : "?";
+  if (c.length >= 2) return c.slice(0, 2).toUpperCase();
+  if (c.length === 1) return (c + c).toUpperCase();
+  const id = String(row.id || "").replace(/-/g, "");
+  if (id.length >= 2) return id.slice(0, 2).toUpperCase();
+  return "?";
 }
 
 function handleFromRow(row) {
@@ -71,7 +80,8 @@ function renderUserRows(profiles, mount, opts) {
     return;
   }
   mount.innerHTML = profiles
-    .map((p) => {
+    .map((raw) => {
+      const p = withResolvedAvatarUrl(raw, supabase);
       const name = escapeHtml(displayName(p));
       const href = "profile-view.html?id=" + encodeURIComponent(p.id);
       const ini = escapeHtml(initials(p));
@@ -177,13 +187,14 @@ function renderUserRows(profiles, mount, opts) {
     handleEl.textContent = parts.join(" · ");
   }
 
-  if (row.avatar_url && imgEl && fbEl) {
+  const heroAv = resolveProfileAvatarUrl(row.avatar_url, supabase);
+  if (heroAv && imgEl && fbEl) {
     imgEl.onerror = function () {
       imgEl.setAttribute("hidden", "");
       fbEl.removeAttribute("hidden");
       fbEl.textContent = initials(row);
     };
-    imgEl.src = row.avatar_url;
+    imgEl.src = heroAv;
     imgEl.removeAttribute("hidden");
     fbEl.setAttribute("hidden", "");
   } else if (imgEl && fbEl) {
