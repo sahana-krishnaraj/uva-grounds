@@ -16,7 +16,7 @@ if (!slug) window.location.href = "clubs.html";
 
 const { data: club } = await supabase
   .from("clubs")
-  .select("id,slug,name,description,category,is_verified")
+  .select("id,slug,name,description,category,is_verified,logo_url")
   .eq("slug", slug)
   .maybeSingle();
 if (!club) {
@@ -40,10 +40,76 @@ const { data: myMem } = await supabase
   .maybeSingle();
 const role = myMem && myMem.role;
 const canManage = !!(role && ["owner", "admin", "editor"].includes(role));
+const canEditPage = !!(role && ["owner", "admin"].includes(role));
 const manageLink = document.getElementById("club-manage-link");
 const createLink = document.getElementById("club-create-link");
+const editToggle = document.getElementById("club-edit-toggle");
+const editForm = document.getElementById("club-edit-form");
+const editCancel = document.getElementById("club-edit-cancel");
 if (manageLink) manageLink.hidden = !canManage;
 if (createLink) createLink.hidden = !canManage;
+if (editToggle) editToggle.hidden = !canEditPage;
+
+function applyClubUi(c) {
+  document.getElementById("club-title").innerHTML =
+    esc(c.name) + (c.is_verified ? ' <span class="badge badge-student">Verified</span>' : "");
+  document.getElementById("club-meta").textContent = "Category: " + (c.category || "other");
+  document.getElementById("club-desc").textContent = c.description || "";
+}
+
+if (canEditPage && editForm && editToggle) {
+  const nameInput = document.getElementById("club-edit-name");
+  const categoryInput = document.getElementById("club-edit-category");
+  const descriptionInput = document.getElementById("club-edit-description");
+  const logoInput = document.getElementById("club-edit-logo");
+
+  if (nameInput) nameInput.value = club.name || "";
+  if (categoryInput) categoryInput.value = club.category || "other";
+  if (descriptionInput) descriptionInput.value = club.description || "";
+  if (logoInput) logoInput.value = club.logo_url || "";
+
+  editToggle.addEventListener("click", () => {
+    editForm.hidden = !editForm.hidden;
+  });
+  editCancel?.addEventListener("click", () => {
+    editForm.hidden = true;
+  });
+
+  editForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const nextName = (nameInput && nameInput.value ? String(nameInput.value).trim() : "") || club.name;
+    const nextCategory = (categoryInput && categoryInput.value ? String(categoryInput.value).trim() : "") || "other";
+    const nextDescription = descriptionInput && descriptionInput.value ? String(descriptionInput.value).trim() : "";
+    const nextLogo = logoInput && logoInput.value ? String(logoInput.value).trim() : "";
+    if (!nextName) {
+      alert("Club name is required.");
+      return;
+    }
+    const { data: updated, error } = await supabase
+      .from("clubs")
+      .update({
+        name: nextName,
+        category: nextCategory,
+        description: nextDescription || null,
+        logo_url: nextLogo || null,
+      })
+      .eq("id", club.id)
+      .select("id,slug,name,description,category,is_verified,logo_url")
+      .maybeSingle();
+    if (error) {
+      alert(error.message || "Could not save club page changes.");
+      return;
+    }
+    if (updated) {
+      club.name = updated.name;
+      club.category = updated.category;
+      club.description = updated.description;
+      club.logo_url = updated.logo_url;
+      applyClubUi(club);
+    }
+    editForm.hidden = true;
+  });
+}
 
 const f = await supabase.from("club_follows").select("club_id").eq("club_id", club.id).eq("user_id", me.id).maybeSingle();
 let following = !!f.data;

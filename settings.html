@@ -1,133 +1,169 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Settings — HoosOut</title>
+  <title>Edit profile — HoosOut</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
+
   <header class="site-header">
     <a class="logo" href="home.html">
-      <span class="logo-mark" aria-hidden="true"><img src="images/logo-mark.svg" width="38" height="38" alt="" /></span>
+      <span class="logo-mark" aria-hidden="true">
+        <img src="images/logo-mark.svg" width="38" height="38" alt="" />
+      </span>
       <span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span>
     </a>
     <nav class="nav-links">
-      <a href="home.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">My Feed</a>
+      <a
+        href="clubs.html"
+        class="btn btn-ghost btn-sm"
+        style="padding: 0.5rem 1rem"
+        id="nav-uva-cville"
+        hidden
+        >Clubs</a>
       <a href="events-map.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Map</a>
+      <a href="post.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Create</a>
       <a href="messages.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Messages</a>
       <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
+      <a href="settings.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Settings</a>
       <a href="index.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem" id="nav-logout">Log out</a>
     </nav>
   </header>
+ 
+  <main class="container" style="max-width: 560px">
+    <h1 class="section-title" style="text-align: left; margin-bottom: 0.5rem">Edit your profile</h1>
+    <p class="section-sub" style="text-align: left; margin-bottom: 1.5rem">
+      First name, Last name, Year are required. Everything else is optional.
+    </p>
 
-  <main class="container" style="max-width: 760px">
-    <h1 class="section-title" style="text-align: left; margin-bottom: 0.4rem">Settings</h1>
-    <p class="section-sub" style="text-align: left; margin-bottom: 1rem">Manage your account, privacy, and app preferences.</p>
-    <p id="settings-status" class="auth-form-msg" style="display:none;margin:0 0 1rem"></p>
+    <div class="auth-card" style="box-shadow: none; width: 100%">
 
-    <div class="settings-sections">
-      <section class="settings-section">
-        <h3>Theme</h3>
-        <p class="section-sub" style="margin:0">HoosOut uses a dark theme only.</p>
-      </section>
-
-      <section class="settings-section">
-        <h3>Profile</h3>
-        <div class="profile-photo-setup" style="margin-bottom: 1rem">
-          <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
-            <div class="me-hero-avatar profile-setup-avatar" data-hoosout-profile-avatar style="width:72px;height:72px;font-size:0.85rem">
-              <img class="js-hoosout-avatar-img me-hero-avatar-img" alt="" hidden />
-              <span class="js-hoosout-avatar-fallback">You</span>
-            </div>
-            <div class="me-photo-toolbar" style="margin:0">
-              <input type="file" class="js-profile-photo-file" accept="image/*" hidden />
-              <button type="button" class="btn btn-ghost btn-sm js-profile-photo-change">Upload photo</button>
-              <button type="button" class="btn btn-ghost btn-sm js-profile-photo-remove">Remove</button>
-            </div>
+      <!-- Profile photo -->
+      <div class="profile-photo-setup" style="margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border)">
+        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600">Profile photo</label>
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap">
+          <div
+            class="me-hero-avatar profile-setup-avatar"
+            data-hoosout-profile-avatar
+            style="width: 72px; height: 72px; font-size: 0.85rem"
+          >
+            <img class="js-hoosout-avatar-img me-hero-avatar-img" alt="" hidden />
+            <span class="js-hoosout-avatar-fallback">You</span>
+          </div>
+          <div class="me-photo-toolbar" style="margin: 0">
+            <input type="file" class="js-profile-photo-file" accept="image/*" hidden />
+            <button type="button" class="btn btn-ghost btn-sm js-profile-photo-change">Upload photo</button>
+            <button type="button" class="btn btn-ghost btn-sm js-profile-photo-remove">Remove</button>
           </div>
         </div>
-        <form class="form-grid" id="settings-form">
-          <div class="two-col">
-            <div><label for="first-name">First name *</label><input id="first-name" type="text" required /></div>
-            <div><label for="last-name">Last name *</label><input id="last-name" type="text" required /></div>
+      </div>
+
+      <!-- Form -->
+      <form class="form-grid" id="settings-form">
+
+        <div class="two-col">
+          <div>
+            <label for="first-name">First name <span class="req-mark" aria-hidden="true">*</span></label>
+            <input id="first-name" type="text" autocomplete="given-name" required />
           </div>
-          <div class="two-col">
-            <div><label for="preferred-name">Username *</label><input id="preferred-name" type="text" maxlength="7" required /></div>
-            <div><label for="year">Year *</label><select id="year" required><option value="">Select</option><option>First year</option><option>Second year</option><option>Third year</option><option>Fourth year</option><option>Grad</option></select></div>
+          <div>
+            <label for="last-name">Last name <span class="req-mark" aria-hidden="true">*</span></label>
+            <input id="last-name" type="text" autocomplete="family-name" required />
           </div>
-          <div><label for="pronouns">Pronouns</label><input id="pronouns" type="text" placeholder="e.g. she/her" /></div>
-          <div><label for="bio">About</label><textarea id="bio"></textarea></div>
-          <div class="two-col">
-            <div><label for="location-dorm">Location / dorm</label><input id="location-dorm" type="text" /></div>
-            <div><label for="interests">Interests</label><input id="interests" type="text" /></div>
+                        <div>
+            <label for="preferred-name">Username<span class="req-mark" aria-hidden="true">*</span></label>
+            <input
+              id="preferred-name"
+              name="HoosOut handle"
+              type="text"
+              autocomplete="nickname"
+              required
+            />
           </div>
-          <div><label for="schedule">Availability</label><input id="schedule" type="text" /></div>
-          <button type="submit" class="btn btn-primary">Save profile changes</button>
-        </form>
-      </section>
+        </div>
 
-      <section class="settings-section">
-        <h3>Account</h3>
-        <form class="form-grid" id="account-form">
-          <div><label for="account-email">Email</label><input id="account-email" type="email" /></div>
-          <div class="two-col">
-            <div><label for="new-password">New password</label><input id="new-password" type="password" minlength="8" /></div>
-            <div><label for="confirm-password">Confirm password</label><input id="confirm-password" type="password" minlength="8" /></div>
-          </div>
-          <button type="submit" class="btn btn-ghost">Update account</button>
-        </form>
-      </section>
+        <div>
+          <label for="year">Year <span class="req-mark" aria-hidden="true">*</span></label>
+          <select id="year" required>
+            <option value="">Select</option>
+            <option>First year</option>
+            <option>Second year</option>
+            <option>Third year</option>
+            <option>Fourth year</option>
+            <option>Grad</option>
+          </select>
+        </div>
 
-      <section class="settings-section">
-        <h3>Notifications</h3>
-        <label class="settings-row"><span>RSVPs</span><input id="notify-rsvp" type="checkbox" /></label>
-        <label class="settings-row"><span>Likes</span><input id="notify-likes" type="checkbox" /></label>
-        <label class="settings-row"><span>Comments</span><input id="notify-comments" type="checkbox" /></label>
-        <label class="settings-row"><span>Messages</span><input id="notify-messages" type="checkbox" /></label>
-        <label class="settings-row"><span>New followers</span><input id="notify-followers" type="checkbox" /></label>
-      </section>
+        <div>
+          <label for="pronouns">Pronouns</label>
+          <input
+            id="pronouns"
+            type="text"
+            list="pronouns-suggestions"
+            placeholder="e.g. she/her, they/them"
+          />
+          <datalist id="pronouns-suggestions">
+            <option value="she/her"></option>
+            <option value="he/him"></option>
+            <option value="they/them"></option>
+            <option value="she/they"></option>
+            <option value="he/they"></option>
+            <option value="any pronouns"></option>
+            <option value="use my name"></option>
+            <option value="ask me"></option>
+          </datalist>
+        </div>
 
-      <section class="settings-section">
-        <h3>Privacy</h3>
-        <label for="profile-visibility">Profile visibility</label>
-        <select id="profile-visibility">
-          <option value="public">Visible to everyone</option>
-          <option value="following_only">Visible only to people I follow</option>
-        </select>
-      </section>
+        <!-- <div>
+          <label for="preferred-name">User Handle</label>
+          <input id="preferred-name" type="text" autocomplete="nickname" />
+        </div> -->
 
-      <section class="settings-section">
-        <h3>Blocked users</h3>
-        <div id="blocked-users-list"></div>
-      </section>
+        <div>
+          <label for="bio">About</label>
+          <textarea id="bio" placeholder="Tell others about yourself (major, hometown, etc.)"></textarea>
+        </div>
 
-      <section class="settings-section">
-        <h3>Help & feedback</h3>
-        <form class="form-grid" id="feedback-form">
-          <textarea id="feedback-message" placeholder="Share feedback or ask for help"></textarea>
-          <button type="submit" class="btn btn-ghost">Send feedback</button>
-        </form>
-      </section>
+        <div>
+          <label for="location-dorm">Location / dorm <span class="optional-mark">(optional)</span></label>
+          <input
+            id="location-dorm"
+            type="text"
+            autocomplete="address-line2"
+            placeholder="e.g. Gibbons, etc."
+          />
+        </div>
+                <div>
+          <label for="schedule">Hobbies<span class="optional-mark">(optional)</span></label>
+          <input
+            id="interests"
+            type="text"
+            placeholder="e.g. art, gym, hiking, etc."
+          />
+      </div>
 
-      <section class="settings-section">
-        <h3>Danger zone</h3>
-        <button id="delete-account-btn" type="button" class="btn btn-ghost">Delete my account</button>
-      </section>
+        <div>
+          <label for="schedule">Availability <span class="optional-mark">(optional)</span></label>
+          <input id="schedule" type="text" placeholder="Thu afternoons, weekend mornings" />
+        </div>
 
-      <section class="settings-section">
-        <h3>About</h3>
-        <p style="margin:.2rem 0;color:var(--text-muted)">Version: v0.8.0</p>
-        <p style="margin:.2rem 0"><a href="https://example.com/terms" target="_blank" rel="noopener">Terms of service</a> · <a href="https://example.com/privacy" target="_blank" rel="noopener">Privacy policy</a></p>
-      </section>
+        <div style="display: flex; gap: .5rem; align-items: center">
+          <button type="submit" class="btn btn-primary">Save changes</button>
+          <a href="me.html" class="btn btn-ghost">Cancel</a>
+        </div>
+
+      </form>
     </div>
   </main>
 
   <script src="js/session.js"></script>
   <script src="js/profile-photo.js"></script>
   <script type="module" src="js/settings-init.js"></script>
+
 </body>
 </html>

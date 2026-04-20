@@ -29,8 +29,40 @@
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
         <button type="button" id="club-follow-btn" class="btn btn-primary btn-sm">Follow</button>
         <a id="club-create-link" class="btn btn-ghost btn-sm" href="post.html">Create event as club</a>
+        <button type="button" id="club-edit-toggle" class="btn btn-ghost btn-sm" hidden>Edit club page</button>
         <a id="club-manage-link" class="btn btn-ghost btn-sm" href="club-admin.html" hidden>Club admin</a>
       </div>
+      <form id="club-edit-form" class="form-grid" hidden style="margin-top:.85rem">
+        <p class="section-sub" style="margin:0 0 .2rem;text-align:left">Update your club page details.</p>
+        <div>
+          <label for="club-edit-name">Club name</label>
+          <input id="club-edit-name" type="text" required />
+        </div>
+        <div>
+          <label for="club-edit-category">Category</label>
+          <select id="club-edit-category">
+            <option value="academic">Academic</option>
+            <option value="cultural">Cultural</option>
+            <option value="sports">Sports</option>
+            <option value="service">Service</option>
+            <option value="arts">Arts</option>
+            <option value="professional">Professional</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label for="club-edit-description">Description</label>
+          <textarea id="club-edit-description" placeholder="What your club does"></textarea>
+        </div>
+        <div>
+          <label for="club-edit-logo">Logo URL (optional)</label>
+          <input id="club-edit-logo" type="url" placeholder="https://..." />
+        </div>
+        <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+          <button type="submit" class="btn btn-primary btn-sm">Save club page</button>
+          <button type="button" id="club-edit-cancel" class="btn btn-ghost btn-sm">Cancel</button>
+        </div>
+      </form>
     </section>
     <h2 class="me-panel-title" style="margin-top:1rem">Upcoming events</h2>
     <div id="club-events-upcoming" class="events-list"></div>

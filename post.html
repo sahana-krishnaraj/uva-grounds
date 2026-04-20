@@ -53,24 +53,24 @@
       <form id="event-form" class="form-grid" novalidate>
         <h3 style="margin:0;color:var(--text);font-size:1rem">Required details</h3>
         <div>
-          <label for="title">Title</label>
+          <label for="title">Title <span class="req-mark" aria-hidden="true">*</span></label>
           <input id="title" name="title" type="text" required placeholder="Pickup basketball at AFC" />
         </div>
 
         <div class="two-col">
           <div>
-            <label for="event-date">Date</label>
+            <label for="event-date">Date <span class="req-mark" aria-hidden="true">*</span></label>
             <input id="event-date" name="event-date" type="date" required />
           </div>
           <div>
-            <label for="event-time">Time</label>
+            <label for="event-time">Time <span class="req-mark" aria-hidden="true">*</span></label>
             <input id="event-time" name="event-time" type="time" required />
           </div>
         </div>
 
         <div class="two-col">
           <div>
-            <label for="duration">Duration</label>
+            <label for="duration">Duration <span class="req-mark" aria-hidden="true">*</span></label>
             <select id="duration" name="duration" required>
               <option value="1 hour">1 hour</option>
               <option value="2 hours" selected>2 hours</option>
@@ -78,13 +78,27 @@
             </select>
           </div>
           <div>
-            <label for="vis">Who can see this?</label>
+            <label for="vis">Who can see this? <span class="req-mark" aria-hidden="true">*</span></label>
             <select id="vis" name="vis" required>
               <option value="public">Anyone at UVA (public)</option>
               <option value="friends">Friends only</option>
               <option value="invite">Invite-only</option>
             </select>
           </div>
+        </div>
+
+        <div>
+          <label for="type">Activity type <span class="req-mark" aria-hidden="true">*</span></label>
+          <select id="type" name="type" required>
+            <option value="">Select activity type</option>
+            <option value="Sports">Sports</option>
+            <option value="Study">Study</option>
+            <option value="Food run">Food run</option>
+            <option value="Gaming">Gaming</option>
+            <option value="Movie night">Movie night</option>
+            <option value="Wellness / gym">Wellness / gym</option>
+            <option value="Social">Social</option>
+          </select>
         </div>
 
         <div>
@@ -106,6 +120,7 @@
               Search
             </button>
           </div>
+          <div id="map-search-results" class="map-search-results" hidden aria-live="polite"></div>
           <div id="event-map" role="application" aria-label="Map to choose event location"></div>
           <input type="hidden" id="lat" name="lat" value="" />
           <input type="hidden" id="lng" name="lng" value="" />
@@ -120,20 +135,6 @@
             required
             placeholder="Shown on the feed — e.g. AFC courts, north entrance"
           />
-        </div>
-
-        <div>
-          <label for="type">Activity type (optional)</label>
-          <select id="type" name="type">
-            <option value="">Select</option>
-            <option value="Sports">Sports</option>
-            <option value="Study">Study</option>
-            <option value="Food run">Food run</option>
-            <option value="Gaming">Gaming</option>
-            <option value="Movie night">Movie night</option>
-            <option value="Wellness / gym">Wellness / gym</option>
-            <option value="Social">Social</option>
-          </select>
         </div>
 
         <div>

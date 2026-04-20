@@ -1593,6 +1593,41 @@ select {
   margin-bottom: 0;
 }
 
+.map-search-results {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.6rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+}
+
+.map-search-result {
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: var(--text);
+  padding: 0.45rem 0.55rem;
+  cursor: pointer;
+}
+
+.map-search-result:hover,
+.map-search-result:focus,
+.map-search-result.is-active {
+  border-color: var(--uva-orange);
+  background: color-mix(in srgb, var(--uva-orange) 12%, transparent);
+  outline: none;
+}
+
+.map-search-result small {
+  display: block;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
 #event-map,
 .feed-map-canvas {
   width: 100%;

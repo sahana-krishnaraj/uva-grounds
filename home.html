@@ -55,6 +55,19 @@
       <button type="button" class="chip" data-feed-scope="following">Following</button>
       <button type="button" class="chip" data-feed-scope="mine">My Events</button>
     </div>
+    <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem">
+      <label for="feed-activity-filter" style="margin:0;font-size:.88rem;color:var(--text-muted)">Activity type:</label>
+      <select id="feed-activity-filter" style="max-width:220px;margin:0">
+        <option value="">All activities</option>
+        <option value="sports">Sports</option>
+        <option value="study">Study</option>
+        <option value="food run">Food run</option>
+        <option value="gaming">Gaming</option>
+        <option value="movie night">Movie night</option>
+        <option value="wellness / gym">Wellness / gym</option>
+        <option value="social">Social</option>
+      </select>
+    </div>
     <section id="feed-profile-progress" class="feed-profile-progress" hidden aria-live="polite">
       <div class="feed-profile-progress-head">
         <strong>Complete your profile</strong>

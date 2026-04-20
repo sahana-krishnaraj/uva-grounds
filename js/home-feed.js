@@ -12,6 +12,7 @@ import { blockUser, getBlockedUserIds, submitEventReport } from "./user-safety.j
 
 let currentUserId = null;
 let feedScope = "discover";
+let activityFilter = "";
 let feedRows = [];
 let followingIds = [];
 let rsvpCountMap = new Map();
@@ -862,6 +863,10 @@ async function refreshFeed() {
   myFollowedClubIds = new Set((myCfRows || []).map((r) => r.club_id).filter(Boolean));
 
   let rows = await fetchEventsForScope();
+  if (activityFilter) {
+    const target = String(activityFilter).toLowerCase();
+    rows = rows.filter((row) => String(row.activity_type || "").trim().toLowerCase() === target);
+  }
   feedRows = rows;
 
   const mount = document.getElementById("feed-posts-mount");
@@ -899,7 +904,9 @@ async function refreshFeed() {
       mount.innerHTML = "";
       if (emptyFeed) {
         emptyFeed.hidden = false;
-        emptyFeed.textContent =
+        if (activityFilter) {
+          emptyFeed.textContent = "No events match that activity type right now.";
+        } else emptyFeed.textContent =
           feedScope === "following" && !followingIds.length && !myFollowedClubIds.size
             ? "Follow people or clubs to see their events here, or open Discover for all public events."
             : "No events yet. Create one from the top nav.";
@@ -1137,6 +1144,11 @@ function subscribeRealtime() {
       feedScope = c.getAttribute("data-feed-scope") || "discover";
       refreshFeed();
     });
+  });
+  const activityFilterEl = document.getElementById("feed-activity-filter");
+  activityFilterEl?.addEventListener("change", () => {
+    activityFilter = String(activityFilterEl.value || "").trim().toLowerCase();
+    refreshFeed();
   });
 
   document.body.addEventListener("click", (e) => {

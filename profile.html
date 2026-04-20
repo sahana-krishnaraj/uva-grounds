@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,14 +11,26 @@
 </head>
 <body>
   <header class="site-header">
-    <a class="logo" href="index.html">
+    <a class="logo" href="home.html">
       <span class="logo-mark" aria-hidden="true">
         <img src="images/logo-mark.svg" width="38" height="38" alt="" />
       </span>
       <span class="logo-type">Hoos<span class="logo-type-accent">Out</span></span>
     </a>
     <nav class="nav-links">
-      <a href="clubs.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Clubs</a>
+      <a
+        href="clubs.html"
+        class="btn btn-ghost btn-sm"
+        style="padding: 0.5rem 1rem"
+        id="nav-uva-cville"
+        hidden
+        >Clubs</a>
+      <a href="events-map.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Map</a>
+      <a href="post.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Create</a>
+      <a href="messages.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Messages</a>
+      <a href="me.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Profile</a>
+      <a href="settings.html" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem">Settings</a>
+      <a href="index.html" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem" id="nav-logout">Log out</a>
     </nav>
   </header>
 
@@ -71,13 +83,12 @@
           </div>
         </div>
               <div>
-            <label for="preferred-name">User Name<span class="req-mark" aria-hidden="true">*</span></label>
+            <label for="preferred-name">Username<span class="req-mark" aria-hidden="true">*</span></label>
             <input
               id="preferred-name"
               name="HoosOut handle"
               type="text"
               autocomplete="nickname"
-              maxlength="7"
               required
             />
           </div>
@@ -93,7 +104,7 @@
           </select>
         </div>
         <div>
-          <label for="pronouns">Pronouns<span class="optional-mark"> (optional)  </span></label>
+          <label for="pronouns">Pronouns<span class="optional-mark"></span></label>
           <input
             id="pronouns"
             name="pronouns"
@@ -107,9 +118,7 @@
             <option value="they/them"></option>
             <option value="she/they"></option>
             <option value="he/they"></option>
-            <option value="any pronouns"></option>
-            <option value="use my name"></option>
-            <option value="ask me"></option>
+            <option value="other"></option>
           </datalist>
         </div>
         <div>
@@ -117,7 +126,7 @@
           <textarea id="bio" placeholder="Tell others about yourself (major, hometown, etc.)"></textarea>
         </div>
                         <div>
-          <label for="schedule">Hobbies/Interests <span class="optional-mark">(optional)</span></label>
+          <label for="schedule">Hobbies/Interests <span class="optional-mark"></span></label>
           <input
             id="interests"
             type="text"
@@ -125,7 +134,7 @@
           />
       </div>
         <div>
-          <label for="location-dorm">Location/Dorm<span class="optional-mark"> (optional)</span></label>
+          <label for="location-dorm">Location/Dorm<span class="optional-mark"></span></label>
           <input
             id="location-dorm"
             name="Location"
@@ -148,7 +157,7 @@
         </div>
         <p id="profile-setup-status" hidden style="margin: 0 0 0.75rem; font-size: 0.88rem"></p>
         <button href="home.html" type="submit" class="btn btn-primary btn-full">Save &amp; Go to Feed</button>
-        <a href="signup.html" class="btn btn-ghost">Cancel</a>
+        <a href="home.html" class="btn btn-ghost">Cancel</a>
       </form>
     </div>
   </main>

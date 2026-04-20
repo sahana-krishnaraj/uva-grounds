@@ -27,18 +27,30 @@ let myFollowed = new Set();
 let myGrant = null;
 /** @type {{ status: string, rejection_reason?: string | null } | null} */
 let pendingRequest = null;
+/** @type {{ status: string } | null} */
+let approvedRequest = null;
 /** @type {{ rejection_reason?: string | null } | null} */
 let lastRejected = null;
+let hasCreatedClub = false;
 
 async function loadApprovalState() {
-  const [{ data: grant }, { data: pendingRows }] = await Promise.all([
+  const [{ data: grant }, { data: pendingRows }, { data: approvedRows }] = await Promise.all([
     supabase.from("club_creation_grants").select("user_id").eq("user_id", me.id).maybeSingle(),
     supabase.from("club_page_requests").select("status,rejection_reason").eq("user_id", me.id).eq("status", "pending").maybeSingle(),
+    supabase
+      .from("club_page_requests")
+      .select("id,status,proposed_name,proposed_slug,category,description")
+      .eq("user_id", me.id)
+      .eq("status", "approved")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
   myGrant = grant || null;
   pendingRequest = pendingRows || null;
+  approvedRequest = approvedRows || null;
   lastRejected = null;
-  if (!myGrant && !pendingRequest) {
+  if (!myGrant && !pendingRequest && !approvedRequest) {
     const { data: rej } = await supabase
       .from("club_page_requests")
       .select("rejection_reason")
@@ -63,12 +75,31 @@ function syncApprovalPanel() {
   statusEl.innerHTML = "";
   statusEl.className = "club-approval-status";
 
-  if (myGrant) {
-    createForm.hidden = false;
+  if (hasCreatedClub) {
     statusEl.hidden = false;
     statusEl.classList.add("club-approval-status--ok");
     statusEl.innerHTML =
-      "<p style=\"margin:0\"><strong>Approved.</strong> You can create your organization’s page below. This uses your one-time approval — after the page exists, submit a new request if you need another club in the future.</p>";
+      "<p style=\"margin:0\"><strong>Your club page is already live.</strong> You do not need to submit another request for this organization.</p>";
+    return;
+  }
+
+  if (myGrant) {
+    createForm.hidden = false;
+    if (approvedRequest) {
+      const approvedName = String(approvedRequest.proposed_name || "").trim();
+      const approvedCategory = String(approvedRequest.category || "other").trim();
+      const approvedDescription = String(approvedRequest.description || "").trim();
+      const nameInput = document.getElementById("club-name");
+      const categoryInput = document.getElementById("club-category");
+      const descriptionInput = document.getElementById("club-description");
+      if (nameInput && approvedName) nameInput.value = approvedName;
+      if (categoryInput && approvedCategory) categoryInput.value = approvedCategory;
+      if (descriptionInput && approvedDescription) descriptionInput.value = approvedDescription;
+    }
+    statusEl.hidden = false;
+    statusEl.classList.add("club-approval-status--ok");
+    statusEl.innerHTML =
+      "<p style=\"margin:0\"><strong>Approved.</strong> Your request details are pre-filled below, so you can create the club page without re-entering everything.</p>";
     return;
   }
 
@@ -77,6 +108,14 @@ function syncApprovalPanel() {
     statusEl.classList.add("club-approval-status--pending");
     statusEl.innerHTML =
       "<p style=\"margin:0\"><strong>Request received.</strong> The HoosOut team will review it. Check back here — once approved, the “create club page” form will unlock.</p>";
+    return;
+  }
+
+  if (approvedRequest) {
+    statusEl.hidden = false;
+    statusEl.classList.add("club-approval-status--ok");
+    statusEl.innerHTML =
+      "<p style=\"margin:0\"><strong>Approved.</strong> Your request is approved, so you do not need to submit the request form again. If create is still locked, refresh in a moment while approval syncs.</p>";
     return;
   }
 
@@ -99,10 +138,11 @@ function syncApprovalPanel() {
 async function loadData() {
   await loadApprovalState();
   const [{ data: clubs }, { data: follows }] = await Promise.all([
-    supabase.from("clubs").select("id,slug,name,logo_url,description,category,is_verified").order("name"),
+    supabase.from("clubs").select("id,slug,name,logo_url,description,category,is_verified,created_by").order("name"),
     supabase.from("club_follows").select("club_id").eq("user_id", me.id),
   ]);
   allClubs = clubs || [];
+  hasCreatedClub = allClubs.some((club) => club.created_by === me.id);
   myFollowed = new Set((follows || []).map((r) => r.club_id));
   syncApprovalPanel();
 }
@@ -190,10 +230,16 @@ document.getElementById("club-create-form")?.addEventListener("submit", async (e
     alert("You need an approved request before creating a club page.");
     return;
   }
-  const name = (document.getElementById("club-name").value || "").trim();
-  const slug = slugFromName(name);
-  const category = document.getElementById("club-category").value || "other";
-  const description = (document.getElementById("club-description").value || "").trim();
+  const name =
+    (document.getElementById("club-name").value || "").trim() ||
+    String((approvedRequest && approvedRequest.proposed_name) || "").trim();
+  const slug = slugFromName(name || String((approvedRequest && approvedRequest.proposed_slug) || ""));
+  const category =
+    document.getElementById("club-category").value ||
+    String((approvedRequest && approvedRequest.category) || "other");
+  const description =
+    (document.getElementById("club-description").value || "").trim() ||
+    String((approvedRequest && approvedRequest.description) || "").trim();
   if (!name || !slug) return;
 
   const { data, error } = await supabase

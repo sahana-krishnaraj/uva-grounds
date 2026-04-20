@@ -25,6 +25,7 @@ const lngInput = document.getElementById("lng");
 const locLabel = document.getElementById("loc");
 const searchInput = document.getElementById("map-search");
 const searchBtn = document.getElementById("map-search-btn");
+const searchResultsEl = document.getElementById("map-search-results");
 const mapHint = document.getElementById("map-hint");
 
 if (!form || !mapEl || typeof L === "undefined") {
@@ -87,6 +88,12 @@ function setCoords(lat, lng, pan) {
   marker.setLatLng([lat, lng]);
   if (pan) map.panTo([lat, lng]);
   if (mapHint) mapHint.textContent = "Pin set — drag it or tap the map to move.";
+}
+
+function escHtml(s) {
+  const d = document.createElement("div");
+  d.textContent = s == null ? "" : String(s);
+  return d.innerHTML;
 }
 
 map.on("click", (e) => {
@@ -165,45 +172,168 @@ document.getElementById("club-id")?.addEventListener("change", syncClubVisibilit
 await loadMyClubs();
 syncClubVisibilityUi();
 
-function nominatimSearch(query) {
-  if (!query || !query.trim()) return;
-  const url =
-    "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" +
-    encodeURIComponent(query.trim());
-  fetch(url, {
-    headers: {
-      Accept: "application/json",
-      "Accept-Language": "en",
-    },
-  })
-    .then((r) => r.json())
-    .then((data) => {
-      if (!data || !data[0]) {
-        alert("No results — try “AFC Charlottesville” or tap the map.");
-        return;
-      }
-      const lat = parseFloat(data[0].lat);
-      const lng = parseFloat(data[0].lon);
-      setCoords(lat, lng, true);
-      map.setView([lat, lng], 16);
-      if (locLabel && !locLabel.value.trim()) {
-        locLabel.value = data[0].display_name.split(",").slice(0, 2).join(",").trim();
-      }
+const UVA_VIEWBOX = "-78.5700,38.0850,-78.4300,37.9600";
+let searchItems = [];
+let activeSearchIndex = -1;
+let searchDebounceTimer = null;
+let searchAbortController = null;
+
+function showSearchResults(items) {
+  if (!searchResultsEl) return;
+  searchItems = items || [];
+  activeSearchIndex = -1;
+  if (!searchItems.length) {
+    searchResultsEl.hidden = true;
+    searchResultsEl.innerHTML = "";
+    return;
+  }
+  searchResultsEl.hidden = false;
+  searchResultsEl.innerHTML = searchItems
+    .map((item, idx) => {
+      const primary = (item.display_name || "").split(",").slice(0, 2).join(", ").trim() || "Pinned location";
+      const secondary = item.display_name || "";
+      return (
+        '<button type="button" class="map-search-result" data-map-result-index="' +
+        idx +
+        '">' +
+        escHtml(primary) +
+        '<small>' +
+        escHtml(secondary) +
+        "</small></button>"
+      );
     })
-    .catch(() => {
-      alert("Search failed — place the pin on the map manually.");
-    });
+    .join("");
 }
 
-if (searchBtn && searchInput) {
-  searchBtn.addEventListener("click", () => {
-    nominatimSearch(searchInput.value);
+function highlightSearchResult(index) {
+  if (!searchResultsEl) return;
+  const nodes = searchResultsEl.querySelectorAll(".map-search-result");
+  nodes.forEach((node, idx) => {
+    const on = idx === index;
+    node.classList.toggle("is-active", on);
+    if (on) node.scrollIntoView({ block: "nearest" });
   });
-  searchInput.addEventListener("keydown", (e) => {
+}
+
+function closeSearchResults() {
+  showSearchResults([]);
+}
+
+function applySearchChoice(item) {
+  if (!item) return;
+  const lat = parseFloat(item.lat);
+  const lng = parseFloat(item.lon);
+  if (!isFinite(lat) || !isFinite(lng)) return;
+  setCoords(lat, lng, true);
+  map.setView([lat, lng], 16);
+  const placeName = (item.display_name || "").split(",").slice(0, 2).join(", ").trim();
+  if (locLabel) {
+    locLabel.value = placeName || locLabel.value || "Pinned location";
+  }
+  if (mapHint) mapHint.textContent = "Location selected from search results.";
+  closeSearchResults();
+}
+
+async function fetchPlaces(query) {
+  const q = (query || "").trim();
+  if (!q || q.length < 2) {
+    closeSearchResults();
+    return [];
+  }
+  if (searchAbortController) searchAbortController.abort();
+  searchAbortController = new AbortController();
+
+  const base =
+    "https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=us&limit=6&accept-language=en";
+  const localUrl = base + "&viewbox=" + encodeURIComponent(UVA_VIEWBOX) + "&bounded=0&q=" + encodeURIComponent(q);
+  const broadUrl = base + "&q=" + encodeURIComponent(q);
+
+  try {
+    const localRes = await fetch(localUrl, {
+      headers: { Accept: "application/json", "Accept-Language": "en" },
+      signal: searchAbortController.signal,
+    });
+    let data = await localRes.json();
+    if (!Array.isArray(data) || !data.length) {
+      const broadRes = await fetch(broadUrl, {
+        headers: { Accept: "application/json", "Accept-Language": "en" },
+        signal: searchAbortController.signal,
+      });
+      data = await broadRes.json();
+    }
+    const items = Array.isArray(data) ? data : [];
+    showSearchResults(items);
+    return items;
+  } catch (err) {
+    if (err && err.name === "AbortError") return [];
+    if (mapHint) mapHint.textContent = "Search failed — you can still tap or drag pin on the map.";
+    closeSearchResults();
+    return [];
+  }
+}
+
+async function runSearchAndUseFirst(query) {
+  const items = await fetchPlaces(query);
+  if (!items.length) {
+    alert("No matching places found. Try building + UVA, or place pin manually.");
+    return;
+  }
+  applySearchChoice(items[0]);
+}
+
+if (searchBtn && searchInput && searchResultsEl) {
+  searchBtn.addEventListener("click", async () => {
+    await runSearchAndUseFirst(searchInput.value);
+  });
+  searchInput.addEventListener("input", () => {
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    const val = searchInput.value;
+    searchDebounceTimer = setTimeout(() => {
+      fetchPlaces(val);
+    }, 240);
+  });
+
+  searchInput.addEventListener("keydown", async (e) => {
+    if (e.key === "ArrowDown") {
+      if (!searchItems.length) return;
+      e.preventDefault();
+      activeSearchIndex = Math.min(searchItems.length - 1, activeSearchIndex + 1);
+      highlightSearchResult(activeSearchIndex);
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      if (!searchItems.length) return;
+      e.preventDefault();
+      activeSearchIndex = Math.max(0, activeSearchIndex - 1);
+      highlightSearchResult(activeSearchIndex);
+      return;
+    }
     if (e.key === "Enter") {
       e.preventDefault();
-      nominatimSearch(searchInput.value);
+      if (searchItems.length) {
+        const idx = activeSearchIndex >= 0 ? activeSearchIndex : 0;
+        applySearchChoice(searchItems[idx]);
+      } else {
+        await runSearchAndUseFirst(searchInput.value);
+      }
+      return;
     }
+    if (e.key === "Escape") {
+      closeSearchResults();
+    }
+  });
+
+  searchResultsEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".map-search-result");
+    if (!btn) return;
+    const idx = Number(btn.getAttribute("data-map-result-index"));
+    if (!isFinite(idx) || idx < 0 || idx >= searchItems.length) return;
+    applySearchChoice(searchItems[idx]);
+  });
+
+  document.addEventListener("click", (e) => {
+    const insideSearch = e.target.closest("#map-search") || e.target.closest("#map-search-btn") || e.target.closest("#map-search-results");
+    if (!insideSearch) closeSearchResults();
   });
 }
 
@@ -254,8 +384,8 @@ form.addEventListener("submit", async (e) => {
     notes: document.getElementById("notes").value.trim(),
   };
 
-  if (!row.title || !row.duration || !row.visibility || !row.place_label) {
-    alert("Title, duration, location, and visibility are required.");
+  if (!row.title || !row.activity_type || !row.duration || !row.visibility || !row.place_label) {
+    alert("Title, activity type, duration, location, and visibility are required.");
     return;
   }
 
