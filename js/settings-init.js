@@ -184,6 +184,7 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
 
 document.getElementById("account-form").addEventListener("submit", async (e) => {
   e.preventDefault();
+  const submitBtn = e.target.querySelector('button[type="submit"]');
   const email = document.getElementById("account-email").value.trim();
   const pw = document.getElementById("new-password").value;
   const pw2 = document.getElementById("confirm-password").value;
@@ -194,10 +195,19 @@ document.getElementById("account-form").addEventListener("submit", async (e) => 
   const payload = {};
   if (email && email !== (user.email || "")) payload.email = email;
   if (pw) payload.password = pw;
-  if (!Object.keys(payload).length) return flash("No account changes to save.", true);
+  if (!Object.keys(payload).length) return flash("No account changes to save. Update email or password first.", true);
+  if (submitBtn) submitBtn.disabled = true;
   const { error } = await supabase.auth.updateUser(payload);
-  if (error) return flash(error.message, true);
+  if (submitBtn) submitBtn.disabled = false;
+  if (error) {
+    flash(error.message || "Could not save account changes.", true);
+    alert(error.message || "Could not save account changes.");
+    return;
+  }
+  document.getElementById("new-password").value = "";
+  document.getElementById("confirm-password").value = "";
   flash("Account changes saved.", false);
+  alert("Account changes saved.");
 });
 
 async function loadBlockedUsers() {
@@ -238,37 +248,67 @@ async function loadBlockedUsers() {
 
 document.getElementById("feedback-form").addEventListener("submit", async (e) => {
   e.preventDefault();
+  const submitBtn = e.target.querySelector('button[type="submit"]');
   const msg = document.getElementById("feedback-message").value.trim();
   if (!msg) return flash("Please enter feedback before submitting.", true);
+  if (submitBtn) submitBtn.disabled = true;
   const { error } = await supabase.from("moderation_reports").insert({
     reporter_id: user.id,
     report_type: "user",
     reported_user_id: user.id,
     reason: "[FEEDBACK] " + msg,
   });
-  if (error) return flash(error.message, true);
+  if (submitBtn) submitBtn.disabled = false;
+  if (error) {
+    flash(error.message || "Could not send feedback.", true);
+    alert(error.message || "Could not send feedback.");
+    return;
+  }
   document.getElementById("feedback-message").value = "";
   flash("Feedback sent. Thank you.", false);
+  alert("Feedback sent. Thank you.");
 });
 
 document.getElementById("delete-account-btn").addEventListener("click", async () => {
+  const deleteBtn = document.getElementById("delete-account-btn");
   const ok = window.confirm("Delete your account and associated data? This action cannot be undone.");
   if (!ok) return;
-  const confirmText = window.prompt('Type "DELETE" to confirm.');
-  if (confirmText !== "DELETE") return;
+  if (deleteBtn) deleteBtn.disabled = true;
+  const sessionRes = await supabase.auth.getSession();
+  const accessToken = sessionRes && sessionRes.data && sessionRes.data.session ? sessionRes.data.session.access_token : null;
+  if (!accessToken) {
+    if (deleteBtn) deleteBtn.disabled = false;
+    flash("Could not verify your session. Please log in again and retry.", true);
+    alert("Could not verify your session. Please log in again and retry.");
+    return;
+  }
   const { data, error } = await supabase.functions.invoke("delete-account", {
+    headers: {
+      Authorization: "Bearer " + accessToken,
+    },
     body: { confirmDelete: true },
   });
+  if (deleteBtn) deleteBtn.disabled = false;
   if (error) {
-    flash(error.message || "Could not delete account.", true);
+    const rawMsg = error.message || "Could not delete account.";
+    const lower = String(rawMsg).toLowerCase();
+    const msg =
+      lower.includes("failed to send a request") || lower.includes("fetch")
+        ? "Delete account is not available yet (edge function not deployed/reachable). Ask a developer to deploy Supabase function: delete-account."
+        : rawMsg;
+    flash(msg, true);
+    alert(msg);
     return;
   }
   if (!data || !data.ok) {
-    flash("Could not delete account.", true);
+    const msg = "Could not delete account. If this continues, confirm edge function delete-account is deployed with service role secret.";
+    flash(msg, true);
+    alert(msg);
     return;
   }
   if (window.HoosOutSession) window.HoosOutSession.signOut();
   flash("Account deleted.", false);
+  alert("Account deleted.");
   setTimeout(() => (window.location.href = "index.html"), 900);
 });
 

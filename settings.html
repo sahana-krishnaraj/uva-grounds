@@ -40,6 +40,7 @@
     <p class="section-sub" style="text-align: left; margin-bottom: 1.5rem">
       First name, Last name, Year are required. Everything else is optional.
     </p>
+    <p id="settings-status" class="section-sub" style="text-align:left;margin:0 0 .9rem;display:none"></p>
 
     <div class="auth-card" style="box-shadow: none; width: 100%">
 
@@ -159,6 +160,67 @@
 
       </form>
     </div>
+
+    <section class="auth-card" style="box-shadow:none;width:100%;margin-top:1rem">
+      <h2 style="margin:.1rem 0 .6rem;font-size:1.05rem">Account</h2>
+      <form id="account-form" class="form-grid">
+        <div>
+          <label for="account-email">Email</label>
+          <input id="account-email" type="email" autocomplete="email" />
+        </div>
+        <div class="two-col">
+          <div>
+            <label for="new-password">New password</label>
+            <input id="new-password" type="password" autocomplete="new-password" placeholder="At least 8 characters" />
+          </div>
+          <div>
+            <label for="confirm-password">Confirm password</label>
+            <input id="confirm-password" type="password" autocomplete="new-password" />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-ghost btn-sm">Save account changes</button>
+      </form>
+    </section>
+
+    <section class="auth-card" style="box-shadow:none;width:100%;margin-top:1rem">
+      <h2 style="margin:.1rem 0 .6rem;font-size:1.05rem">Preferences</h2>
+      <div class="form-grid">
+        <label class="settings-row"><span>RSVP notifications</span><input id="notify-rsvp" type="checkbox" /></label>
+        <label class="settings-row"><span>Like notifications</span><input id="notify-likes" type="checkbox" /></label>
+        <label class="settings-row"><span>Comment notifications</span><input id="notify-comments" type="checkbox" /></label>
+        <label class="settings-row"><span>Message notifications</span><input id="notify-messages" type="checkbox" /></label>
+        <label class="settings-row"><span>New follower notifications</span><input id="notify-followers" type="checkbox" /></label>
+        <div>
+          <label for="profile-visibility">Profile visibility</label>
+          <select id="profile-visibility">
+            <option value="public">Public to UVA</option>
+            <option value="following_only">Friends only</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="auth-card" style="box-shadow:none;width:100%;margin-top:1rem">
+      <h2 style="margin:.1rem 0 .6rem;font-size:1.05rem">Safety</h2>
+      <h3 style="margin:.2rem 0 .45rem;font-size:.95rem;color:var(--text)">Blocked users</h3>
+      <div id="blocked-users-list" class="form-grid"></div>
+    </section>
+
+    <section class="auth-card" style="box-shadow:none;width:100%;margin-top:1rem">
+      <h2 style="margin:.1rem 0 .6rem;font-size:1.05rem">Feedback</h2>
+      <form id="feedback-form" class="form-grid">
+        <div>
+          <label for="feedback-message">Tell us what to improve</label>
+          <textarea id="feedback-message" placeholder="Share bugs, missing features, or ideas"></textarea>
+        </div>
+        <button type="submit" class="btn btn-ghost btn-sm">Send feedback</button>
+      </form>
+    </section>
+
+    <section class="auth-card" style="box-shadow:none;width:100%;margin-top:1rem">
+      <h2 style="margin:.1rem 0 .6rem;font-size:1.05rem;color:#b91c1c">Danger zone</h2>
+      <button type="button" id="delete-account-btn" class="btn btn-primary btn-sm">Delete account</button>
+    </section>
   </main>
 
   <script src="js/session.js"></script>
