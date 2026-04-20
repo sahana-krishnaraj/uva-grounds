@@ -26,6 +26,7 @@ let myProfileRow = null;
 let blockedUserIds = new Set();
 /** Club ids the current user follows (for Follow club button state). */
 let myFollowedClubIds = new Set();
+let userSearchTimer = null;
 
 function escapeHtml(s) {
   if (!s) return "";
@@ -127,6 +128,62 @@ function initialsFromProfile(p) {
   if (c.length >= 2) return c.slice(0, 2).toUpperCase();
   if (c.length === 1) return (c + c).toUpperCase();
   return "?";
+}
+
+function usernameFromProfile(p) {
+  if (!p) return "";
+  return (
+    String(p.preferred_name || "").trim() ||
+    String(p.computing_id || "").trim() ||
+    String(p.first_name || "").trim() ||
+    "student"
+  )
+    .replace(/\s+/g, "")
+    .toLowerCase();
+}
+
+function userSearchAvatarHtml(p) {
+  const initials = initialsFromProfile(p);
+  const avatarUrl = p && p.avatar_url ? String(p.avatar_url).trim() : "";
+  if (avatarUrl) {
+    return (
+      '<span class="avatar avatar--sm avatar--color-1 msg-avatar--search">' +
+      '<img class="js-hoosout-avatar-img" alt="" src="' +
+      escapeHtml(avatarUrl) +
+      '" onerror="this.hidden=true;var n=this.nextElementSibling;if(n)n.hidden=false;" />' +
+      '<span class="js-hoosout-avatar-fallback" hidden>' +
+      escapeHtml(initials) +
+      "</span></span>"
+    );
+  }
+  return (
+    '<span class="avatar avatar--sm avatar--color-1 msg-avatar--search">' +
+    '<span class="js-hoosout-avatar-fallback">' +
+    escapeHtml(initials) +
+    "</span></span>"
+  );
+}
+
+async function searchProfilesForHeader(query, myId) {
+  const safe = String(query || "").trim().replace(/[%]/g, "").slice(0, 48);
+  if (safe.length < 2) return [];
+  const pat = "%" + safe + "%";
+  const sel = "id, first_name, last_name, preferred_name, computing_id, avatar_url";
+  const [r1, r2, r3] = await Promise.all([
+    supabase.from("profiles").select(sel).ilike("first_name", pat).neq("id", myId).limit(8),
+    supabase.from("profiles").select(sel).ilike("last_name", pat).neq("id", myId).limit(8),
+    supabase.from("profiles").select(sel).ilike("preferred_name", pat).neq("id", myId).limit(8),
+  ]);
+  const merged = [...(r1.data || []), ...(r2.data || []), ...(r3.data || [])];
+  const seen = new Set();
+  const rows = [];
+  for (const x of merged) {
+    if (!x || !x.id || blockedUserIds.has(x.id) || seen.has(x.id)) continue;
+    seen.add(x.id);
+    rows.push(withResolvedAvatarUrl(x, supabase));
+    if (rows.length >= 12) break;
+  }
+  return rows;
 }
 
 function userEventFeedTags(ev) {
@@ -1149,6 +1206,58 @@ function subscribeRealtime() {
   activityFilterEl?.addEventListener("change", () => {
     activityFilter = String(activityFilterEl.value || "").trim().toLowerCase();
     refreshFeed();
+  });
+  const headerSearchInput = document.getElementById("feed-user-search");
+  const headerHits = document.getElementById("feed-user-hits");
+  headerSearchInput?.addEventListener("input", (e) => {
+    clearTimeout(userSearchTimer);
+    const q = String(e.target.value || "").trim();
+    if (!headerHits) return;
+    if (q.length < 2) {
+      headerHits.hidden = true;
+      headerHits.innerHTML = "";
+      return;
+    }
+    userSearchTimer = setTimeout(async () => {
+      const rows = await searchProfilesForHeader(q, currentUserId);
+      if (!rows.length) {
+        headerHits.innerHTML =
+          '<p style="padding:0.5rem 0.75rem;font-size:0.85rem;color:var(--text-muted)">No matches</p>';
+        headerHits.hidden = false;
+        return;
+      }
+      headerHits.innerHTML = rows
+        .map((r) => {
+          const fullName = [r.first_name, r.last_name].filter(Boolean).join(" ").trim() || displayNameFromProfile(r);
+          return (
+            '<button type="button" class="messages-user-hit" data-user-id="' +
+            escapeHtml(r.id) +
+            '">' +
+            userSearchAvatarHtml(r) +
+            '<span><span class="messages-user-hit-name">' +
+            escapeHtml(fullName) +
+            '</span><span class="messages-user-hit-meta">@' +
+            escapeHtml(usernameFromProfile(r)) +
+            "</span></span></button>"
+          );
+        })
+        .join("");
+      headerHits.hidden = false;
+      headerHits.querySelectorAll(".messages-user-hit").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const uid = btn.getAttribute("data-user-id");
+          if (!uid) return;
+          window.location.href = "profile-view.html?id=" + encodeURIComponent(uid);
+        });
+      });
+    }, 260);
+  });
+  document.addEventListener("click", (e) => {
+    if (!headerHits || !headerSearchInput) return;
+    const inside = e.target.closest("#feed-user-search") || e.target.closest("#feed-user-hits");
+    if (!inside) {
+      headerHits.hidden = true;
+    }
   });
 
   document.body.addEventListener("click", (e) => {
